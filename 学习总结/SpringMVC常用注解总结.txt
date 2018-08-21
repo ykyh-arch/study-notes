@@ -1,0 +1,296 @@
+-- -------------------------------------------------------- SpringMVC 常用注解说明 -----------------------------------------------------
+-- 控制器的使用
+#  @Controller 运用于类名之上，负责处理由DispatcherServlet分发的请求，经过业务处理层（service）处理之后封装成一个Model ，然后再把该Model 返回给对应的View 进行展示，
+#  结合@RequestMapping注解使用
+#  @RequestMapping 处理请求地址（URI）映射,可用于类或方法上。属性介绍 ：
+#  value： 指定请求的实际地址（URI）method：指定请求的method类型（GET、POST、PUT、DELETE ）
+#  consumes：处理请求的提交内容类型（Content-Type），如application/json, text/html;
+#  produces: 返回的内容类型
+#  params: request中必须包含某些参数值
+#  headers：request中必须包含某些指定的header值
+#
+#  @Resource和@Autowired 用做bean的注入时使用，@Resource需要导入javax.annotation.Resource，Spring支持该注解的注入，用在字段和setter方法上，而@Autowired 是byType注入
+#  如 ：public class TestServiceImpl {
+#    // 下面两种@Autowired只要使用一种即可
+#    @Autowired
+#    @Qualifier("userDao")     // byName 来装配
+#    private UserDao userDao; // 用于字段上
+#    
+#    @Autowired
+#    public void setUserDao(UserDao userDao) { // 用于属性的方法上
+#       this.userDao = userDao;
+#    }
+#
+#  }
+#  
+#  public class TestServiceImpl { // 默认按照ByName自动注入，亦可byType注入
+#    // 下面两种@Resource只要使用一种即可
+#    @Resource(name="userDao")
+#   private UserDao userDao; // 用于字段上
+#    
+#    @Resource(name="userDao")
+#    public void setUserDao(UserDao userDao) { // 用于属性的setter方法上
+#        this.userDao = userDao;
+#    }
+#  }
+#
+#  @ModelAttribute 表示Controller器的所有方法在调用前，先执行此@ModelAttribute方法，@ModelAttribute特性，应用在BaseController当中，因为所有的Controller继承BaseController
+#  @SessionAttributes 将值放到session作用域中，写在class上面
+#  SpringMVC 支持使用 @ModelAttribute 和 @SessionAttributes 在不同的模型（model）和控制器之间共享数据
+#  @ModelAttribute 主要有两种使用方式，一种是标注在方法上，一种是标注在 Controller 方法参数上
+#  当 @ModelAttribute 标记在方法上的时候，该方法将在处理器方法执行之前执行，然后把返回的对象存放在 session 或模型属性中，属性名称可以使用 @ModelAttribute(“attributeName”) 在标记方法的时候指定，若未指定，则使用返回类型的类名称（首字母小写）作为属性名称
+#  如下：
+#  @Controller
+#  @RequestMapping ( "/myTest" )
+#  public class MyController {
+#
+#    @ModelAttribute ( "hello" )
+#    public String getModel() {
+#       System. out .println( "-------------Hello---------" );
+#       return "world" ;
+#    }
+#
+#    @ModelAttribute ( "intValue" )
+#    public int getInteger() {
+#       System. out .println( "-------------intValue---------------" );
+#       return 10;
+#    }
+#
+#    @RequestMapping ( "sayHello" )
+#    public void sayHello( @ModelAttribute ( "hello" ) String hello, @ModelAttribute ( "intValue" ) int num, @ModelAttribute ( "user2" ) User user, Writer writer, HttpSession session) throws IOException {
+#       writer.write( "Hello " + hello + " , Hello " + user.getUsername() + num);
+#       writer.write( "\r" );
+#       Enumeration enume = session.getAttributeNames();
+#       while (enume.hasMoreElements())
+#           writer.write(enume.nextElement() + "\r" );
+#    }
+#
+#    @ModelAttribute ( "user2" )
+#    public User getUser(){
+#       System. out .println( "---------getUser-------------" );
+#       return new User(3, "user2" );
+#    }
+#  } 
+#  
+#  解析：当我们请求 /myTest/sayHello.do 的时候使用 @ModelAttribute 标记的方法会先执行，然后把它们返回的对象存放到模型中。最终访问到 sayHello 方法的时候，使用 @ModelAttribute 标记的方法参数都能被正确的注入值。执行结果如下所示：
+#  Hello world,Hello user210 ，由执行结果我们可以看出来，此时session中没有包含任何属性，也就是说上面的那些对象都是存放在模型属性中，而不是存放在 session属性中
+#
+#  数据对象存放在session属性，使用@SessionAttributes标记
+#
+#  @Controller
+#  @RequestMapping ( "/myTest" )
+#  @SessionAttributes (value={"intValue","stringValue"}, types={User.class})  // 用在类名上面
+#  public class MyController {
+#
+#    @ModelAttribute ( "hello" )
+#    public String getModel() {
+#       System. out .println( "-------------Hello---------" );
+#       return "world" ;
+#    }
+#
+#    @ModelAttribute ( "intValue" )
+#    public int getInteger() {
+#       System. out .println( "-------------intValue---------------" );
+#       return 10;
+#    }
+#   
+#    @RequestMapping ( "sayHello" )
+#    public void sayHello(Map<String, Object> map, @ModelAttribute ( "hello" ) String hello, @ModelAttribute ( "intValue" ) int num, @ModelAttribute ( "user2" ) User user, Writer writer, HttpServletRequest request) throws IOException {
+#       map.put( "stringValue" , "String" );
+#       writer.write( "Hello " + hello + " , Hello " + user.getUsername() + num);
+#       writer.write( "\r" );
+#       HttpSession session = request.getSession();
+#       Enumeration enume = session.getAttributeNames();
+#       while (enume.hasMoreElements())
+#           writer.write(enume.nextElement() + "\r" );
+#       System. out .println(session);
+#    }
+#
+#    @ModelAttribute ( "user2" )
+#    public User getUser() {
+#       System. out .println( "---------getUser-------------" );
+#       return new User(3, "user2" );
+#    }
+#  }
+#
+#  解析：在上面代码中我们指定了属性为 intValue 或 stringValue 或者类型为 User 的都会放到 Session中，利用上面的代码当我们访问 /myTest/sayHello.do 的时候，结果如下：
+#  Hello world,Hello user210 （第一次访问）
+#
+#  Hello world,Hello user210
+#  user2
+#  intValue
+#  stringValue  （第二次访问）
+#
+#  @PathVariable 将请求URL中的模板变量映射到功能处理方法的参数上，即取出uri模板中的变量作为参数,如下：
+#  @Controller  
+#  public class TestController {  
+#     @RequestMapping(value="/user/{userId}/roles/{roleId}",method = RequestMethod.GET)  
+#     public String getLogin(@PathVariable("userId") String userId,  
+#         @PathVariable("roleId") String roleId){  
+#         System.out.println("User Id : " + userId);  
+#         System.out.println("Role Id : " + roleId);  
+#         return "hello";  
+#    }  
+#     @RequestMapping(value="/product/{productId}",method = RequestMethod.GET)  
+#    public String getProduct(@PathVariable("productId") String productId){  
+#           System.out.println("Product Id : " + productId);  
+#           return "hello";  
+#     }  
+#     @RequestMapping(value="/javabeat/{regexp1:[a-z-]+}",  
+#           method = RequestMethod.GET)  
+#     public String getRegExp(@PathVariable("regexp1") String regexp1){  
+#           System.out.println("URI Part 1 : " + regexp1);  
+#           return "hello";  
+#     }  
+#  }
+#
+-- @SessionAttributes与@ModelAttribute 区别
+#  @SessionAttributes与@ModelAttribute 区别
+#  @SessionAttributes 该注解用来绑定HttpSession中的attribute对象的值，便于在方法中的参数里使用。有两个属性：value、types
+#
+#  @ModelAttribute 有两个用法，一个是用于方法上，一个是用于参数上；
+#  如下：
+#  @ModelAttribute  
+#  public Account addAccount(@RequestParam String number) {  
+#    return accountManager.findAccount(number);  
+#  } 
+#  效果类似于在调用@RequestMapping的方法之前，为request对象的model里put（“account”， Account）
+#
+#  @RequestMapping(value="/owners/{ownerId}/pets/{petId}/edit", method = RequestMethod.POST)  
+#  public String processSubmit(@ModelAttribute Pet pet) {  
+#    
+#  } 
+#  解释：首先查询 @SessionAttributes有无绑定的Pet对象，若没有则查询@ModelAttribute方法层面上是否绑定了Pet对象，若没有则将URI template中的值按对应的名称绑定到Pet对象的各属性上
+#
+#  @requestParam 用于SpringMVC后台控制层获取参数，类似一种是request.getParameter("name")，有三个常用参数：defaultValue = "0", required = false, value = "isApp"
+#  @ResponseBody 用于将Controller的方法返回的对象，通过适当的HttpMessageConverter转换为指定格式（如json、xml等）后，写入到Response对象的body数据区
+#
+#  @Component 通用的注解，当不知道一些类归到哪个层时使用，但是不建议
+#
+#  @Repository 用于注解dao层，在daoImpl类上面注解
+#  
+#  使用URI模板，处理Request请求
+#  @Controller
+#  @RequestMapping ( "/test/{variable1}" )
+#  public class MyController {  // 类
+#
+#    @RequestMapping ( "/showView/{variable2}" )
+#    public ModelAndView showView(@PathVariable String variable1, @PathVariable("variable2") int variable2) {
+#       ModelAndView modelAndView = new ModelAndView();
+#       modelAndView.setViewName( "viewName" ); // 返回的视图名相对路径
+#       modelAndView.addObject( " 需要放到 model 中的属性名称 " , " 对应的属性值，它是一个对象 " );
+#       return modelAndView;
+#     }
+#  }
+#
+#  通配符*的使用，ANT风格的使用，? 任何单字符，* 0或者任意数量的字符，** 0或者更多的目录
+#  @Controller
+#  @RequestMapping ( "/myTest" )
+#  public class MyController {
+#      @RequestMapping ( "*/wildcard" )
+#      public String testWildcard() {
+#         System. out .println( "wildcard------------" );
+#         return "wildcard" ;
+#      }  
+#  }
+#
+#  @RequestMapping 高级用法
+#  属性：params
+#    @RequestMapping (value= "testParams" , params={ "param1=value1" , "param2" , "!param3" })  // 分别表示参数param1 的值必须等于value1 ，参数param2 必须存在，值无所谓，参数param3必须不存在
+#    public String testParams() {
+#       System. out .println( "test Params..........." );
+#       return "testParams" ;
+#    }
+#
+#  属性：params
+#  @RequestMapping (value= "testMethod" , method={RequestMethod. GET , RequestMethod. DELETE })  // 限定了method 请求的方式 
+#    public String testMethod() {
+#       return "method" ;
+#    }
+#
+#  属性：headers属性
+#  @RequestMapping (value= "testHeaders" , headers={ "host=localhost" , "Accept" })  // 限定了请求头信息，必须包含Accept，localhost
+#    public String testHeaders() {
+#       return "headers" ;
+#    }
+#
+#  @RequestMapping 处理器方法参数类型   
+#  HttpServlet 对象，主要包括HttpServletRequest 、HttpServletResponse 和HttpSession 对象
+#  WebRequest 对象
+#  InputStream 、OutputStream 、Reader 和Writer 流
+#  @PathVariable 、@RequestParam 、@CookieValue 、@ModelAttribute 和@RequestHeader 标记的参数
+#  java.util.Map 、Spring 封装的Model 和ModelMap，这些都可以用来封装模型数据，用来给视图做展示
+#  实体类
+#  Spring 封装的MultipartFile 。用来接收上传文件的
+#  Spring 封装的Errors 和BindingResult 对象。这两个对象参数必须紧接在需要验证的实体对象参数之后，它里面包含了实体对象的验证结果。
+#
+#  @RequestMapping 处理器方法返回类型
+#  ModelAndView 对象
+#  模型对象，主要包括Spring 封装好的Model 和ModelMap ，以及java.util.Map 
+#  String 字符串
+#  返回值是void 这种情况一般是我们直接把返回结果写到HttpServletResponse 中
+#  被注解@ResponseBody 标记的话，那么处理器方法的任何返回类型都会通过HttpMessageConverters 转换之后写到HttpServletResponse 中
+#
+-- @PathVariable和@RequestParam的区别 
+#  @PathVariable和@RequestParam的区别 
+#  @RequestParam用来获得静态的URL请求入参; 请求路径上有个id的变量值，可以通过@PathVariable来获取，格式 ：someUrl/{userId} 即URI template 样式映射，如下：
+#  @Controller  
+#  @RequestMapping("/owners/{ownerId}")  
+#  public class RelativePathUriTemplateController {  
+# 
+#  @RequestMapping("/pets/{petId}")  
+#  public void findPet(@PathVariable String ownerId, @PathVariable String petId, Model model) {      
+#    // implementation omitted   
+#    }  
+#  }
+#
+#  handler method 参数绑定常用的注解,根据处理的Request的不同内容部分分为四类：
+#  处理requet uri 部分（这里指uri template中variable，不含queryString部分）的注解：@PathVariable
+#  处理request header部分的注解：@RequestHeader,@CookieValue
+#  处理request body部分的注解：@RequestParam,@RequestBody
+#  处理attribute类型是注解：@SessionAttributes,@ModelAttribute
+#
+-- @RequestHeader与@CookieValue 
+#  @RequestHeader、@CookieValue 把Request请求header部分的值绑定到方法的参数上，如下：
+#  @RequestMapping("/displayHeaderInfo.do")  
+#  public void displayHeaderInfo(@RequestHeader("Accept-Encoding") String encoding,  
+#   @RequestHeader("Keep-Alive") long keepAlive)  {  
+#  }  
+#
+#  @RequestMapping("/displayHeaderInfo.do")  
+#  public void displayHeaderInfo(@CookieValue("JSESSIONID") String cookie)  {  // 把Request header中关于cookie的值绑定到方法的参数上
+#  } 
+#
+-- @RequestParam与@RequestBody
+#  @RequestParam与@RequestBody 的区别
+#  @RequestParam 类似Request.getParameter()获取参数值，用来处理Content-Type: 为 application/x-www-form-urlencoded编码的内容，提交方式GET、POST；有两个属性：value、required  
+#  如下：
+#  @Controller  
+#  @RequestMapping("/pets")  
+#  @SessionAttributes("pet")  
+#  public class EditPetForm {  
+#  @RequestMapping(method = RequestMethod.GET)  
+#  public String setupForm(@RequestParam("petId") int petId, ModelMap model) { //   ModelMap 是map的实现，作用域同request；在前台页面取数据格式：${requestScope.pet}
+#       Pet pet = this.clinic.loadPet(petId);  
+#   model.addAttribute("pet", pet);  
+#   return "petForm";  
+#    }
+#  }
+#
+#  @RequestBody 该注解常用来处理Content-Type:不是application/x-www-form-urlencoded编码的内容，例如application/json, application/xml等,也可以用来处理 application/x-www-form-urlencoded的内容，处理完的结果放在一个MultiValueMap<String, String>里
+#  如下：
+#  @RequestMapping(value = "/something", method = RequestMethod.PUT)  
+#  public void handle(@RequestBody String body, Writer writer) throws IOException {  
+#  writer.write(body);  
+#  } 
+#  
+#
+#
+#
+#
+#
+#
+
+
+
+

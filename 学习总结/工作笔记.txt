@@ -1,0 +1,3049 @@
+-----------------------------------------------------------------------》》》》 统计输入的字数 《《《---------------------------------------------------
+
+function countChar(textareaName,spanName){  
+ document.getElementById(spanName).innerHTML = 140 - document.getElementById(textareaName).value.length;
+}  
+ 
+可以输入<span id="counter">140</span>字<br/>
+<textarea id="status"  name="status" rows="6" cols="40" onkeydown='countChar("status","counter");' onkeyup='countChar("status","counter");'></textarea>
+
+/*正则替换*/
+var reg=new RegExp("-","g"); //正则替换 
+var len = full.pushTimeStr.replace(reg,".").length - 8;
+html+='<li>推送时间：'+full.pushTimeStr.replace(reg,".").substring(0,len)+'</li>';	
+
+-----------------------------------------------------------------------》》》》编码与解码《《《---------------------------------------------------
+jsp页面:escape(encodeURIComponent(full.vkName));java后台代码：vkName = URLDecoder.decode(vkName, "UTF-8");//解密
+
+或 ：
+
+jsp页面:encodeURI(encodeURI(content));java后台代码：java.net.URLDecoder.decode((String)request.getParameter("content"), "UTF-8"); 
+
+
+-----------------------------------------------------------------------》》》》复选框全选与反选《《《---------------------------------------------------
+/* 全部选中 */
+function selectAll(){
+	var checPart_length = $("input[name='message']:checked").length;//部分选中 
+	var checAll_length = $("input[name=message]").attr("checked", true).length;//全部选中长度
+	if( checPart_length != checAll_length){
+	$("input[name=message]").attr("checked", true);
+	}else{
+		//$("input[name=message]").attr("checked", false);
+		$("[name='message']").removeAttr("checked");//取消全选     
+		
+		}
+	}
+/* 选中部分 */
+function selectPart(full){
+		var checPart_length = $("input[name='message']:checked").length;//部分选中长度 
+		var checAll_length = $("input[name=message]").length;//全部单选按钮的长度
+		if(checAll_length == checPart_length){
+			$("input[name=checkAll]").attr("checked", true);
+		}else{
+			//$("input[name=checkAll]").attr("checked", false);
+			$("[name='checkAll']").removeAttr("checked");//取消全选     
+			
+		}
+	}
+html+= '<input type="checkbox" name="message" value="'+full.uuid+'" onclick="selectPart((\''+ full.uuid+ '\'));"></td>';//部分
+<input type="checkbox" value="" name ="checkAll" onclick="selectAll();"><span class="ml20">全选</span>//全选
+
+或
+
+$(function() {
+	//全选反选
+    $("#chooseall").click(function(){
+        var isChecked = $(this).prop("checked");
+        $("input[name='studentBox']").prop("checked", isChecked);
+    });	
+	initPage(0);
+});
+/*部分*/
+function checkAll(obj){
+	 //当没有选中某个子复选框时，SelectAll取消选中  
+    if (!$(obj).checked) {  
+         $("#chooseall").prop("checked", false);
+     }  
+     var chsub = $("input[name='studentBox']").length; //获取checkbox的个数  
+     var checkedsub = $("input[name='studentBox']:checked").length; //获取选中的checkbox的个数  
+     if (checkedsub == chsub) {  
+     	 $("#chooseall").prop("checked", true); 
+     }  
+}
+/*初始化*/
+function initPage(pageIndex) {
+	$("#chooseall").prop("checked", false);
+}
+
+<input name="" type="checkbox" value="" class="class-input" id="chooseall"/>//全选
+html+= '<td width="8%"><input name="studentBox" type="checkbox" value="'+full.userId+'" class="class-input" onclick="checkAll(this)"/></td>';//部分
+
+或
+
+function selectAll(){ //选中所有
+ 		var checklist = document.getElementsByName("weike");
+   		if(document.getElementById("checkAll").checked == true){//全选选中
+   			for(var i=0;i<checklist.length;i++){
+      			checklist[i].checked = true;
+   		} 
+   		}else{
+  			for(var j=0;j<checklist.length;j++){
+     			checklist[j].checked = false;
+  			}
+ 		}
+	}
+function selectPart(){//选中部分
+		var checPart_length = $("input[name='weike']:checked").length;//部分选中长度 
+		var checAll_length = $("input[name=weike]").length;//全部复选框的长度
+		if(checAll_length == checPart_length){
+			$("input:checkbox[value='1']").attr('checked',true);
+		}else{
+			$("input:checkbox[value='1']").attr('checked',false);
+			
+		}
+	}
+
+如 ：<td width="5%"><input type="checkbox" onclick="selectAll()" id="checkAll" value="1"></td>;
+     <td><input type="checkbox" id="uuid" onclick="selectPart()" name="weike" value="'+full.uuid+'"></td>;
+
+-----------------------------------------------------------------------》》》》更换样式《《《---------------------------------------------------
+
+ <ul class="tab-ul-f mt20" onclick="changeStyle();">
+          <li class="cur-f" id="vk_s"><a href="javascript:;" onclick="initPage(pageIndexC,1);">微课学习</a></li>
+          <li class="" id="vk_e"><a href="javascript:;" onclick="initPage(pageIndexC,2);changeStyleTemp();">结束学习</a></li>
+ </ul>
+
+/* 更换样式 */
+function changeStyle(){
+	 $("#vk_s").click(function(){ //获取点击事件
+		 $("#vk_s").attr("class","cur-f");//设置Id为vk_s的class属性。
+			$("#vk_e").attr("class",""); 
+	 });
+	 $("#vk_e").click(function(){
+		 $("#vk_e").attr("class","cur-f");//设置Id为vk_s的class属性。
+			$("#vk_s").attr("class",""); 
+	 });
+}
+/* 临时样式 */
+function changeStyleTemp(){
+	$("#vk_e").attr("class","cur-f");
+	$("#vk_s").attr("class",""); 
+}
+
+或
+
+<ul class="tab-ul-f mt20  clearfix">
+	<div class="fr"><a href=" " class="weike-fh weike-fh-mr">返回</a></div>
+	<li class="cur-f" onclick="initPage(0,0);changeTitle(this);"><a  href="javascript:;" >未回答</a></li>
+	<li onclick="initPage(0,1);changeTitle(this);"><a  href="javascript:;">已回答</a></li>
+</ul>
+
+/*切换样式*/
+function changeTitle(ele) {
+	$(".cur-f").removeClass("cur-f");
+	$(ele).addClass("cur-f");
+}
+
+-----------------------------------------------------------------------》》》》返回上一级《《《---------------------------------------------------
+
+<a href="javascript:history.go(-1);"><span class="fr weike-fhsyj">返回上一级</span></a>
+<a href="javascript:history.back(1);"><span class="fr weike-fhsyj">返回上一级</span></a>
+
+-----------------------------------------------------------------------》》》》回车事件《《《---------------------------------------------------
+
+<input type="text" id="stuName" class="fl welk-wrap-input mt25" placeholder="请输入学生姓名" onkeypress="getKey();"/>
+
+/* 回车事件 */
+ function getKey(){
+         if(event.keyCode==13 ||event.which == 13){  //代表回车
+	    	initPage(0);
+	   }  
+}
+
+-----------------------------------------------------------------------》》》》Jquery鼠标移上去与离开事件《《《---------------------------------------------------
+
+$(function(){
+	$('.make-aside li').mouseover(function(){
+		$(this).find(".doc-operate").removeClass('pri-none');
+	        $(this).find('.make-seconds').hide();
+	})
+	$('.make-aside li').mouseout(function(){
+		$(this).find(".doc-operate").addClass('pri-none');// 加样式
+	        $(this).find('.make-seconds').show();
+	})
+})
+
+-----------------------------------------------------------------------》》》》JS页面跳转的几种方式《《《---------------------------------------------------
+
+window.location.href=""; window.navigate(""); self.location=""; top.location=""; window.history.back(-1); $(location).attr('href', 'http://www.jb51.net');
+$(window).attr('location','http://www.jb51.net'); $(location).prop('href', 'http://www.jb51.net');
+
+-----------------------------------------------------------------------》》》》公用字典查询《《《---------------------------------------------------
+
+tyzyProduct.setGradeStr(BaseCommonDictionarys.getCommonDictionarysName(tyzyProduct.getGrade(), GlobalConstants.GRADE));//其中tyzyProduct.getGrade()为数字如:1;-->>结果为一年级;
+
+或
+
+DataguidPageResult<TyzyProduct> tyzyProducts=tyzyProductService.findPageResult(pageQuery);
+		//字典里取年级
+		List<CommonDictionarys> grades = GlobalConstants.commonDictionarysMap.get(GlobalConstants.GRADE);//年级
+		List<TyzyProduct> result = tyzyProducts.getRows();
+		for(TyzyProduct tyzyProduct: result){
+			for(CommonDictionarys grade:grades){
+				if(tyzyProduct.getGrade().toString().equals(grade.getValue())){
+					tyzyProduct.setGrade(grade.getName());
+				}
+				if(tyzyProduct.getZyGrade() !=null){
+					if(tyzyProduct.getZyGrade().toString().equals(grade.getValue())){
+						tyzyProduct.setZyGrade(grade.getName());
+					}	
+				}
+				
+			}
+		}
+
+或 
+
+Map<String,String> subMap=BaseCommonDictionarys.subjectMap();
+				teacherClassSubject.setSubjectName(subMap.get(teacherClassSubject.getSubjectId())); //获取科目名称;
+
+-----------------------------------------------------------------------》》》》设置JSP页面背景样式《《《---------------------------------------------------
+
+	var arrayObj = new Array();//定义数组设置随机样式
+	arrayObj.push('et-main','et-main2','et-main3','et-main4','et-main5','et-main6');
+	var index =parseInt(Math.random()*(arrayObj.length-1));
+	var currentImage=arrayObj[index];
+	html +='<div class="'+currentImage+' et-shadow mt10 et-all-wrap" id="setBackPic">';//其中class中设置背景样式;
+	html +='</div>';
+
+-----------------------------------------------------------------------》》》》JSP页面处理日期的JSTL标签《《《---------------------------------------------------
+
+例如 ：<fmt:formatDate value="${best.createTime}" pattern="yyyy-MM-dd"/>
+	<c:if test="${userList!=null && fn:length(userList) > 0}">
+                <label>XXX</label>
+                <c:forEach var="user" items="${userList}">
+                    <li>${user}</li>
+                </c:forEach>
+	</c:if>
+
+-----------------------------------------------------------------------》》》》【扩展】(uetec)获取学校,年级，学科的方式《《《---------------------------------------------------
+
+例如 ：String schoolId = model.addAttribute("schoolId",user.getRelativeSchoolId());// 学校 
+       String schoolId = messageSource.getMessage("schoolId", null, null);//
+       List<CommonDictionarys> grade = GlobalConstants.commonDictionarysMap.get(GlobalConstants.GRADE);
+       List<CommonDictionarys> subject = GlobalConstants.commonDictionarysMap.get(GlobalConstants.SUBJECT);
+
+    获取年级名 ：student.setGradeName(BaseCommonDictionarys.getCommonDictionarysName(student.getGrade(), GlobalConstants.GRADE));
+
+
+-----------------------------------------------------------------------》》》》 Ueditor插件的使用《《《-----------------------------------------------------------
+
+例如 ：var ue = UE.getEditor('container', {
+    toolbars: [
+        ['fullscreen', 'source', 'undo', 'redo', 'bold']
+    ],
+    autoHeightEnabled: true,
+    autoFloatEnabled: true
+});
+var content = ue.hasContents();//内容；
+var ue = UE.getEditor('container', {
+    isShow: flase //隐藏编辑器
+});
+
+或
+<textarea id="content" style="margin-left: 105px;"></textarea>
+var content = UE.getEditor('content',{initialFrameHeight:700,initialFrameWidth:880});
+获取内容与长度
+var content = $.trim(UE.getEditor('content').getContent());
+var count = UE.getEditor('content').getContentLength(true);
+后台需对内容进行处理
+content = HtmlUtils.htmlUnescape(content);//可以实现HTML标签及转义字符之间的转换; 目的是防止对JSP页面的破坏;
+例如 ：
+/** HTML转义 **/  
+String s = HtmlUtils.htmlEscape("<div>hello world</div><p>&nbsp;</p>");  
+System.out.println(s);  ---》&lt;div&gt;hello world&lt;/div&gt;&lt;p&gt;&amp;nbsp;&lt;/p&gt;  
+String s2 = HtmlUtils.htmlUnescape(s);  
+System.out.println(s2); ---》<div>hello world</div><p>&nbsp;</p>  
+
+或 ：
+
+<textarea name="后台取值的key" id="myEditor">这里写你的初始化内容</textarea> 
+<!--  <form id="form" action="">
+	<div id="myEditor" class="myEditor" name="answer" style="margin-left:10px;margin-top:5px"></div> <!-- 后台参数传值传入参数Answer answer -->
+	<input type="hidden" id="quesId" name="quesId" value="${quesId}">
+</form> -->
+var editor = new baidu.editor.ui.Editor({initialFrameHeight:280,initialFrameWidth:798 }); //初始化编辑器
+    editor.render("myEditor"); //实例化编辑器
+	//1.2.4以后可以使用一下代码实例化编辑器 
+   ---放在ajax里面进行处理--- 如 ： $('#form').ajaxSubmit({}）;
+ //var editor = UE.getEditor(’myEditor’); 
+if($.trim(editor.getContent()).length == 0) {
+		layer.msg("请输入回复内容！");
+		return;
+   }
+
+//自定义设置
+	UE.Editor.prototype.placeholder = function(justPlainText){
+	var _editor = this;
+	_editor.addListener("focus", function(){
+		var localHtml = _editor.getPlainTxt();
+		if ($.trim(localHtml) === $.trim(justPlainText)) {
+			_editor.setContent("\t");
+		}
+	});
+	_editor.addListener("blur", function(){
+		var localHtml = _editor.getContent();
+		if (!localHtml) {
+			_editor.setContent(justPlainText);
+		}
+	});
+	_editor.ready(function () {
+		_editor.fireEvent("blur");
+	});
+};
+
+-------------------------------------------------------------》》》》后台对HTML标签的转义符号的处理《《《-----------------------------------------------------------------------------
+
+import org.apache.commons.lang3.StringEscapeUtils;
+elements = StringEscapeUtils.unescapeHtml4(elements);//处理特殊转义字符；
+或：
+import org.springframework.web.util.HtmlUtils; 
+elements= HtmlUtils.htmlUnescape(elements);
+
+-----------------------------------------------------------------------》》》》 layer层插件的使用《《《---------------------------------------------------
+
+如 ：layer.msg(data.description, { icon: 1,time: 1500 }); 
+     layer.msg('上传成功!', { icon: 1,time: 1500 }, function(){ window.location.href="${ctx}/upload/toLookWorks?id="+data.result+"&type=1"; });
+     layer.alert(result.description, {icon: 2});
+     layer.tips('请输入内容','选择器名', { tips: [4, 'red'], time: 3000 }); 
+
+如 ：updateIndex= layer.open({//iframe框
+	    type: 2,
+	    title: '回答提问',
+	    shadeClose: false,//开启遮罩关闭
+	    shade: 0.3,
+	    fix : false,
+	    area: ['820px', '450px'],
+	    content: ['${ctx}/vke/teacherCenter/toAnswer?quesId='+quesId, 'no' ],//iframe的url no代表不显示滚动条,
+	    end : function(){
+			CKobject.getObjectById('ckplayer_flashContent').videoPlay();//播放视频  .videoPause();//暂停视频
+		}
+     });
+
+如 ：layer.close(updateIndex);//关闭
+
+如 ：layer.confirm('回答成功', {
+				    btn: ['确定','关闭'], //按钮
+				    shadeClose: false,
+				    shade: 0.3 //不显示遮罩
+				},function(){
+					parent.refreshUpdate();//调用父级方法
+				},function(){
+					parent.refreshUpdate();
+				});
+
+		layer.confirm('确定要删除吗?', {icon: 3, title:'提示'}, function(index){
+			$.ajax({	
+				url:"${ctx}/vke/teacherCenter/deleteVk",
+				async:false, 
+				type:"post",
+				dataType:"json",
+				data:{
+					id:id
+				},
+				error:function(){
+					layer.msg("程序出错");
+				},
+				success:function(resp){		
+					if(resp.returnCode == 0){
+						layer.msg("删除成功");
+						initPage(0);
+					}else{
+						layer.msg("删除失败");
+					}
+				}
+			});
+		});
+
+如 ：  前提 ：//layer 层配置  layer.config({ extend: 'extend/layer.ext.js'}); 
+	layer.prompt(
+		  {title: '修改内容', formType: 2, maxlength: 1000, value: content.replace(/<.+?>/gim,'')}, function(value, index, elem){  //content.replace(/<.+?>/gim,'')//去除html标签;
+		  layer.close(index);
+		 // layer.msg('修改后内容：'+value);
+		  $.ajax({
+				type : "POST",//用POST方式传输   
+				dataType : "json",//数据格式:JSON  
+				url : '${ctx}/vke/myNodes/editInfo',//目标地址  
+				async : false ,
+				data : {
+					"uuid":uuid,
+					"content":value
+				},
+				success : function(json) {
+					if(json.returnCode == 0){
+						layer.msg("修改成功");
+						initPage(0);
+					}else{
+						layer.msg("修改失败");
+					}
+				}
+			});
+		  });
+
+//相册的使用
+
+ layer.use('extend/layer.ext.js',function(){
+				layer.photos({
+				photos:'#layer-photos'+full.uuid, //图片父级容器id
+				title: '图片预览',
+				closeBtn:2, 
+				shift : 0,
+				tipsMore :false
+				// id: 112 //相册id，可选
+			 });
+									
+		 });
+
+如 ：关闭所有层 layer.closeAll(); //如 ：<a href="javascript:parent.layer.closeAll();" class="class-wk">关闭</a>
+
+-----------------------------------------------------------------------》》》》 mybatis.xml层相关映射《《《---------------------------------------------------
+
+与实体的映射((一对一) 如 ：
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.uetec.digital.func.baseinfo.mapper.StudentInfoMapper">
+       <resultMap id="BaseResultMap"
+		type="cn.uetec.digital.func.baseinfo.entity.StudentInfo">
+		<id column="id" property="id" jdbcType="CHAR" />
+		<result column="user_id" property="userId" jdbcType="CHAR" />
+		<result column="school_id" property="schoolId" jdbcType="CHAR" />
+		<result column="student_num" property="studentNum" jdbcType="VARCHAR" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="gender" property="gender" jdbcType="TINYINT" />
+		<result column="class_id" property="classId" jdbcType="CHAR" />
+		<result column="blogNum" property="blogNum" jdbcType="CHAR" />
+		<result column="blogVistNum" property="blogVistNum" jdbcType="CHAR" />
+        	<result column="blogEvaluateMeNum" property="blogEvaluateMeNum" jdbcType="CHAR" />
+        	<result column="blogMeEvaluateNum" property="blogMeEvaluateNum" jdbcType="CHAR" />
+		<result column="status" property="status" jdbcType="TINYINT" />
+		<result column="studentCount" property="studentCount" jdbcType="INTEGER" />
+		<result column="classNum" property="classNum" jdbcType="VARCHAR" />
+		<result column="grade" property="grade" jdbcType="VARCHAR" />
+	<!--  <association property="user" javaType="cn.uetec.digital.func.center.entity.User">
+		 <result column="username" property="username" jdbcType="VARCHAR" />  -->
+	</association>
+	<!-- 或 -->
+	<!--  <association property="user" column="user_id"          
+		select="cn.uetec.digital.func.center.mapper.UserMapper.selectByPrimaryKey"></association> --><!--通过userId查询得到User这一个实体的 -->
+	<!-- 或 -->
+	<association property="user"
+		javaType="cn.uetec.digital.func.center.entity.User" resultMap="userMap" />
+	</resultMap>
+	<resultMap id="userMap" type="cn.uetec.digital.func.center.entity.User">
+		<id column="sys_user_id" property="id" jdbcType="CHAR" />
+		<result column="sys_user_username" property="username"
+			jdbcType="VARCHAR" />
+		<result column="sys_user_name" property="name" jdbcType="VARCHAR" />
+		<result column="sys_user_password" property="password"
+			jdbcType="VARCHAR" />
+		<result column="sys_user_salt" property="salt" jdbcType="VARCHAR" />
+		<result column="sys_user_create_date" property="createDate"
+			jdbcType="TIMESTAMP" />
+		<result column="sys_user_status" property="status" jdbcType="INTEGER" />
+		<result column="sys_user_user_type" property="userType"
+			jdbcType="INTEGER" />
+		<result column="sys_user_relative_id" property="relativeId"
+			jdbcType="CHAR" />
+		<result column="sys_user_remark" property="remark" jdbcType="VARCHAR" />
+		<result column="sys_user_relative_organization_id" property="relativeOrganizationId"
+			jdbcType="CHAR" />
+		<result column="sys_user_relative_school_id" property="relativeSchoolId"
+			jdbcType="CHAR" />
+		<result column="sys_user_avatar" property="avatar" jdbcType="VARCHAR" />
+	</resultMap>
+</mapper>
+实体 ：
+public class StudentInfo {
+	private String id;//编号
+	
+	private String userId;//用户编号
+	
+	private String schoolId;//学校编号
+	
+	private String studentNum;//学号
+	
+	private String name;//姓名
+	
+	private Byte gender;//性别 0：女 ；1：男
+	
+	private String classId;//班级编号
+	
+	private Byte status;//状态 
+	
+	private User user;//用户信息
+	
+	//getter 与setter 方法
+	....
+}
+
+与实体的映射(一对多) 如 ：
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.uetec.digital.func.tyzy.mapper.TyzyStudentMapper" >
+ 	<resultMap id="BestStudentMap" type="cn.uetec.digital.func.tyzy.entity.TyzyStudent" >
+    		<id column="id" property="id" jdbcType="CHAR" />
+    		<result column="user_id" property="userId" jdbcType="CHAR" />
+    		<result column="integral" property="integral" jdbcType="INTEGER" />
+    		<result column="name" property="name" jdbcType="VARCHAR" />
+    		<result column="avatar" property="avatar" jdbcType="VARCHAR" />
+    	<!-- <collection property="products" column="user_id" select="cn.uetec.digital.func.tyzy.mapper.TyzyProductMapper.selectProductByBestStudent"></collection> --><!--通过userId查询得到Product实体的集合List -->
+ 	<!-- 或 -->
+ 		<collection property="products" ofType="cn.uetec.digital.func.tyzy.entity.TyzyProduct" column="user_id">  
+           	    <id column="uuid" property="uuid" jdbcType="CHAR" /><!--实体字段 -->
+		    <result column="user_id" property="userId" jdbcType="CHAR" />
+		    <result column="task_id" property="taskId" jdbcType="INTEGER" />
+		    <result column="title" property="title" jdbcType="VARCHAR" />
+		    <result column="descript" property="descript" jdbcType="VARCHAR" />
+		.....
+        	</collection>
+	</resultMap>
+</mapper>
+实体 ：
+public class TyzyStudent {
+    private String id;
+
+    private String userId;
+
+    private Integer integral;
+    
+    private String name;
+    
+    private String avatar;
+
+    private Date updateDate;//时间 
+
+    private String updateDateStr;//格式化时间 
+
+    @DateTimeFormat(pattern="yyyy-MM-dd")
+    private Date beginDate;//开始时间
+
+    @DateTimeFormat(pattern="yyyy-MM-dd")
+    private Date endDate;// 结束时间
+    
+    private List<TyzyProduct> products;
+
+  //getter 与setter 方法
+   ........
+
+    对时间的处理 ：public void setUpdateDate(Date updateDate) {
+        		this.updateDate = updateDate;
+        		this.updateDateStr = DateUtil.getStringFromDateWithFormat(updateDate, DateUtil.DATE_FORMAT1); 
+    			}
+		   }
+
+-----------------------------------------------------------------------》》》》 mybatis.xml层相关查询《《《---------------------------------------------------
+
+如 ：从一组数据中查询获取List数据
+
+<!-- 根据一组userId查询学生 -->
+	<select id="getStudentByUserIds" resultMap="BaseResultMap">
+	select 
+	<include refid="Base_Column_List"/>
+	from t_student_info
+	where t_student_info.user_id in
+	(  
+        <foreach item="item" index="index" collection="array"  
+            separator=","> #{item} </foreach>  
+        ) 
+     order by t_student_info.student_num ASC
+	</select>
+
+-----------------------------------------------------------------------》》》》 Jsp页面内容过长的处理《《《---------------------------------------------------
+
+如 ：'11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+<style>
+ .showWrap {
+ word-wrap:break-word;
+ /* word-break:break-all; */
+ }
+</style>
+ jsp页面 ：<span class="showWrap"><p>${np.content}</p></span> 
+
+-----------------------------------------------------------------------》》》》 Mysql中常见的函数《《《---------------------------------------------------
+
+1.字符串函数 ：(链接字符串)concat(s1, s2,...sn);concat_ws(sep,s1,s2,...sn);seq参数表示分割符;（比较大小）strcmp(str1,str2);返回-1 1 0;
+		(获取长度)length(str);char_length(str);(字母大小转换函数)upper(s); ucase(s);lower(s); lcase(s);
+		(查找位置)find_in_set(str1,str2);str2以，隔开;filed(str,str1,str2...);//返回与str相同的字符串的位置;locate(str1,str);position(str1 in str); instr(str,str1);
+		elt(n,str1,str2...);
+		（截取字符串）left(str,num);right(str,num);substring(str,num,len);mid(str,num,len);
+		(去除空格)ltrim()、rtrim()、trim();(替换字符串)insert(str,pos,len,newstr);replace(str,substr,newstr);
+2.数值函数 ： (随机数)rand()与rand(x)//返回0-1之间的随机数，而rand(x)随机数值是完全相同的;（获取整数）ceil(x) floor(x)// //函数返回小于或等于数值x的最大整数;
+	      (对数值的小数位进行截取)truncate(x,y) //返回数值x,保留小数点后y位; (四舍五入)round(x) round(x,y);
+3.当前日期和时间 ： now(),current_timestamp(),localtime(),sysdate();//格式 ：2017-03-09 14:12:09
+4.当前日期 ：curdate()，current_date();//格式 ：2016-08-25
+5.当前时间 ：curtime()，current_time();//格式 ：16:15:04 
+6.当前日期和时间的各部分值 ：year()年份;quarter()季度;month()月份monthname()英文表示的月份;week()返回当前日期属于一年第几个星期 或 weekofyear(now());dayofmonth()当前月的第几天;
+			     ;hour();minute();second(); dayname(now()) ;//如 ：Thursday        ; dayofyear(now()) ;dayofmonth(now()); dayofweek()返回日期d是星期几的索引（位置）1表示星期日，2表示星期一，...，7表示星期六;
+			     extract(type from date);//
+7.与默认日期和时间的操作 :to_days(date); from_days(number);//如 ：from_days(to_days(now())) ;2016-08-25   // to_days(now());736566
+			   datediff(now(),'2000-12-01') ;//两个日期之间相隔的天数; adddate(date,n);subdate(date,n);addtime(time,n);subtime(time,n);//秒
+			  adddate(curdate(),interval '2,3' year_month) ;//2016-08-25 加3个月--》2018-11-25 
+补充知识：			  
+	-- 今天
+SELECT DATE_FORMAT(NOW(),'%Y-%m-%d 00:00:00') AS '今天开始';
+SELECT DATE_FORMAT(NOW(),'%Y-%m-%d 23:59:59') AS '今天结束';
+
+-- 昨天
+SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y-%m-%d 00:00:00') AS '昨天开始';
+SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y-%m-%d 23:59:59') AS '昨天结束';
+
+-- 上周
+SELECT DATE_FORMAT( DATE_SUB( DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 1 WEEK), '%Y-%m-%d 00:00:00') AS '上周一';
+SELECT DATE_FORMAT( SUBDATE(CURDATE(), WEEKDAY(CURDATE()) + 1), '%Y-%m-%d 23:59:59') AS '上周末';
+
+-- 本周
+SELECT DATE_FORMAT( SUBDATE(CURDATE(),DATE_FORMAT(CURDATE(),'%w')-1), '%Y-%m-%d 00:00:00') AS '本周一';
+SELECT DATE_FORMAT( SUBDATE(CURDATE(),DATE_FORMAT(CURDATE(),'%w')-7), '%Y-%m-%d 23:59:59') AS '本周末';
+-- 上面的本周算法会有问题,因为mysql是按照周日为一周第一天,如果当前是周日的话,会把时间定为到下一周.
+SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), '%Y-%m-%d 00:00:00') AS '本周一';
+SELECT DATE_FORMAT( DATE_ADD(SUBDATE(CURDATE(), WEEKDAY(CURDATE())), INTERVAL 6 DAY), '%Y-%m-%d 23:59:59') AS '本周末';
+
+-- 上月
+SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01 00:00:00') AS '上月初';
+SELECT DATE_FORMAT( LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)), '%Y-%m-%d 23:59:59') AS '上月末';
+
+-- 本月
+SELECT DATE_FORMAT( CURDATE(), '%Y-%m-01 00:00:00') AS '本月初';
+SELECT DATE_FORMAT( LAST_DAY(CURDATE()), '%Y-%m-%d 23:59:59') AS '本月末';		  
+			  
+-----------------------------------------------------------------------》》》》Mysql中日期函数《《《--------------------------------------------------------------------
+
+DATE_FORMAT() 函数 :where 表名.字段 = DATE_FORMAT(NOW(),'%Y-%m-%d'); //今日
+WEEKOFYEAR（）函数 :表示一年中的第几周;WHERE WEEKOFYEAR( 表名.时间字段（如：create_time）) = WEEKOFYEAR(NOW());//本周内;
+
+-----------------------------------------------------------------------》》》》Jsp中点击事件的处理方式《《《--------------------------------------------------------
+
+1. 如 ：<a href="javascript:deleteInfo(\''+full.uuid+'\');" class="weike-sc"><span class="weike-kc-bj">删除</span></a>;
+2. 如 ：<a href="javascript:;" class="weike-sc" onclick="'+deleteInfo(\''+full.uuid+'\')+'"><span class="weike-kc-bj">删除</span></a>;
+
+-----------------------------------------------------------------------》》》》Jsp中判断数组Array是否取重复值《《《--------------------------------------------------------
+
+function isRepeat(arr) {
+	    var isRepeat = false;
+	    var hash = {};
+	    for(var i in arr) {
+	        if (hash[arr[i]]) {
+	            isRepeat = arr[i];
+	            return isRepeat;
+	        }
+	        hash[arr[i]] = true;
+	    }
+	    return isRepeat;
+	}	
+
+或 （参考）
+
+var arr = [1,2,3,4,5,1,6,7,8];
+	for(var i=0; i<arr.length; ++i){
+		var current = arr[i];
+		var isRepeat = false;
+	for(var j=i+1; j<arr.length; ++j){
+		if(current === arr[j]){
+		isRepeat = true;
+		break;
+			}
+		}
+	if(isRepeat){
+		break;
+		}
+	}
+
+-----------------------------------------------------------------------》》》》Jsp中去除数组Array重复值《《《--------------------------------------------------------
+ 
+方式一 ：function unique(arr) {
+    var result = [], isRepeated;
+    for (var i = 0, len = arr.length; i < len; i++) {
+        isRepeated = false;
+        for (var j = 0, len = result.length; j < len; j++) {
+            if (arr[i] == result[j]) {   
+                isRepeated = true;
+                break;
+            }
+        }
+        if (!isRepeated) {
+            result.push(arr[i]);
+        }
+    }
+    return result;
+}//总体思路是把数组元素逐个搬运到另一个数组，搬运的过程中检查这个元素是否有重复，如果有就直接丢掉。从嵌套循环就可以看出，这种方法效率极低。
+ //我们可以用一个hashtable的结构记录已有的元素，这样就可以避免内层循环。恰好，在Javascript中实现hashtable是极为简单的，改进如 下：
+
+方式二 ：function unique(arr) {
+    var result = [], hash = {};
+    for (var i = 0, elem; (elem = arr[i]) != null; i++) {
+        if (!hash[elem]) {
+            result.push(elem);
+            hash[elem] = true;
+        }
+    }
+    return result;
+}
+
+附加 ：array---->>string ：使用join('\t')方法 ；array<<----string ：使用split('，')方法 ；
+
+-----------------------------------------------------------------------》》》》Html5视频播放与CkPlayer视频播放《《《--------------------------------------------------------
+
+//加载ckplay配置
+ 	function loadVideo(){
+ 		var flashvars = {
+ 			    f: '${filectx}/${tyzyProduct.videoPath}',
+ 			    a:'',
+ 				s:'0',
+ 				c:'0',
+ 				x:'',
+ 				i:'',
+ 				d:'',
+ 				u:'',
+ 				l:'',
+ 				r:'',
+ 				t:'',
+ 				y:'',
+ 				z:'',
+ 				e:'6',
+ 				v:'80',
+ 				p:'1',
+ 				h:'3',
+ 				q:'start',
+ 				m:'',
+ 				o:'',
+ 				w:'',
+ 				g:'',
+ 				j:'',
+ 				wh:'',
+ 				lv:'0',
+ 				loaded:'loadedHandler',  
+ 				my_url:encodeURIComponent(window.location.href)
+ 		  };
+ 	   	var video=['${filectx}/${tyzyProduct.videoPath}->video/mp4'];
+ 	    	var support=['all'];
+ 		//  var params={bgcolor:'#FFF',allowFullScreen:true,allowScriptAccess:'always',wmode:'transparent',marqueeClose:true};
+ 		 // CKobject.embedSWF('${ctx}/statics/plugins/ckplayer/ckplayer.swf','flashContent','ckplayer_vke_vedio','100%','500',flashvars,params);
+ 		 CKobject.embed('${ctx}/statics/plugins/ckplayer/ckplayer.swf','flashContent','ckplayer_vke_vedio','100%','500',true,flashvars,video,support);
+ 		$('video').removeAttr('autoplay'); 
+ 		$('video').attr('poster','${filectx}/${tyzyProduct.logo}');
+ 		$('video').attr('preload','preload'); 
+ 		var videoButton=document.getElementById("ckplayer_vke_vedio"); 
+ 		videoButton.onclick=function(){
+ 		    if(videoButton.paused){
+ 		    	videoButton.play();
+ 		    }else{
+ 		    	videoButton.pause();
+ 		    }
+ 		}
+	}
+
+页面标签 ：<div class="s-d-com clearfix"><div id="flashContent" style="background:#000"></div></div>;
+
+-----------------------------------------------------------------------》》》》POI处理excel时候合并单元格后处理样式问题《《《--------------------------------------------------
+
+	/**
+	 * 设置RegionStyle的样式
+	 * @param sheet
+	 * @param region
+	 * @param cs
+	 */
+	public static void setRegionStyle(HSSFSheet sheet, CellRangeAddress region,
+            HSSFCellStyle cs) {
+
+        for (int i = region.getFirstRow(); i <= region.getLastRow(); i++) {
+
+            HSSFRow row = sheet.getRow(i);
+            if (row == null)
+                row = sheet.createRow(i);
+            for (int j = region.getFirstColumn(); j <= region.getLastColumn(); j++) {
+                HSSFCell cell = row.getCell(j);
+                if (cell == null) {
+                    cell = row.createCell(j);
+                    cell.setCellValue("");
+                }
+                cell.setCellStyle(cs);
+
+            }
+        }
+    }
+
+-----------------------------------------------------------------------》》》》art.dialog(消息框)的使用《《《--------------------------------------------------
+
+如 ：art.dialog.open('${ctx}/classinfo/version/toUpdateAppVersion?id='+id+"&name="+name, {title: '修改版本信息', width: '396',height: '398'});//打开一个消息框;
+如 ：art.dialog.opener.refreshDataGuid();//调父级方法;
+     art.dialog.opener.document.getElementById("classroomName").value=roomName;//
+     art.dialog.opener.$("#dataguid").datagrid('reload');
+     art.dialog.close();//关闭
+
+如 ：art.dialog({
+		title: "按照年级导入课程表",
+		content: document.getElementById('importGradesDiv'), //html标签元素;
+		id:"importGradesDiv2"
+	});
+
+     art.dialog({id:'importGradesDiv2'}).close();//关闭消息框;
+
+扩展 ：如果弹出的消息框中含有视频文件，默认的html5视频时不支持全屏播放的，此时需要修改iframe框架对全屏属性的支持（部分IE不适用）；
+	如 ：window.parent.$('[name=\'OpennimportGradesDiv2\']').attr('allowfullscreen',true).attr('webkitallowfullscreen',true).attr('mozallowfullscreen',true);
+
+如 ：调用父级窗体的元素方式 ：
+//art.dialog.opener.$("#touxiang").attr("src",msg.content.avatarUrl);
+artDialog.open.origin.document.getElementById('jpgName').src= msg.content.saveUrl;
+artDialog.open.origin.document.getElementById('imageUrl').value=currentActiveImgName;
+
+-----------------------------------------------------------------------》》》》JS中处理数值的函数《《《--------------------------------------------------------
+
+1. Math：函数 ceil()：将小数部分一律向整数部分进位。Math.ceil(12.2)返回13.0;
+	      floor()：舍去小数，仅保留整数。Math.floor(12.2)返回12.0;
+	      round()：进行四舍五入。Math.round(12.2)返回12.0，Math.round(12.5)返回13.0。
+2. Number： 函数 Number.isInteger();//判断是否为整数;  Number();//	Number.toFixed(2);//保留两位小数
+3. 
+
+-----------------------------------------------------------------------》》》》WdatePicker设置时间区间时，对开始时间和结束时间限制《《《--------------------------------------------------------
+  <input id="startDate" name="startDate"  type="text" readonly="readonly" maxlength="20" class="input-small Wdate" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',maxDate:'#F{$dp.$D(\'endDate\')}'})"/>
+        至
+  <input id="endDate" name="endDate" type="text" readonly="readonly" maxlength="20" class="input-small Wdate" onFocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',minDate:'#F{$dp.$D(\'startDate\')}'})"/>
+
+或 ：
+
+			<ul class="seachform" style="float: left;">
+				<li>
+				<label>开始时间：</label>
+				<input value="<fmt:formatDate value="${examPlan.beginDate }" pattern="yyyy-MM-dd"/>" name="beginDate"
+						id="beginDate" onClick="WdatePicker({minDate:'#F{$dp.$D(\'minDate\')}',maxDate:'#F{$dp.$D(\'maxDate\')}',dateFmt:'yyyy-MM-dd',readOnly:true});" type="text" class="Wdate easyui-validatebox"
+						style="width: 150px;" readonly="readonly"
+						data-options="required:true,validType:'length[1,20]'" />
+				</li>
+				<li>
+				<label>结束时间：</label>
+				<input value="<fmt:formatDate value="${examPlan.endDate}" pattern="yyyy-MM-dd"/>" name="endDate"
+						id="endDate" onClick="WdatePicker({minDate:'#F{$dp.$D(\'beginDate\')}',maxDate:'#F{$dp.$D(\'maxDate\')}',dateFmt:'yyyy-MM-dd',readOnly:true});" type="text" class="Wdate easyui-validatebox"
+						style="width:150px;" readonly="readonly"
+						data-options="required:true,validType:'length[1,20]'" />
+				</li>
+			</ul>
+
+
+-----------------------------------------------------------------------》》》》扩展 ：datagrid editor（编辑器）扩展功能的实现《《《-----------------------------------------------------
+
+/* 重写timespinner样式 */
+$.extend($.fn.datagrid.defaults.editors,{  
+    timespinner: {  
+        init: function (container, options) {  
+            var input = $('<input />').appendTo(container);  
+            input.timespinner(options);  
+            return input;  
+        },  
+        getValue: function (target){  
+            return $(target).timespinner('getValue');  
+        },  
+        setValue: function (target, value){  
+            $(target).timespinner('setValue', value);  
+        },  
+        resize: function (target, width){  
+            var input = $(target);  
+            if ($.boxModel == true) {  
+                input.resize('resize', width - (input.outerWidth() - input.width()));  
+            } else {  
+                input.resize('resize', width);  
+            }  
+        }  
+    }  
+});
+
+/* datagrid扩展时间控件功能的实现 */
+ $.extend($.fn.datagrid.defaults.editors, {
+	 WdatePickerBox: {//调用名称
+          init: function (container, options) {
+              var input = $('<input maxlength="20" type="text" class="Wdate" placeholder="07:30" onFocus="WdatePicker({lang:\'zh-cn\',dateFmt:\'HH:mm\'})"/>').appendTo(container);
+              return input;
+          },
+         getValue: function (target) {
+        	 return $(target).prop('getValue') == undefined ? $(target).val() : $(target).prop('getValue');  
+         },
+         setValue: function (target, value) {
+             if (value)
+            	 $(target).prop('setValue', value);
+         },
+         resize: function (target, width) {
+             var input = $(target);
+             if ($.boxModel == true) {  
+                 input.resize('resize', width - (input.outerWidth() - input.width()));  
+             } else {  
+                 input.resize('resize', width);  
+             }
+         }
+     }
+});
+
+-----------------------------------------------------------------------》》》》Jquery-easyUI《《《---------------------------------------------------------------------------------
+
+1,文件筐 ：<input id="gradeScheduleExcel" style="width:180px;height:30px" class="easyui-filebox" data-options="prompt:'请选择EXCEL文件',buttonText:'请选择...'" name="scheduleExcel"/>;
+  获取文件框的内容： $('#gradeScheduleExcel').filebox('getValue');
+
+-----------------------------------------------------------------------》》》》级联操作《《《-----------------------------------------------------------------------------
+
+//载入班级下拉菜单
+	function loadClass() {
+		var schoolId = $("#schoolId").val();
+		var gradeId = $("#gradeId").val();
+		$.ajax({
+			url : "${ctx}/baseinfo/student/getClassByGrade",
+			type : "post",
+			data : {
+			schoolId : schoolId,
+			gradeId : gradeId
+			},
+			dataType : "json",
+			async : false,//设置为同步，防止先执行查询方法refreshDataGuid()
+			success : function(data) {
+				$('#classId').empty();
+				var html = '<option value="" selected="selected">--请选择--</option>';
+				if (data != null && data.length > 0) {
+						for (var i = 0; i < data.length; i++) {
+							html += '<option value="'+data[i].id+'">'
+								+ data[i].classNum + '班</option>';
+						}
+					}
+				$('#classId').append(html);
+				vocationSelect("classId", "");
+				}
+			});
+		}
+
+如 ：<li><label>班级:</label>
+	<div class="vocation"><select class="select1" onchange="refreshDataGuid()" id="classId">
+	<option value="">--请选择--</option></select> 
+	</div>
+     </li>
+
+-----------------------------------------------------------------------》》》》ModelAndView类的使用《《《----------------------------------------------------------------------------
+
+       /**
+	 * 查看报修类别信息
+	 * @param id
+	 * @param methodtype
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping("cfg_toUpdate/{id}/{methodtype}")
+	public ModelAndView toUpdateCfg(@PathVariable String id,@PathVariable String methodtype ){
+		ModelAndView model = new ModelAndView("office/repair/repair_cfg_add");
+		SchoolRepairCfg schoolRepairCfg = null;
+		schoolRepairCfg = this.repairCfgService.findById(id);
+		model.addObject("schoolRepairCfg", schoolRepairCfg);
+		model.addObject("methodtype", methodtype);
+		return model;
+	}
+
+-----------------------------------------------------------------------》》》》获取下拉框指定属性的值《《《----------------------------------------------------------------------
+
+<select class="select1" id="examId">
+	<c:forEach items="${examPlans}" var="e">
+	  	<option value="${e.id}" data-grade="${e.grade}">${e.name}</option>
+	</c:forEach>
+</select>
+var grades = $("#examId").find("option:selected").attr("data-grade");//
+
+-----------------------------------------------------------------------》》》》对BLOB类型的数据的处理《《《--------------------------------------------------------------------
+
+后台 ：实体类 ：private byte[] content;//内容；
+
+		//自定义 ：private String contentStr;//内容字符串
+
+// setter 与 getter 
+
+ 	    public byte[] getContent() {
+	        return content;
+	    }
+
+	    public void setContent(byte[] content) {
+	        this.content = content;
+	        try {
+	        	if(this.content != null ){
+				this.setContentStr(new String(content,"utf-8"));
+	        	}
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+	    }
+
+-----------------------------------------------------------------------》》》》JSONLib类库的使用《《《-------------------------------------------------------------------
+
+//import net.sf.json.JSONObject; import net.sf.json.JSONArray;
+1,JSONObject类;类似于Map
+  方式一 ：JSONObject jsonObect =new JSONObject();
+		jsonObect.put("userName", user.getUsername());
+		jsonObect.put("teacherName", teacherInfo.getName());
+		jsonObect.put("schoolName", schoolInfo.getName());
+		jsonObect.put("teacherClassSubjectList", teacherClassSubjectList);
+		System.out.println(jsonObect.toString());
+ 
+方式二 ：Map<String, Object> mapJson = new HashMap<>();
+		mapJson.put("avatar", user.getAvatar());
+		mapJson.put("Name", user.getName());
+		mapJson.put("userName", user.getUsername());
+		mapJson.put("schoolName", schoolInfo.getName());
+		mapJson.put("teacherClassSubjectList", teacherClassSubjectList);
+		JSONObject jsonObject = JSONObject.fromObject(mapJson);
+		logger.info(jsonObject.toString());
+		model.addAttribute("jsonObject", jsonObject.toString());
+
+2，JSONArray类;类似于List
+ 方式一 ： List<Object> listJson =new ArrayList<>();
+		listJson.add(user);
+		listJson.add(teacherInfo);
+		listJson.add(schoolInfo);
+		listJson.add(teacherClassSubjectList);
+		JSONArray jsonObject = JSONArray.fromObject(listJson);
+		System.out.println(jsonObject);
+
+//方式二 ：
+		JSONArray jsonArray = new JSONArray();
+		jsonArray.add(user);
+		jsonArray.add(teacherInfo);
+		jsonArray.add(schoolInfo);
+		jsonArray.add(teacherClassSubjectList);
+		System.out.println(jsonArray);
+
+前台 ：通过Javascript 解析JSON数据 ： 如 ：var jsonObject ='${jsonObject}' ;
+       				   jsonObj = JSON.parse(jsonObject);
+     				   //jsonObj = eval("("+jsonObject+")");
+
+
+前台组成ＪＳＯＮ格式的数据形式 ：var map = new Map(); 形如 : var map = {a:1,b:2};
+
+	elements ：JSON.stringify(map).toString(); --->>>>后台处理方式 ：
+
+	// 将json字符串转成json对象数组
+	    JSONObject jsonObject = JSONObject.fromObject(elements);
+	    Iterator<String> keys = jsonObject.keys();//定义迭代器
+	    String key = null;
+	    String value = null;
+        while(keys.hasNext()){
+            key = keys.next();
+            value = (String) jsonObject.get(key);
+			
+          //  map.put(key, value);
+        }
+
+//过滤json里面的null与""值：
+JSONObject title = JSONObject.fromObject(Object, filterJsonEmptyValue());
+public JsonConfig filterJsonEmptyValue() {
+        JsonConfig jsonConfig = new JsonConfig();
+        jsonConfig.setJsonPropertyFilter(new PropertyFilter() {
+            @Override
+            public boolean apply(Object obj, String key, Object value) {
+                if (value == null || value == "") {
+                    return true;
+                }
+                return false;
+            }
+        });
+        return jsonConfig;
+    }
+	
+	//项目中读取json文件，以接口方式返回
+	score_rule.json 文件内容如下：
+	
+	/*逸学派APP积分规则文件*/
+{
+    /* 签到 */
+    "sign": "连续5天签到，每天分别获得2、4、6、8、10积分奖励。从第6天开始，连续签到按10分奖励。中间有1天未签到，则从2分开始发放。",
+    /* 测评*/
+    "evaluation": "参加一次能力测评活动奖励10分，每天最多奖励50分。",
+    /* 完善信息*/
+    "inproveInformation": "完善个人信息，奖励100积分。",
+    /* 评价说说*/
+    "evaluationSay": "发表一条说说，奖励5积分。每天最多奖励25分。点赞一次奖励1积分，每天最多奖励5分。回复一条奖励2分，每天最多奖励10分。",
+    /* 课程报名*/
+    "courseRegistration": "课程报名按课程费用乘以系数进行奖励，积分=课程价格*100*1%（比例）。",
+    /* 评价课程*/
+    "evaluationCourse": "评价课程，每评价一门课程获20积分（每门课程最多20分）。",
+    /* 推荐课程*/
+    "recommendCourse": "推荐人和被推荐人均获得课程报名积分。即积分=课程价格*100*1%（比例）。",
+}
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.alibaba.fastjson.JSONObject;
+	public Response<Object> getRuleDocumentData(){
+        String result = null;InputStream in = null;
+		try {
+			in = RuleDocumentController.class.getResourceAsStream("/conf/score_rule.json");
+			result = IOUtils.toString(in,"UTF-8");
+	        //json对象转Map，过滤JSON中的注释/**/内容
+	        JSONObject  jsonObject = JSONObject.parseObject(result.replaceAll("/\\*.*\\*/", ""));
+	        Map<String,Object> map = (Map<String,Object>)jsonObject;
+	        return new Response<Object>(map);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}finally{
+			try {
+				in.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return new Response<Object>(CommonReturnCode.FAILURE, "获取积分规则内容失败");
+	}
+//补充知识
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import net.sf.json.JsonConfig;
+import net.sf.json.util.PropertyFilter;
+
+/**
+ * JSON工具类
+ * @author yuyicheng.guo
+ * @2018年4月27日 上午11:16:31
+ */
+public class JsonUtil {
+
+	/**
+	 * JSON数据格式化
+	 * @param object
+	 * @return
+	 */
+	public static String toJson(Object object) {
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.setPrettyPrinting();
+        Gson gson = gsonBuilder.create();
+        return gson.toJson(object);
+    }
+	
+	/**
+	 * JSON数据格式化
+	 * @param jsonStr
+	 * @return
+	 */
+	public static String formatJson(String jsonStr) {
+		if (null == jsonStr || "".equals(jsonStr))
+			return "";
+		StringBuilder sb = new StringBuilder();
+		char last = '\0';
+		char current = '\0';
+		int indent = 0;
+		boolean isInQuotationMarks = false;
+		for (int i = 0; i < jsonStr.length(); i++) {
+			last = current;
+			current = jsonStr.charAt(i);
+			switch (current) {
+			case '"':
+				if (last != '\\') {
+					isInQuotationMarks = !isInQuotationMarks;
+				}
+				sb.append(current);
+				break;
+			case '{':
+			case '[':
+				sb.append(current);
+				if (!isInQuotationMarks) {
+					sb.append('\n');
+					indent++;
+					addIndentBlank(sb, indent);
+				}
+				break;
+			case '}':
+			case ']':
+				if (!isInQuotationMarks) {
+					sb.append('\n');
+					indent--;
+					addIndentBlank(sb, indent);
+				}
+				sb.append(current);
+				break;
+			case ',':
+				sb.append(current);
+				if (last != '\\' && !isInQuotationMarks) {
+					sb.append('\n');
+					addIndentBlank(sb, indent);
+				}
+				break;
+			default:
+				sb.append(current);
+			}
+		}
+
+		return sb.toString();
+	}
+ 
+ 	/**
+     * 添加space
+     * 
+     * @param sb
+     * @param indent
+     * @author lizhgb
+     * @Date 2015-10-14 上午10:38:04
+     */
+    private static void addIndentBlank(StringBuilder sb, int indent) {
+        for (int i = 0; i < indent; i++) {
+            sb.append('\t');
+        }
+    }
+    
+    /**
+     * JSON数据配置，不显示值为null或空字符串的情况
+     * @return
+     */
+    public static JsonConfig filterJsonEmptyValue() {
+        JsonConfig jsonConfig = new JsonConfig();
+        jsonConfig.setJsonPropertyFilter(new PropertyFilter() {
+            @Override
+            public boolean apply(Object obj, String key, Object value) {
+                if (value == null || value == "") {
+                    return true;
+                }
+                return false;
+            }
+        });
+        return jsonConfig;
+	}
+	
+}
+-----------------------------------------------------------------------》》》》Map.Entry的使用方式《《《-----------------------------------------------------------------
+        Map<Object, Object> map = new HashMap<>();
+    	map.put("userName", "admin");
+    	map.put("passward", "123456");
+    	map.put("e-mail", "admin@uetec.cn");
+    	print("***************  方式一     ***************");
+    	for(Map.Entry<Object, Object> entry:map.entrySet()){
+            System.out.println(entry.getKey()+":"+entry.getValue());
+        }
+    	print("***************  方式二    ***************");
+    	Iterator<Entry<Object, Object>> iterator = map.entrySet().iterator();
+        while(iterator.hasNext()) {
+                Map.Entry<Object, Object> entry = iterator.next();
+                Object key = entry.getKey();
+                Object value = entry.getValue();
+                System.out.println(key+":"+value);
+        }
+        print("***************  方式三    ***************");
+        Set<Object>  keySet= map.keySet();
+        Iterator<Object>  iterator1 = keySet.iterator();
+        while(iterator1.hasNext()) {
+                Object key = iterator1.next();
+                Object value = map.get(key);
+                System.out.println(key+":"+value);
+        }
+
+-----------------------------------------------------------------------》》》》request与response（请求与相应）编码设置《《《---------------------------------------------------
+
+响应：response.setContextTyle("text/html;charset=utf-8");
+请求分不同的请求方式不同对待 ：
+GET 方式 ：String paramValue = new String(request.getParameter("paramName").getBytes("ISO8859-1"),"utf-8");
+POST 方式 ：request.setCharacterEncoding("utf-8");
+
+-----------------------------------------------------------------------》》》》div与span标签的设值处理DOM 与Jquery的转换《《《---------------------------------------------------
+
+如 ：<div id="testDiv"></div>
+
+DOM 操作 ：document.getElementById('testDiv').innerText ="张三";
+Jquery 操作 ：$('#testDiv').text("张三");
+
+//Jquery-->>转为DOM操作 ：$('#testDiv')[0].innerText ="张三"; 
+//DOM-->>转为Jqeury操作 ： 使用$()函数;
+var $div= $('<div id="testDiv"></div>'); $div.text("张三");
+
+-----------------------------------------------------------------------》》》》MyBatis 里使用模糊查询《《《--------------------------------------------------------------------
+
+方式一 ：使用连接符 :${} ;如 ： <select id="findByUsername" resultType="cn.temptation.domain.User" parameterType="String">
+					SELECT * FROM userinfo WHERE username LIKE '%${value}%'
+				</select>
+方式二 使用concat()函数 ; 如 ： <select id="findByForeach03" parameterType="Map" resultType="cn.temptation.domain.Employee">
+					SELECT * FROM employee WHERE employeename LIKE CONCAT('%', #{empname}, '%') AND employeeid IN
+					<foreach collection="empids" index="index" item="item" open="(" separator="," close=")">
+						#{item}
+					</foreach>
+				</select>
+
+-----------------------------------------------------------------------》》》》判断服务器资源是否存在《《《-------------------------------------------------------------------
+	
+	function isEffective(url){
+		   try {
+		     var xmlhttp;
+		     if (window.XMLHttpRequest) { // code for IE7+, Firefox, Chrome, Opera, Safari
+		       xmlhttp = new XMLHttpRequest();
+		     } else { // code for IE6, IE5
+		       xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		     }
+		     xmlhttp.open("get", url, false);
+		     xmlhttp.send(null);
+		     if (xmlhttp.status == 404) {
+		       return false;
+		     } else {
+		       return true;
+		     }
+		   } catch (e) {
+		     return false;
+		   }
+	}
+
+或 ： 后台代码 ；
+
+	/**
+	 * 检查资源是否存在
+	 * @param url
+	 * @param request
+	 * @return
+	 */
+    @RequestMapping("/checkAttachExist")
+    @ResponseBody
+    public Response<Object> checkAttachExist(String url,HttpServletRequest request){
+    	if(!StringUtils.isBlank(url)){
+    		String filePath=request.getSession().getServletContext().getRealPath("/");
+    		//filePath = StringUtils.substringBefore(filePath, MessageUtils.getFileProject()); 
+    		//String file2 = resource.getDownloadUrl();
+    		filePath=request.getSession().getServletContext().getRealPath("/").replaceFirst(MessageUtils.getProjectName(), url);
+    		
+    		//filePath =filePath +""+url ;
+			File file=new File(filePath);   
+			if(!file.exists()){
+				return new Response<Object>(CommonReturnCode.FAILURE,"未找到该附件");
+			}
+			return new Response<Object>();
+		}
+    	return new Response<Object>(CommonReturnCode.FAILURE,"未找到该附件");
+    }
+
+转码检验方法 ： 利用附件实体类 ；
+
+	/**
+	 * 检测转码是否完成
+	 * @param attachId
+	 * @return
+	 */
+	@RequestMapping("/checkTrans")
+	@ResponseBody
+	public Response<Object> checkTrans(String attachId){
+		CommonAttach commonAttach = this.commonAttachService.findById(attachId);
+		return new Response<Object>(commonAttach.getTransStatus());
+	}
+
+-----------------------------------------------------------------------》》》》HTMLUtils工具类的使用《《《-------------------------------------------------------------------
+
+	package cn.uetec.classcard.common.utils;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;  
+import java.util.regex.Pattern;  
+public class HtmlUtils {
+	 /** 
+     * 替换指定标签的属性和值 
+     * @param str 需要处理的字符串 
+     * @param tag 标签名称 
+     * @param tagAttrib 要替换的标签属性值 
+     * @param startTag 新标签开始标记 
+     * @param endTag  新标签结束标记 
+     * @return 
+     * @author yuyicheng 
+     * @date 2017年5月20日 下午3:15:32 
+     */  
+    public static String replaceHtmlTag(String str, String tag, String attribNameAndValue,String tagAttrib, String startTag, String endTag) {  
+        String regxpForTag = "<\\s*" + tag + "\\s+([^>]*)\\s*" ;  
+        String regxpForTagAttrib = tagAttrib + "=\\s*\"([^\"]+)\"" ;  
+        Pattern patternForTag = Pattern.compile (regxpForTag,Pattern. CASE_INSENSITIVE );  
+        Pattern patternForAttrib = Pattern.compile (regxpForTagAttrib,Pattern. CASE_INSENSITIVE );     
+        Matcher matcherForTag = patternForTag.matcher(str);  
+        StringBuffer sb = new StringBuffer();  
+        boolean result = matcherForTag.find();  
+        while (result) {  
+            StringBuffer sbreplace = new StringBuffer( "<"+tag+" "+attribNameAndValue+" ");  
+            Matcher matcherForAttrib = patternForAttrib.matcher(matcherForTag.group(1));  
+            if (matcherForAttrib.find()) {  
+//                String attributeStr = matcherForAttrib.group(1);  
+//                matcherForAttrib.appendReplacement(sbreplace, startTag + attributeStr + endTag);  
+                matcherForAttrib.appendReplacement(sbreplace, startTag + endTag);  
+            }  
+            matcherForAttrib.appendTail(sbreplace);  
+            matcherForTag.appendReplacement(sb, sbreplace.toString());  
+            result = matcherForTag.find();  
+        }  
+        matcherForTag.appendTail(sb);           
+        return sb.toString();  
+    }  
+    
+    /**
+     * 替换HTML标签内容，如：<embed>替换为<video>
+     * @param content
+     * @param partten
+     * @param target
+     * @return
+     */
+    public static String replaceContentByPartten(String content,
+            String partten, String target) {
+        Matcher matcher = Pattern.compile(partten, Pattern.CASE_INSENSITIVE).matcher(content);
+        if (matcher.find()) {
+            StringBuffer temp = new StringBuffer();
+            matcher.appendReplacement(temp, target);
+            matcher.appendTail(temp);
+            return temp.toString();
+        } else {
+            return content;
+        }
+    }
+    
+    /**
+     * 得到网页中视频或图片的地址
+     */
+    public static Set<String> getVideoStr(String htmlStr) {
+        Set<String> pics = new HashSet<>();
+        String img = "";
+        Pattern p_image;
+        Matcher m_image;
+         //String regEx_img = "<video.*src=(.*?)[^>]*?>"; //图片链接地址
+        String regEx_img = "<img.*src\\s*=\\s*(.*?)[^>]*?>";//
+        p_image = Pattern.compile
+                (regEx_img, Pattern.CASE_INSENSITIVE);
+        m_image = p_image.matcher(htmlStr);
+        while (m_image.find()) {
+            // 得到<img />数据
+            img = m_image.group();
+            // 匹配<img>中的src数据
+            Matcher m = Pattern.compile("src\\s*=\\s*\"?(.*?)(\"|>|\\s+)").matcher(img);
+            while (m.find()) {
+                pics.add(m.group(1));
+            }
+        }
+        return pics;
+    }
+    
+    
+    /** 
+     * 获取指定HTML标签的指定属性的值 
+     * @param source 要匹配的源文本 
+     * @param element 标签名称 
+     * @param attr 标签的属性名称 
+     * @return 属性值列表 
+     */  
+    public static List<String> getMatchAttrValue(String source, String element, String attr) {  
+        List<String> result = new ArrayList<String>();  
+        String reg = "<" + element + "[^<>]*?\\s" + attr + "=['\"]?(.*?)['\"]?(\\s.*?)?>";  
+        Matcher m = Pattern.compile(reg).matcher(source);  
+        while (m.find()) {  
+            String r = m.group(1);  
+            result.add(r);  
+        }  
+        return result;  
+    }  
+    
+    /**
+    * 删除inputStr字符串中的html格式，获取纯文本内容
+    * 
+    * @param inputStr
+    * @param length
+    * @return
+    */
+    public static String splitAndFilterString(String inputStr, int length) {
+    if (inputStr == null || inputStr.trim().equals("")) {
+    return "";
+    }
+    // 去掉所有html元素,
+    String str = inputStr.replaceAll("\\&[a-zA-Z]{1,10};", "").replaceAll(
+    "<[^>]*>", "");
+    str = str.replaceAll("[(/>)<]", "");
+    int len = str.length();
+    if (len <= length) {
+    return str;
+    } else {
+    str = str.substring(0, length);
+    str += "......";
+    }
+    return str;
+    }
+
+	  /**
+	    *正则表达式去除html标签
+	    */
+	public static String removeTag(String htmlStr) {
+		String regEx_script = "<script[^>]*?>[\\s\\S]*?<\\/script>"; // script
+		String regEx_style = "<style[^>]*?>[\\s\\S]*?<\\/style>"; // style
+		String regEx_html = "<[^>]+>"; // HTML tag
+		String regEx_space = "\\s+|\t|\r|\n";// other characters
+		Pattern p_script = Pattern.compile(regEx_script,
+			Pattern.CASE_INSENSITIVE);
+		Matcher m_script = p_script.matcher(htmlStr);
+		htmlStr = m_script.replaceAll("");
+		Pattern p_style = Pattern
+			.compile(regEx_style, Pattern.CASE_INSENSITIVE);
+		Matcher m_style = p_style.matcher(htmlStr);
+		htmlStr = m_style.replaceAll("");
+		Pattern p_html = Pattern.compile(regEx_html, Pattern.CASE_INSENSITIVE);
+		Matcher m_html = p_html.matcher(htmlStr);
+		htmlStr = m_html.replaceAll("");
+		Pattern p_space = Pattern
+			.compile(regEx_space, Pattern.CASE_INSENSITIVE);
+		Matcher m_space = p_space.matcher(htmlStr);
+		htmlStr = m_space.replaceAll(" ");
+		return htmlStr;
+	    }
+      
+    public static void main(String[] args) {  
+        StringBuffer content = new StringBuffer();  
+        content.append("<ul class=\"imgBox\"><li><video id=\"160424\" src=\"uploads/allimg/160424/1-160424120T1-50.jpg\" class=\"src_class\"></video></li>");  
+        content.append("<li><video id=\"150628\" src=\"uploads/allimg/150628/1-15062Q12247.jpg\" class=\"src_class\"></video><image id=\"img1\" src=\"uploads/allimg/150628/1-15062Q12248.jpg\" class=\"src_class\"/></li></ul>");  
+        System.out.println("原始字符串为:"+content.toString());  
+        String newStr = replaceHtmlTag(content.toString(), "image", "poster=\"1.png\"","\t", "", "");  
+        System.out.println("替换后为:"+newStr); 
+    	
+//    	replaceContentByPartten方法的测试
+//    	String content = "<span>这是内容开始</span><br />"
+//                + "<embed src=\"http://localhost:8080/uploadFile/video/1111111111.mp4\""
+//                + " autostart=\"false\" WIDTH=\"480\" height=\"400\" /><br />"
+//                + "<span>这是内容中间</span><br />"
+//                + "<embed src=\"http://localhost:8080/uploadFile/video/2222222222.mp4\""
+//                + " autostart=\"false\" WIDTH=\"480\" height=\"400\" /><br />"
+//                + "<span>这是内容结尾</span>";
+//        String regxpForEmbedTag = "<\\s*embed\\s+([^>]*)\\s*/>";
+//        Matcher matcher = Pattern.compile(regxpForEmbedTag).matcher(content);
+//        StringBuffer sb = new StringBuffer();
+//        while (matcher.find()) {
+//            String contentTemp = matcher.group(1);
+//            contentTemp = replaceContentByPartten(contentTemp,
+//                    "src=\"([^\"]+)\"",
+//"src=\"http://localhost:8080/uploadFile/test.mp4\"");
+//            contentTemp = replaceContentByPartten(contentTemp,
+//                    "width=\"([^\"]+)\"", "width=\"100%\"");
+//            matcher.appendReplacement(sb, "<video controls=\"controls\" "+ contentTemp + "></video>");
+//        }
+//        matcher.appendTail(sb);
+//        System.out.println("原始字符串为:"+content);
+//        System.out.println("替换后为:"+sb.toString());
+    
+//        Set<String> set = getVideoStr(content.toString());
+//        for (String setStr : set) {
+//        	System.out.println("---------------------------------");
+//        	System.out.println(setStr);
+//		}
+        
+//        List<String> list = getMatchAttrValue(content.toString(), "video", "src");  
+//        for (String srcString : list) {
+//        	System.out.println(srcString);  
+//		}
+        
+        String str = "<div style=\"width:50%;height:auto;\"><video src=\"http://localhost:8080/uploadFile/video/2222222222.mp4\" autostart=\"false\" WIDTH=\"480\" height=\"400\">这是div中的video标签</video></div>";
+    System.out.println(splitAndFilterString(str, str.length()));
+    }   
+      
+}
+
+-----------------------------------------------------------------------》》》》采用jquery easyui loading css实现加载效果《《《-------------------------------------------------------------------
+
+function ajaxLoading(){   
+    $("<div class=\"datagrid-mask\"></div>").css({display:"block",width:"100%",height:$(window).height()}).appendTo("body");   
+    $("<div class=\"datagrid-mask-msg\"></div>").html("正在处理，请稍候。。。").appendTo("body").css({display:"block",left:($(document.body).outerWidth(true) - 190) / 2,top:($(window).height() - 45) / 2});   
+ };   
+function ajaxLoadEnd(){   
+     $(".datagrid-mask").remove();   
+     $(".datagrid-mask-msg").remove();               
+};
+或 ：
+function AddRunningDiv() {
+    $("<div class=\"datagrid-mask\"></div>").css({ display: "block", width: "100%", height: $(document).height() }).appendTo("body");
+    $("<div class=\"datagrid-mask-msg\"></div>").html("正在处理，请稍候...").appendTo("body").css({ display: "block", left: ($(document.body).outerWidth(true) - 190) / 2, top: ($(document).height() - 45) / 2 });
+};
+function MoveRunningDiv() {
+    $("div[class='datagrid-mask']").remove();
+    $("div[class='datagrid-mask-msg']").remove();
+};
+
+-----------------------------------------------------------------------》》》》采用CSS3 技术 取消按钮点击事件的触发《《《-------------------------------------------------------------------
+
+.disabled {
+    pointer-events: none;//元素永远不会成为鼠标事件的target;
+    opacity: 0.6;//不透明级别;
+}
+
+-----------------------------------------------------------------------》》》》原生的事件监听器《《《-------------------------------------------------------------------
+
+/* 事件监听器 */
+var attachEventListener = function(objectObj,e,func){//事件监听器分IE与非IE浏览器; e ='click';
+	objectObj.attachEvent ? objectObj.attachEvent('on'+e,func): objectObj.addEventListener(e,func,false); 
+}
+
+/*保存*/
+var saveMethod = function(){
+	var saveObj  = document.getElementById('saveButton');
+	attachEventListener(saveObj,'click',save_callBack);
+}
+
+/*回调函数*/
+var save_callBack =function(){
+
+}
+
+-----------------------------------------------------------------------》》》》获取浏览器页面的宽度和高度《《《-------------------------------------------------------------------
+
+一、javascript 方式 ：
+网页可见区域宽： document.body.clientWidth //body的宽度;
+网页可见区域高： document.body.clientHeight
+网页可见区域宽： document.body.offsetWidth (包括边线的宽)
+网页可见区域高： document.body.offsetHeight (包括边线的高)
+网页正文全文宽： document.body.scrollWidth
+网页正文全文高： document.body.scrollHeight
+网页被卷去的高： document.body.scrollTop
+网页被卷去的左： document.body.scrollLeft
+网页正文部分上： window.screenTop
+网页正文部分左： window.screenLeft
+屏幕分辨率的高： window.screen.height
+屏幕分辨率的宽： window.screen.width //屏幕分辨率宽度;
+屏幕可用工作区高度： window.screen.availHeight
+屏幕可用工作区宽度： window.screen.availWidth
+window.innerWidth //浏览器可用宽度
+window.innerHeight
+
+二、jQuery
+获取浏览器显示区域的高度 ： $(window).height(); 
+获取浏览器显示区域的宽度 ：$(window).width(); 
+获取页面的文档高度 ：$(document).height(); 
+获取页面的文档宽度 ：$(document).width();
+获取滚动条到顶部的垂直高度 ：$(document).scrollTop(); 
+获取滚动条到左边的垂直宽度 ：$(document).scrollLeft(); 
+
+-----------------------------------------------------------------------》》》》获取img图片原始的宽度和高度《《《-------------------------------------------------------------------
+
+/*  封装获取原始src的尺寸 ，考虑浏览器IE7/8中的的兼容问题*/ 注：有点问题，图片没加载完，可能获取的值为0
+function getNaturalSize (domElement){ //参数为dom节点元素
+	 var natureSize = {};
+	 if(window.naturalWidth && window.naturalHeight) {
+		  natureSize.width = domElement.naturalWidth;
+		  natureSize.height = domElement.naturalHeight;
+	  }else{
+		  var img = new Image();
+		  img.src = domElement.src;
+		  natureSize.width = img.width;
+		  natureSize.height = img.height;
+		}
+	 return natureSize;
+}
+改进方法 ：
+function getImgNaturalDimensions(oImg, callback) {
+　　      var nWidth,nHeight;
+　　      if (window.naturalWidth && window.naturalHeight){
+　　    	  	nWidth = oImg.naturalWidth;
+	　　　 nHeight = oImg.naturalHeight;
+	　　　callback({width:nWidth,height:nHeight},oImg);
+　　      }else{
+　　　　	var img = new Image();
+　　　　	img.onload = function(){
+	        var nWidth = img.width, nHeight = img.height;
+	        callback({width:nWidth,height:nHeight},oImg);
+　　　               }
+　　　　	img.src = oImg.src;
+　　   }
+}
+调用函数 ：getImgNaturalDimensions($(this)[0],function(dimensions,that){
+						//逻辑代码块，如：
+						if(dimensions.width > $(window).width()){
+							$(that).css('width','98%');
+						}
+					});
+-----------------------------------------------------------------------》》》》判断List集合中元素出现的次数、对List进行操作《《《-------------------------------------------------------
+
+使用 ：Collections.frequency(ListName,fieldName) >0;//元素fieldName有出现;
+       Collections.shuffle(optionList);//随机取数据
+
+List 的方法 ：subList();//操作原集合、子集合彼此互相影响;
+
+补充 ：Collections 接口：排序
+        形式 ：List<BdcWord> bdcWordList = new ArrayList<BdcWord>();
+       Collections.sort(bdcWordList, new Comparator<BdcWord>(){  
+            public int compare(BdcWord bw1, BdcWord bw2) {  
+                if(bw1.getUnitNum() > bw2.getUnitNum()){  
+                    return 1;  
+                }  
+                if(bw1.getUnitNum() == bw2.getUnitNum()){  
+                    return 0;  
+                }  
+                return -1;  
+            }  
+        }); 
+集合的操作 ：并集：result.addAll(list1)-->result.addAll(list2) 交集：result.addAll(list1)--> result.retainAll(list2);;差集：result.addAll(list1)-->result.removeAll(list2) 清空：clear()
+
+-----------------------------------------------------------------------》》》》List集合（由实体对象组成）中去重实体属性存在相同的值的实体《《《-------------------------------------------------------
+Class People{
+ private int age();
+ ....
+ settter/getter
+}
+List<People> peopleList = new ArrayList<>();
+for (int i = 0; i < peopleList.size()-1; i++) {  
+		    for (int j = peopleList.size()-1; j > i; j--) {  
+		        if (peopleList.get(j).getAge().equals(peopleList.get(i).getAge())) {  
+		            peopleList.remove(j);  
+		        }  
+		    }  
+		}  
+-----------------------------------------------------------------------》》》》StringUtils字符串工具类的使用《《《-------------------------------------------------------
+
+1、StringUtils.join(); //如 ：String[] str = {"1","2","3","4"};  String str2 = StringUtils.join(str, "|");  System.out.println(str2); //  结果 ：1|2|3|4
+
+2、StringUtils.isEmpty();//标准是 ：str==null或str.length()==0; //如 ：StringUtils.isEmpty(null) = true;StringUtils.isEmpty("") = true;StringUtils.isEmpty(" ") = false;//注意在StringUtils中空格作非空处理
+
+3、StringUtils.isBlank();//标准是 ：判断某字符串是否为空(null)或长度为0或由空白符(whitespace)构成;StringUtils.isBlank(" ") = true;
+
+4、StringUtils.trim();//标准是 ：去掉字符串两端的控制符;StringUtils.trim(null) = null;
+
+5、StringUtils.trimToNull();//标准是 ：去掉字符串两端的控制符;如果变为null或""，则返回null ; StringUtils.trimToNull(null) = null;StringUtils.trimToNull("") = null
+
+6、StringUtils.trimToEmpty(null) = "";//如果变为null或""，则返回""
+
+7、StringUtils.strip();//去掉字符串两端的空白符;
+
+-----------------------------------------------------------------------》》》》CSS3新特性之滤镜效果《《《-----------------------------------------------------
+//  加滤镜效果
+    -webkit-filter: grayscale(100%);filter:grayscale(100%); //灰色; 属性值有 ：blur 模糊 brightness 亮度 contrast 对比度 drop-shadow 阴影 grayscale 灰度 opacity 透明度 sepia 褐色 invert 反色 saturate 饱和度 hue-rotate 色相旋转 
+
+-----------------------------------------------------------------------》》》》ES6箭头函数《《《-----------------------------------------------------    
+ //格式 ：=>替代 ：function ，省略{}
+如 ： var array = ['a', 'bc', 'def', 'ghij']; 
+ 	array = array.filter(function (item) { return item.length >= 2; });
+alert(array);
+var array = ['a', 'bc', 'def', 'ghij']; 
+array = array.filter(item => item.length >= 2); 
+
+-----------------------------------------------------------------------》》》》判断浏览器是否为IE浏览器《《《-----------------------------------------------------    
+function isIE() { //ie?
+  if (!!window.ActiveXObject || "ActiveXObject" in window)
+      return true;
+  else
+      return false;
+ }
+
+-----------------------------------------------------------------------》》》》后台对含有HTML标签元素的字符串的处理，可以使用Jsoup类 HTML解析器来处理《《《-----------------------------------------------------    
+
+如 ：String str = "<html>
+	 <head></head>
+ 	<body>
+  	<ul class="imgBox">
+  	 <li>
+   	 <video id="160424" src="uploads/allimg/160424/1-160424120T1-50.jpg" class="src_class"></video></li>
+   	<li>
+   	 <video id="150628" src="uploads/allimg/150628/1-15062Q12247.jpg" class="src_class"></video><img id="img1" src="uploads/allimg/150628/1-15062Q12248.jpg" class="src_class" /></li>
+  	</ul>
+ 	</body>
+	</html>"
+
+如何获取字符串中所有video标签的src的值 ?  ?　?;
+
+解决方法 :Document doc = Jsoup.parse(str,"UTF-8");
+	 System.out.println(doc);
+          Elements ele = doc.getElementsByTag("video");
+          for (Element element : ele) {
+          String srcURL = element.attr("src");
+          element.append("<source src=\"uploads/allimg/160424/1-160424120T1-source.jpg\" >浏览器暂不支持video标签，请升级浏览器到最新版本</source>");
+          System.out.println(srcURL +"\n");
+	  }
+    System.out.println(doc);
+
+扩展 ： 网页上的页面数据，使用网络爬虫技术进行抓取，方法：使用Jsoup类处理，可参考 ：http://www.cnblogs.com/ydxlt/p/5030964.html；
+
+-----------------------------------------------------------------------》》》》利用POI实现导入导出的功能《《《---------------------------------------------------------
+
+1,导入功能 : 模板样式 ：
+
+后台 ：		@RequestMapping(value="/importExcel")
+		@ResponseBody
+		public String importExcel(@RequestParam MultipartFile stufile,@CurrentUser User user,String usertype){
+			String originalFilename = stufile.getOriginalFilename();
+			if(!"xls".equals(originalFilename.substring(originalFilename.lastIndexOf(".") + 1)) &&
+					!"xlsx".equals(originalFilename.substring(originalFilename.lastIndexOf(".") + 1))){
+				return "文件格式错误";
+			}
+			String schoolId = user.getRelativeSchoolId();
+			
+			Map<String, StudentInfo> stuMap = new HashMap<String, StudentInfo>();
+			Map<String, TeacherInfo> teaMap = new HashMap<String, TeacherInfo>();
+			Map<String, Integer> iSRepeat = new HashMap<String, Integer>(); // 用于判断重复
+			/**
+			 * key : 姓名+学号/工号   如：   罗小飞20170317
+			 * value : 学生/教师对象
+			 */
+			String key;
+			if("4".equals(usertype)){
+				List<TeacherInfo> teachers = this.teacherInfoService.findAllBySchoolId(schoolId);
+				for (TeacherInfo t : teachers) {
+					key = t.getName() + t.getWorkNum();
+					teaMap.put(key, t);
+				}
+			} else {
+				
+				List<StudentInfo> students = this.studentInfoService.getBySchoolId(schoolId);
+				for(StudentInfo s : students){
+					key = s.getName() + s.getStudentNum();
+					stuMap.put(key, s);
+				}
+			}
+			
+			List<PcCustomerCard> pcCustomerCards = new ArrayList<PcCustomerCard>();
+			List<PcCardInfo> pcCardInfos = new ArrayList<PcCardInfo>();
+			
+			Workbook wb = null;
+			try {
+				InputStream inputStream = stufile.getInputStream();
+				wb = WorkbookFactory.create(inputStream);
+				
+				// 获得第一个工作表
+				Sheet sheet = wb.getSheetAt(0);
+				// 表的第一行
+				Row titleRow0 = sheet.getRow(0);
+				if(!isCorrectTemplate(titleRow0)){
+					return "Excel模板错误!";
+				}
+				
+				for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+					//跳过没有数据的行
+					Row row = sheet.getRow(i);
+					if(row == null || this.isBlankRow(row)){
+						continue;
+					}
+					
+					PcCustomerCard customerCard = new PcCustomerCard();
+					PcCardInfo cardInfo = new PcCardInfo();
+					TeacherInfo tInfo = new TeacherInfo();
+					StudentInfo sInfo = new StudentInfo();
+					
+					if(row.getCell(0)==null || row.getCell(0).getCellType() == Cell.CELL_TYPE_BLANK){ // 姓名
+						return "Excel文件第"+(i+1)+"行姓名不能为空";
+					}
+					String name = this.getCellValue(row.getCell(0));
+					
+					if(row.getCell(1) == null || row.getCell(1).getCellType() == Cell.CELL_TYPE_BLANK){ // 学号/工号
+						return "Excel文件第"+(i+1)+"行学号/工号不能为空";
+					}
+					String num = this.getCellValue(row.getCell(1));
+					
+					if(row.getCell(2)==null || row.getCell(2).getCellType() == Cell.CELL_TYPE_BLANK){ // 卡号
+						return "Excel文件第"+(i+1)+"行卡号不能为空";
+					}
+					String cardno = this.getCellValue(row.getCell(2));
+					
+					if(!isNumeric(cardno)){
+						return "Excel文件第"+(i+1)+"行卡号必须由数字组成";
+					}
+					cardno = changeString(cardno); // 十转十六进制
+					// 查询导入的卡号有无被使用
+					PcCardInfo pc = this.PcCardInfoService.findById(cardno);
+					if (pc != null) {
+						return "Excel文件第"+(i+1)+"行卡号已被使用";
+					}
+					
+					// 判重
+					if (!iSRepeat.containsKey(name + num)) {
+						iSRepeat.put(name + num, i);
+					} else {
+						return "Excel文件第"+(i+1)+"行与第"+iSRepeat.get(name+num)+"行重复";
+					}
+
+					if("4".equals(usertype)){
+						tInfo = teaMap.get(name + num);
+						if (tInfo == null) {
+							return "Excel文件第"+(i+1)+"行教师不存在";
+						}
+						
+						customerCard.setCustomerid(tInfo.getUserId());
+						customerCard.setEventtype((byte)4);
+						
+					} else {
+						sInfo = stuMap.get(name + num);
+						if (sInfo == null) {
+							return "Excel文件第"+(i+1)+"行学生不存在";
+						}
+						
+						customerCard.setCustomerid(sInfo.getUserId());
+						customerCard.setEventtype((byte)5);
+						
+					}
+					// 判断用户是否已经开过户
+					if(!this.pcCustomerCardService.isExist(customerCard.getCustomerid())){
+						return "Excel文件第"+(i+1)+"行,该用户不可重复开户";
+					}
+					
+					customerCard.setCardid(cardno);
+					customerCard.setEventtime(new Date());
+					customerCard.setValiddate(new Date());
+					customerCard.setCardflag((byte)1);
+					
+					cardInfo.setCardno(cardno);
+					cardInfo.setId(cardno);
+					cardInfo.setCardstatus((byte)1);
+					cardInfo.setSchoolid(schoolId);
+					
+					pcCustomerCards.add(customerCard);
+					pcCardInfos.add(cardInfo);
+					
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally{
+				try{
+					if(wb != null){
+						wb.close();
+					}
+				}catch(IOException e){
+					e.printStackTrace();
+				}
+			}
+			
+			if (this.pcCustomerCardService.insertAll(pcCustomerCards,pcCardInfos)) {
+				//立即生效卡与用户中间表信息（演示完要注释掉）
+				this.PcCardInfoService.create_etl_stu_tea_fam_class();
+				String url = request.getScheme()+ "://" + request.getServerName() + ":" +request.getServerPort() ;//部署同一个web容器上
+				SendCmdMsgUtil.sendCmdMsg(url, user.getRelativeSchoolId(),"",SendCmdMsgUtil.CMD_TYPE.CMD_CARDWIE+"0001",null,null,null);
+				return "导入成功";
+			} else {
+				return "导入失败";
+			}
+			
+		}
+
+		public boolean isCorrectTemplate(Row titleRow){
+			String[] template0 = {"姓名","学号/工号","卡号"};
+			
+			String str = null;
+			for (int i = 0; i < template0.length; i++) {
+				
+				str = titleRow.getCell(i).getStringCellValue();
+				
+				if(str == null || "".equals(str)) {
+					return false;
+				}
+				else if(!template0[i].equals(str.replace(" ", ""))) {
+					return false;
+				}
+			}
+			
+			return true;
+			
+		}
+
+		public boolean isBlankRow(Row row){
+				if(row == null) return true;
+				boolean result = true;
+				for(int i = row.getFirstCellNum(); i < row.getLastCellNum(); i++){
+					Cell cell = row.getCell(i, Row.RETURN_BLANK_AS_NULL);
+					String value = "";
+					if(cell != null){
+						switch (cell.getCellType()) {
+						case Cell.CELL_TYPE_STRING:
+							value = cell.getStringCellValue();
+							break;
+						case Cell.CELL_TYPE_NUMERIC:
+							value = String.valueOf((int) cell.getNumericCellValue());
+							break;
+						case Cell.CELL_TYPE_BOOLEAN:
+							value = String.valueOf(cell.getBooleanCellValue());
+							break;
+						case Cell.CELL_TYPE_FORMULA:
+							value = String.valueOf(cell.getCellFormula());
+							break;
+						//case Cell.CELL_TYPE_BLANK:
+						//	break;
+						default:
+							break;
+						}
+						
+						if(!value.trim().equals("")){
+							result = false;
+							break;
+						}
+					}
+				}
+				
+				return result;
+			}
+
+  			public static boolean isNumeric(String str){
+			  for (int i = 0; i < str.length(); i++){
+			   if (!Character.isDigit(str.charAt(i))){
+			    return false;
+			   }
+			  }
+			  return true;
+			 }
+
+			public String changeString(String cardNo){
+			cardNo = Long.toHexString(Long.parseLong(cardNo.toString())).toUpperCase();
+			if(cardNo.length() < 8) {  //左补0
+				StringBuffer str = new StringBuffer();
+				for(int i=0; i<(8-cardNo.length()); i++) {
+					str.append("0");
+				}
+				cardNo = str.toString() + cardNo;
+			}
+			return cardNo;
+		       }
+
+                       public boolean insertAll(List<PcCustomerCard> pcCustomerCards,
+		List<PcCardInfo> pcCardInfos) {
+	boolean flag = false;
+	
+	if (pcCustomerCardMapper.insertBatch(pcCustomerCards) > 0 &&
+			pcCardInfoMapper.insertBatch(pcCardInfos) > 0) {
+		flag = true;
+	}
+	
+	return flag;
+}
+
+例如 ： ${projectName}/walkingCourse/WalkingCourseSchedule/importExcelWalkCourseSchedule ; ${projectName}/PcCustomerCard/importExcel ;//项目路径;classcard (项目)
+
+导入功能 ：
+
+后台代码 ：省略； 路径 ： ${projectName}/education/schedule/exportExcelSchedule ; ${projectName}/education/schedule/downClassModel ;// classcard (项目)
+
+详细参考 ：
+
+    /**
+	 * 导出准考证信息
+	 * @param pageQuery
+	 * @param examId
+	 * @param roomId
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("/exportDataExcel")
+	@ResponseBody
+	public void exportDataExcel(PageQuery pageQuery, String examId, String roomId, HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
+		DataguidPageResult<ExamCardVo> result = this.getExamCard(null, roomId, null, null, examId, null, pageQuery,
+				null, request);
+		List<ExamCardVo> list=result.getRows();
+		
+		//以准考证号进行排序，如：ZQ20113099019
+		 Collections.sort(list, new Comparator<ExamCardVo>(){  
+	            public int compare(ExamCardVo ec1, ExamCardVo ec2) {
+	            	Integer ec1CardNum =null,ec2CardNum =null;
+	                Pattern patternEnd = Pattern.compile("\\d+(\\.\\d+)?$");
+	                Matcher matcherEnd1 = patternEnd.matcher(ec1.getExamCard().getCardNum());
+	                Matcher matcherEnd2 = patternEnd.matcher(ec2.getExamCard().getCardNum());
+	                if(matcherEnd1.find()){
+	                	ec1CardNum = Integer.parseInt(matcherEnd1.group());
+	                }
+	                if(matcherEnd2.find()){
+	                	ec2CardNum = Integer.parseInt(matcherEnd2.group());
+	                }
+	                
+	                return ec1CardNum - ec2CardNum;
+	            }  
+	    }); 
+		
+		String excelName="准考证信息统计.xls";
+		
+		HSSFWorkbook wb=new HSSFWorkbook();
+		HSSFSheet sheet=wb.createSheet("准考证信息统计");
+		sheet.setColumnWidth(0, 8000);  //设置列宽
+		sheet.setColumnWidth(1, 6500);
+		sheet.setColumnWidth(2, 3766);
+		sheet.setColumnWidth(3, 8000);
+		
+		HSSFRow row0=sheet.createRow(0);
+		sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+		
+		row0.setHeightInPoints(30);
+		HSSFCellStyle cellStyle = wb.createCellStyle();
+		cellStyle.setAlignment(CellStyle.ALIGN_CENTER);
+		cellStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);// 垂直居中
+		HSSFFont font=wb.createFont();
+		font.setFontHeightInPoints((short)12);
+		font.setBoldweight(Font.BOLDWEIGHT_BOLD);//粗体显示   
+		cellStyle.setFont(font);
+		HSSFCell cell = row0.createCell(0);
+		cell.setCellValue("准考证信息一览表");
+		cell.setCellStyle(cellStyle);
+		
+		
+		HSSFRow row1 = sheet.createRow(1);
+		setValue0(0, "准考证号", row1, wb);
+		setValue0(1, "准考证名称", row1, wb);
+		setValue0(2, "座位号", row1, wb);
+		setValue0(3, "学生", row1, wb);
+		
+		int i=2;
+		for (ExamCardVo c : list) {
+			HSSFRow row=sheet.createRow(i);
+			setValue(0, c.getExamCard().getCardNum(), row, wb);
+			setValue(1, c.getRoomName(), row, wb);
+			setValue(2, c.getExamCard().getSeatNum(), row, wb);
+			setValue(3, c.getStuName(), row, wb);
+			i++;
+		}
+		OutputStream outputStream=null;
+		try {
+			outputStream=new BufferedOutputStream(response.getOutputStream());
+			response.reset(); 
+			response.setHeader("Content-Disposition",  "attachment;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1" ));
+			response.setContentType("application/octet-stream");
+			wb.write(outputStream);
+			outputStream.flush();
+			response.flushBuffer();
+		} catch (Exception e) {
+			request.setAttribute("flag", "1");
+			e.printStackTrace();
+		}finally {
+			outputStream.close();
+			wb.close();
+		}
+	}
+	
+	/**
+	 * excel设入第一行单元格值及样式
+	 * @param columnIndex
+	 * @param value
+	 * @param row
+	 */
+	private void setValue0(int columnIndex, Object value, HSSFRow row, HSSFWorkbook workbook) {
+		if (value != null) {
+			row.setHeightInPoints(20);
+			HSSFCellStyle cellStyle = workbook.createCellStyle();
+			cellStyle.setAlignment(CellStyle.ALIGN_CENTER);
+			cellStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);// 垂直居中
+			HSSFFont font=workbook.createFont();
+			font.setFontHeightInPoints((short)12);
+			font.setBoldweight(Font.BOLDWEIGHT_BOLD);//粗体显示   
+			cellStyle.setFont(font);
+			HSSFCell cell = row.createCell(columnIndex);
+			cell.setCellValue(value.toString());
+			cell.setCellStyle(cellStyle);
+		}
+	}
+	
+	/**
+	 * excel设入单元格值
+	 * @param columnIndex
+	 * @param value
+	 * @param row
+	 */
+	private void setValue(int columnIndex, Object value, HSSFRow row, HSSFWorkbook workbook) {
+		if (value != null) {
+			HSSFCellStyle cellStyle = workbook.createCellStyle();
+			cellStyle.setAlignment(CellStyle.ALIGN_CENTER);
+			HSSFFont font=workbook.createFont();
+			font.setFontHeightInPoints((short)12);
+			cellStyle.setFont(font);
+			HSSFCell cell = row.createCell(columnIndex);
+			cell.setCellValue(value.toString());
+			cell.setCellStyle(cellStyle);
+		}
+	}
+
+	或 ：
+	/**
+	 * 下载模板文件
+	 * @param classId 班级Id
+	 * @param response
+	 * @param request
+	 * @throws IOException
+	 */
+	@RequestMapping("/downModelExcel")
+	public void exportExcel(String classId,HttpServletResponse response, HttpServletRequest request)
+			throws IOException {   
+		try {
+		List<StudentInfo> studentList = this.studentInfoService.getStudentByClassId(classId);//所在班级的学生信息
+		String realPath = request.getSession().getServletContext().getRealPath("/").replaceFirst(GlobalConstants.PROJECT_NAME, GlobalConstants.PROJECT_FILE_NAME);
+		File stuFile = new File(realPath+"/filesystem/template", "classStudent.xls");
+		InputStream inputStream = new FileInputStream(stuFile.getPath());
+		// 打开excel文件
+		HSSFWorkbook hssfWorkbook = new HSSFWorkbook(inputStream);
+		// 获取excel文件第一个工作簿
+		HSSFSheet sheet = hssfWorkbook.getSheetAt(0);
+		int row = 1;
+		// 循环设值
+		for (StudentInfo student : studentList) {
+			HSSFRow hssfrow = sheet.createRow(row);
+			setValue(0,student.getUser().getUsername(),hssfrow);//登录名
+			setValue(1, student.getName(), hssfrow);//姓名
+			row++;
+		}
+		if (stuFile.exists()) {
+			final String userAgent = request.getHeader("USER-AGENT");
+			//获取班级名
+			String gradeName = BaseCommonDictionarys.getCommonDictionarysName(Byte.toString(this.classInfoService.findById(classId).getGrade()), GlobalConstants.GRADE);
+			String className = gradeName +"（" + this.classInfoService.findById(classId).getClassNum() + "）班";
+			String downFileName = new String(className+"模板文件.xls");
+			 try {  
+				if(StringUtils.contains(userAgent, "Mozilla")){
+					 downFileName=new String(downFileName.getBytes(),"ISO8859-1");
+				 }else{
+		            //若不进行编码在IE下会乱码  
+		            downFileName = URLEncoder.encode(downFileName, "UTF-8");
+				 }
+		        } catch (UnsupportedEncodingException e) {  
+		            e.printStackTrace();  
+		        }
+			 try{
+			 // 清空response  
+	            response.reset();  
+	            response.setContentType("application/msexcel");//设置生成的文件类型  
+	            response.setCharacterEncoding("UTF-8");//设置文件头编码方式和文件名  
+	            response.setHeader("Content-Disposition", "attachment; filename=" +downFileName);//+ new String(downFileName.getBytes("UTF-8"), "ISO8859-1"));  //
+	            OutputStream os=response.getOutputStream();  
+	            hssfWorkbook.write(os);  
+	            os.flush();  
+	            os.close();
+			 }catch(IOException e){
+				 request.setAttribute("flag", "1");
+			 }finally{
+				inputStream.close();
+				hssfWorkbook.close();
+			 }
+		}
+		} catch (Exception e) {
+			request.setAttribute("flag", "1");
+		} 
+		request.setAttribute("flag", "0");
+	}
+	
+	/**
+	 * excel设入单元格值
+	 * 
+	 * @param columnIndex
+	 * @param value
+	 * @param hssfrow
+	 */
+	private void setValue(int columnIndex, Object value, HSSFRow hssfrow) {
+		if (value != null) {
+			HSSFCell hssfcell = hssfrow.createCell(columnIndex);
+			hssfcell.setCellValue(value.toString());
+		}
+	}
+	
+-----------------------------------------------------------------------》》》》ENTER利用键盘回车触发事件《《《---------------------------------------------------------
+var that = this;
+$(document).ready(function () {
+	            jQuery("body").keydown({that: that}, function (event) {
+	                if (event.which == 13) {
+	                	 return that.postBarrage();
+	                }
+	            });
+	        });
+
+-----------------------------------------------------------------------》》》》阻止事件的冒泡《《《-----------------------------------------------------------
+
+一般 ：return false;
+
+//IE：
+window.event.cancelBubble = true;//停止冒泡
+window.event.returnValue = false;//阻止事件的默认行为
+
+//Firefox：
+event.preventDefault();// 取消事件的默认行为  
+event.stopPropagation(); // 阻止事件的传播,注意与event.stopImmediatePropagation()的区别；（注意对于：live()与delegate()绑定的事件失效;）
+
+-----------------------------------------------------------------------》》》》Window对象阶层关系《《《-----------------------------------------------------------
+阶层关系：Window（self）对象→Parent对象→Frame对象→Document对象→Form对象；
+如 ：window.parent.document.form名.xx.value='xxxxx';  
+	window.parent与window.opener的区别 ：如在a分割窗口打开b分割窗口中，在b中使用window.parent（或self.parent）表示获取父级分割窗口a,self代表自身窗口，opener代表打开自身的那个窗口，因此window.opener指的是父级分割窗口a;
+	
+	-----------------------------------------------------------------------》》》》html节点元素转化为字符串《《《-----------------------------------------------------------
+	function nodeToString (node) {  
+	    var tmpNode = document.createElement( "div" );  
+	    tmpNode.appendChild( node.cloneNode( true ) );  
+	    var str = tmpNode.innerHTML;  
+	    tmpNode = node = null; // prevent memory leaks in IE  
+	    return str;  
+ } 
+
+ -----------------------------------------------------------------------》》》》iframe框架高度自适应的问题《《《-----------------------------------------------------------
+ setIframeHeight(document.getElementById('iframepage'));
+ //框架高度自适应
+function setIframeHeight(iframe) {
+	if (iframe) {
+		var iframeWin = iframe.contentWindow
+				|| iframe.contentDocument.parentWindow;
+		if (iframeWin.document.body) {
+			iframe.height = iframeWin.document.documentElement.scrollHeight +30
+					|| iframeWin.document.body.scrollHeight +30;
+			/* iframe.height = Math.max(iframeWin.document.documentElement.scrollHeight
+					,iframeWin.document.body.scrollHeight); */
+		}
+	}
+}
+
+-----------------------------------------------------------------------》》》》判断字符串仅由字母、数字和中文汉字组成（是否包含“_”特殊字符）《《《-----------------------------------------------------------
+ 
+ public static boolean isLetterDigitOrChinese(String str,Boolean flag) {
+		String regex = null;
+		if(flag){//包含
+			regex = "^[\u4e00-\u9fa5_a-zA-Z0-9]+$";
+		}else{//不包含
+			regex = "^[a-z0-9A-Z\u4e00-\u9fa5]+$";
+		}
+		return str.matches(regex);
+	}
+ 
+ -------------------------------------------------------------》》》》判断字符串是否含有中文，若不包含即：仅支持数字、符号和大小写英文组成《《《-----------------------------------------------------------
+ 
+ public static boolean isContainChinese(String str) {
+
+		Pattern p = Pattern.compile("[\u4e00-\u9fa5]");
+		Matcher m = p.matcher(str);
+		if (m.find()) {
+			return true;
+		}
+		return false;
+	}
+ 
+ -------------------------------------------------------------》》》》判断字符串是否含有字母（a-z或A-Z）《《《-----------------------------------------------------------
+ 
+ public static boolean isContainWord(String str) {
+
+		Pattern p = Pattern.compile("[a-zA-Z]");
+		Matcher m = p.matcher(str);
+		if (m.find()) {
+			return true;
+		}
+		return false;
+	}
+ 
+-------------------------------------------------------------》》》》判断字符串只含有字母（a-z或A-Z）,不含有其他字符《《《----------------------------------------------------------- 
+ 
+ public static boolean isOnlyContainWord(String str) {
+		
+		boolean isWord = str.matches("^[a-zA-Z]*");
+//		boolean isWord = str.matches("[a-zA-Z]+");
+		if(isWord){
+			return true;
+		}
+		return false;
+	}
+	
+-------------------------------------------------------------》》》》判断字符串是否包含以下特殊字符《《《----------------------------------------------------------- 	
+	
+	public static boolean isContainSpecialSigns(String str) {
+		String regex = "[`~!@#$%^&*()+=|{}':;',//[//].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";   
+		Pattern p = Pattern.compile(regex); 
+		Matcher m = p.matcher(str);
+		if (m.find()) {
+			return true;
+		}
+		return false;
+	}
+	
+ -------------------------------------------------------------》》》》获取Request对象、Response对象《《《----------------------------------------------------------- 
+ import org.springframework.web.context.request.RequestContextHolder;
+ import org.springframework.web.context.request.ServletRequestAttributes;
+				
+HttpServletRequest request = ((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest();
+HttpServletResponse response = ((ServletWebRequest)RequestContextHolder.getRequestAttributes()).getResponse();
+ 
+ -------------------------------------------------------------》》》》后台代码分页《《《-----------------------------------------------------------------------------   
+
+Model层：
+public class Page {
+    private Integer currentPage;//当前页
+    private int pageSize;//每页显示记录条数
+    private int totalPage;//总页数
+    private List<?> dataList;//每页显示的数据
+    private int star;//开始数据，记录偏移数
+
+    public Integer getCurrentPage() {
+        return currentPage;
+    }
+    public void setCurrentPage(Integer currentPage) {
+        this.currentPage = currentPage;
+    }
+    public int getPageSize() {
+        return pageSize;
+    }
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
+    public int getTotalPage() {
+        return totalPage;
+    }
+    public void setTotalPage(int totalPage) {
+        this.totalPage = totalPage;
+    }
+    public List<?> getDataList() {
+        return dataList;
+    }
+    public void setDataList(List<?> dataList) {
+        this.dataList = dataList;
+    }
+    public int getStar() {
+        return star;
+    }
+    public void setStar(int star) {
+        this.star = star;
+    }
+} 
+控制层：
+@RequestMapping("fenye.do")
+public String fen(Page page,HttpServletRequest request){
+
+try {
+    //查询出的list数据
+    List<Data> showdata=loginService.selectyichall();
+    //刚开始的页面为第一页
+    if (page.getCurrentPage() == null){
+        page.setCurrentPage(1);
+    } else {
+        page.setCurrentPage(page.getCurrentPage());
+    }
+    //设置每页数据为十条
+    page.setPageSize(10);
+    //每页的开始数
+    page.setStar((page.getCurrentPage() - 1) * page.getPageSize());
+    //list的大小
+    int count = showdata.size();
+    //设置总页数
+    page.setTotalPage(count % 10 == 0 ? count / 10 : count / 10 + 1);
+    //对list进行截取
+    page.setDataList(showdata.subList(page.getStar(),count-page.getStar()>page.getPageSize()?page.getStar()+page.getPageSize():count));
+    //设置作用域
+    request.setAttribute("paging", page);               
+    return "add/show.jsp";
+
+} catch (Exception e) {
+    e.printStackTrace();
+    return "mistake.jsp";
+}
+
+}
+ 
+或 ：
+Model层：
+package cn.uetec.bhSelfstudy.common.pages;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 分页查询
+ * @author Lionel
+ * @version uetec_v0.1 2015年1月19日
+ */
+public class PageQuery {
+	
+	/**
+	 * 当前页，从1开始，值为0时表示不分页
+	 */
+	private int page;
+	
+	/**
+	 * 每页记录数
+	 */
+	private int rows;
+	
+	/**
+	 * 记录偏移数
+	 */
+	private int offset;
+	/**
+	 * 结束结束行号 orcle
+	 */
+	private int endNum;
+	
+	public int getEndNum() {
+		endNum=getRows()+getOffset();
+		return endNum;
+	}
+
+	public void setEndNum(int endNum) {
+		this.endNum = endNum;
+	}
+
+	/**
+	 * 简易参数传递
+	 */
+	private Map<String, Object> queryMap;
+	
+	/**
+	 * 查询条件
+	 */
+	private List<QueryCondition> queryConditions;
+	
+	/**
+	 * 是否需要知道记录总数
+	 */
+	private boolean needTotalCount = true;
+	
+	/**
+	 * 排序
+	 */
+	private List<QuerySort> querySorts;
+
+	public int getPage() {
+		return page;
+	}
+
+	public void setPage(int page) {
+		this.page = page;
+	}
+
+	public int getRows() {
+		return rows;
+	}
+
+	public void setRows(int rows) {
+		this.rows = rows;
+	}
+	
+	public Map<String, Object> getQueryMap() {
+		return queryMap;
+	}
+
+	public void setQueryMap(Map<String, Object> queryMap) {
+		this.queryMap = queryMap;
+	}
+
+	public List<QueryCondition> getQueryConditions() {
+		return queryConditions;
+	}
+
+	public void setQueryConditions(List<QueryCondition> queryConditions) {
+		this.queryConditions = queryConditions;
+	}
+
+	
+	public List<QuerySort> getQuerySorts() {
+		return querySorts;
+	}
+
+	public void setQuerySorts(List<QuerySort> querySorts) {
+		this.querySorts = querySorts;
+	}
+	
+	
+	
+	public void addQuerySort(QuerySort querySort){
+		if(this.querySorts == null){
+			this.querySorts = new ArrayList<QuerySort>();
+		}
+		this.querySorts.add(querySort);
+	}
+	
+	public void addQueryCondition(QueryCondition queryCondition){
+		if(this.queryConditions == null){
+			this.queryConditions = new ArrayList<QueryCondition>();
+		}
+		this.queryConditions.add(queryCondition);
+	}
+	
+
+	public int getOffset() {
+		if(page > 0){
+			return (page - 1) * rows;
+		}
+		return offset;
+	}
+	
+	
+	public void setOffset(int offset) {
+		this.offset = offset;
+	}
+
+	public boolean isNeedTotalCount() {
+		return needTotalCount;
+	}
+
+	public void setNeedTotalCount(boolean needTotalCount) {
+		this.needTotalCount = needTotalCount;
+	}
+
+	@Override
+	public String toString() {
+		return "PageQuery [page=" + page + ", rows=" + rows
+				+ ", offset=" + offset + ", queryConditions=" + queryConditions
+				+ ", needTotalCount=" + needTotalCount + ", querySorts="
+				+ querySorts + "]";
+	}	
+
+}
+
+//后台对List<>数据进行分页：
+如：//分页显示，对数据进行截取
+			List<StudentStatictisInfo> studentStatictisInfoList1 = new ArrayList<StudentStatictisInfo>();
+			studentStatictisInfoList1 = studentStatictisInfoList.subList(pageContion.getOffset(),
+					studentStatictisInfoList.size() - pageContion.getOffset() > pageContion.getRows()
+							? pageContion.getOffset() + pageContion.getRows() : studentStatictisInfoList.size());
+
+分页数据封装:List与Long							
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+	如：Pair<List<User>, Long> pair = agencyService.getAllAgent(pageParams);
+    ListResponse<User> response = ListResponse.build(pair.getKey(), pair.getValue());//pair.getKey() 获取List：pair.getValue() 获取Long
+	return ImmutablePair.of(agents, count);
+	
+ -------------------------------------------------------------》》》》java 保留两位小数《《《----------------------------------------------------------- 
+ 如 ：
+ NumberFormat numberFormat= NumberFormat.getNumberInstance();
+ numberFormat.setMaximumFractionDigits(2);
+ numberFormat.format(rightCount/(allCount*1.0);
+ 
+ -------------------------------------------------------------》》》》spring boot 打包方式《《《----------------------------------------------------------- 
+ 使用cmd 打包：
+ 查看maven 版本：C:\Users\Administrator>mvn -version
+ 查看maven 安装路径：echo %M2_HOME% (echo后面接环境变量)
+ 切换盘符 ：cd D:\Program Files\Java\eclip_workspaces\userManage 下一步 D:回车
+ 打包：mvn -Dmaven.test.skip -U clean package -- 意思是跳过单元测试以及更新包进行打包
+       或者（多模块化打包方式）: mvn clean package -DskipTests
+       cd \web\target\ -- 进入jar包文件 ，或（多模块化打包方式）：cd \house-web\target\
+	   dir -- 查看目录
+	   java -jar web-0.0.1-SNAPSHOT.jar -- 启动jar 文件 或（多模块化打包方式）： java -jar house-web-0.0.1-SNAPSHOT.jar （补充：可以已后台方式执行：nohup java -jar house-web-0.0.1-SNAPSHOT.jar &）
+	   cd .. -- 回到根目录
+	   java -jar web-0.0.1-SNAPSHOT.war -- 作为可执行文件执行，也可以放在web容器(tomcat)执行
+
+运行模式3种：IDEA启动，jar/war打包方式，maven中间件启动方式	   
+maven中间件启动方式：mvn spring-boot:run
+启动其他设置的配置（如：application-peer.properties）：mvn spring-boot:run -Dspring.profiles.active=peer
+安装：mvn -Dmaven.test.skip -U clean install -- 对应错误： Could not find artifact com.yuyicheng:persistence:jar:0.0.1-SNAPSHOT in spring-snapshot
+
+-------------------------------------------------------------》》》》Docker 的认识《《《----------------------------------------------------------- 
+
+Docker :特点：集装箱、标准化（运输方式、存储方式、API接口）、隔离
+解决问题：解决运行环境不一致的问题，弹性伸缩
+核心知识：镜像（集装箱）、仓库（超级码头）、容器（运行程序的地方,一个进程）  build ship run
+镜像中心：https://hub.docker.com/explore/  c.163.com
+docker 安装：官网下载 http://get.daocloud.io/
+查看： docker info
+		docker version
+docker 镜像：docker pull [OPTIONS] NAME[:TAG] 下载镜像：docker pull hello-world 
+             docker images [OPTIONS][REPOSITORY[:TAG]] 查看所有镜像
+			 运行镜像： docker run [OPTIONS]IMAGE[:TAG][COMMAND][ARG...]   docker run hello-world 
+docker 运行nginx(web服务器)
+		docker pull hub.c.163.com/library/nginx:latest  
+		docker run hub.c.163.com/library/nginx:latest  (前台) 没有效果
+		查看运行的容器：docker ps
+		docker stop f 停止运行的容器(f为容器Id首字母)
+		control+c 停止镜像运行(前台)
+		docker run -d hub.c.163.com/library/nginx:latest  (后台)
+	docker run --help 查看帮助
+	查看容器：docker exec --help 查看帮助
+	docker exec -it f4 bash 查看linux底层容器内容，使用ls 查看目录，ps -ef 查看内容，exit退出容器
+	docker 网络：bridge模式(独立的IP与端口，与主机进行映射)/host模式(共享主机上的IP与端口)
+	映射端口：docker run -d -p 8080:80 hub.c.163.com/library/nginx
+				docker run -d -P hub.c.163.com/library/nginx (主机开放一个随机端口，映射到ngnix上)
+	检查端口：netstat -na|grep 8080
+制作镜像：vi Dockerfile回车进入制作镜像界面
+	from hub.c.163.com/library/tomcat -- web容器镜像
+	MAINTAINER yuyicheng 2317774857@qq.com -- 联系方式
+	COPY jPress.war /usr/local/tomcat/webapps
+	：wq
+    下载tomcat镜像：docker pull hub.c.163.com/library/tomcat:latest 
+	mv jpress-web-newest.war jPress.war 修改名称
+docker build -t jpress:latest . --当前目录 
+docker run -d -p 8888:8080 jpress
+下载mysql镜像：docker pull hub.c.163.com/library/mysql:latest  
+	docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWARD =000000  -e MYSQL_DATABASE=jpress hub.c.163.com/library/mysql:latest  
+docker restart containerId
+
+-------------------------------------------------------------》》》》log日志控制台显示《《《----------------------------------------------------------- 
+import org.apache.log4j.Logger;
+public static Logger log = Logger.getLogger(ThirdController.class);
+log.info("");
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+private static final Logger logger = LoggerFactory.getLogger(ThirdController.class);
+logger.info("obj={}",obj.toString());
+
+-------------------------------------------------------------》》》》JS文件中获取项目根目录《《《----------------------------------------------------------- 
+//项目根目录
+function getRootPath() {  
+    var pathName = window.location.pathname.substring(1);  
+    var webName = pathName == '' ? '' : pathName.substring(0, pathName.indexOf('/'));  
+    return window.location.protocol + '//' + window.location.host + '/' + webName + '/';  
+} 
+			 
+-------------------------------------------------------------》》》》Spring 工具方法《《《----------------------------------------------------------- 
+ //将一个对象的值，拷贝到另外一个对象
+ BeanUtils.copyProperties(source, target);//如：BeanUtils.copyProperties(productInfo, productInfoVO);
+ //判断集合List是否为空
+ CollectionUtils.isEmpty(list);
+ 
+ -------------------------------------------------------------》》》》div区域超出指定高度出现滚动条设置《《《----------------------------------------------------------- 
+
+ #page2_jPanel2{
+  left: 6px;
+  top: 100px;
+ /*width: 455px; */
+  min-height:450px;
+  max-height:450px;
+  overflow:auto;
+  /* overflow-X:hidden;
+  overflow-Y:scroll; */
+  height:450px;
+}
+
+-------------------------------------------------------》》》》google.guava谷歌提供的工具类总结《《《----------------------------------------------------------- 
+集合类：
+import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
+如 ：Map<String, String> map = Maps.newHashMap();
+     Lists.newArrayList(E... elements);
+对象常量映射Map:
+private static final ImmutableMap<Object, RestCode> MAP = ImmutableMap.<Object, RestCode>builder()
+			.put(IllegalParamsException.Type.WRONG_PAGE_NUM,RestCode.WRONG_PAGE)
+            .put(IllegalStateException.class,RestCode.UNKNOWN_ERROR)
+	        .put(UserException.Type.USER_NOT_LOGIN,RestCode.TOKEN_INVALID)
+	        .put(UserException.Type.USER_NOT_FOUND,RestCode.USER_NOT_EXIST)
+	        .put(UserException.Type.USER_AUTH_FAIL,RestCode.USER_NOT_EXIST).build();
+或：
+Map<Integer, String> INTEGER_STRING_MAP =
+            new ImmutableMap.Builder<Integer, String>().
+                    put(30, "IP地址或地址段").
+                    put(31, "端口号或范围").
+                    put(32, "IP地址或地址段").
+                    put(33, "端口号或范围").
+                    put(34, "代码值").
+                    put(38, "探针名称").
+                    put(39, "网络协议号(protocol)").
+                    put(40, "ipv6源IP(ipv6_src_addr)").
+                    put(41, "ipv6目标IP(ipv6_dst_addr)").
+                    put(42, "网络协议名称(protocol_map)").
+                    put(43, "输入接口snmp(input_snmp)")
+                    .build();
+使用：
+Integer key = 30;
+System.out.println("key = " + key + "的提示语是：" + INTEGER_STRING_MAP.get(key));
+如：
+ImmutableMap.of("email", user.getEmail(), "name", user.getName(),"ts",Instant.now().getEpochSecond()+"");
+多值Map:
+import org.springframework.util.MultiValueMap;//一个key对应多个value
+排序类：
+import com.google.common.collect.Ordering;
+ List<House> houses = houseService.queryAndSetImg(query, PageParams.build(size, 1));
+ final List<Long> order = list;
+ Ordering<House> houseSort = Ordering.natural().onResultOf(hs -> {
+      return order.indexOf(hs.getId());
+    });
+   houseSort.sortedCopy(houses);
+   
+又如：Ordering<ClassInfo> classInfoSort = Ordering.from((o1,o2) -> {
+		      return Integer.compare(new Integer(o1.getClassName()), new Integer(o2.getClassName()));
+		    });
+		 return classInfoSort.sortedCopy(list);
+拼接类：
+import com.google.common.base.Joiner;
+如 ：Joiner.on("&").useForNull("").withKeyValueSeparator("=").join(map);
+	 Joiner.on(",").join(list);	
+分割方法：
+import com.google.common.base.Splitter;
+Splitter.on(",").splitToList(List list);
+判断是否相等：
+import com.google.common.base.Objects;
+如 ： if (Objects.equal(password, confirmPassword)) { }
+哈希工具类：（MD5加盐算法）
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+	private static final HashFunction FUNCTION = Hashing.md5();
+	private static final String SALT = "mooc.com";
+	HashCode hashCode = FUNCTION.hashString(password+SALT, Charset.forName("UTF-8"));	
+字符串工具类：
+import com.google.common.base.Strings;	
+1，判断非空
+	Strings.isNullOrEmpty();
+2，字符串截取
+    StringUtils.substringAfterLast(localFile.getAbsolutePath(), filePath);
+3，guava缓存技术
+import com.google.common.cache.Cache;
+例如：
+private final Cache<String, String> registerCache =
+      CacheBuilder.newBuilder().maximumSize(100).expireAfterAccess(15, TimeUnit.MINUTES)
+          .removalListener(new RemovalListener<String, String>() {
+
+            @Override
+            public void onRemoval(RemovalNotification<String, String> notification) {//通知
+              String email = notification.getValue();
+              User user = new User();
+              user.setEmail(email);
+              List<User> targetUser = userMapper.selectUsersByQuery(user);
+              if (!targetUser.isEmpty() && Objects.equal(targetUser.get(0).getEnable(), 0)) {
+                userMapper.delete(email);// 代码优化: 在删除前首先判断用户是否已经被激活，对于未激活的用户进行移除操作
+              }
+
+            }	
+          }).build();
+//存值
+registerCache.put(randomKey, email);		  
+//失效
+registerCache.invalidate(key);
+apache提供的方法：
+1，获取随机字符
+RandomStringUtils.randomAlphabetic(10);//10位随机字符
+RandomStringUtils.random(6,true,true);//参数1表示长度，参数2表示是否包含字母，参数3表示是否包含数字
+2，判断集合是否为空
+import org.apache.commons.collections.CollectionUtils;
+CollectionUtils.isNotEmpty(list);//判断集合是否为空
+!list.isEmpty()//判断list是否为空
+参考 ： apache commonUtils公用工具类
+https://blog.csdn.net/u013510614/article/details/50481000
+
+-------------------------------------------------------》》》》nginx指令《《《----------------------------------------------------------- 
+验证配置是否正确: nginx -t
+
+查看Nginx的版本号：nginx -V
+
+启动Nginx：start nginx 或nginx.exe
+
+快速停止或关闭Nginx：nginx -s stop
+
+正常停止或关闭Nginx：nginx -s quit
+
+配置文件修改重装载命令：nginx -s reload
+
+重新打开日志文件：nginx -s reopen 
+显示nginx在系统中的进程: tasklist /fi "imagename eq nginx.exe"
+
+可以使用正则：
+“~” 匹配时区分大小写
+“~*” 匹配时不区分大小写
+“=” 精确匹配字符和字符串
+“^~” 例如： ^~ /images/ 匹配到任何以images开头的，便停止搜索。
+location ~ ^/(images|javascript|js|css|flash|media|static)/ { #请求的根文档 root E:\svn\web; #过期时间 expires 30d; } ，访问：http://localhost:80/css/detail.css，即：E:\svn\web\css\detail.css
+
+ -------------------------------------------------------》》》》FreeMarker模板引擎《《《----------------------------------------------------------- 
+ 1，判断对象非空
+ <#if object??>object对象不为空（即object存在）</#if> 或 ：<#if object?exists>object对象不为空</#if>
+ 2，指定格式显示数据
+ <#if str??>${str?string}</#if><#--将str以字符串形式显示-->
+ ${nowDate?time}<#--将现有时间以时间的格式显示，显示结果如：15:13:05-->
+ 3，判断是否相等
+ <#if (vo.sort) == "price_asc"> selected </#if>   <#if (vo.type)?? && (vo.type)==1> selected </#if>
+ 4，获取集合数据
+ <#list ps.list as house> <figure class="tag status">${house.typeStr}</figure> </#list>
+ 5，设置默认值空
+ <input type="text" value="${(vo.sort)!}" name=sort hidden="true">
+ 
+ -------------------------------------------------------》》》》Enum类的几种实现形式《《《----------------------------------------------------------- 
+ 形式一：(房屋用户枚举用例)
+ public enum HouseUserType {
+
+	SALE(1),BOOKMARK(2);//1：-表示售卖；2：收藏
+	
+	public final Integer value;
+	
+	private HouseUserType(Integer value){
+		this.value = value;
+	}
+}
+使用方式：HouseUserType.BOOKMARK.value;
+ 形式二：（支付状态枚举用例）
+@Getter
+public enum PayStatusEnum implements CodeEnum {
+
+    WAIT(0, "等待支付"),
+    SUCCESS(1, "支付成功"),
+
+    ;
+
+    private Integer code;
+
+    private String message;
+
+    PayStatusEnum(Integer code, String message) {
+        this.code = code;
+        this.message = message;
+    }
+}
+
+public interface CodeEnum {
+    Integer getCode();
+}
+
+public class EnumUtil {
+
+    public static <T extends CodeEnum> T getByCode(Integer code, Class<T> enumClass) {
+        for (T each: enumClass.getEnumConstants()) {
+            if (code.equals(each.getCode())) {
+                return each;
+            }
+        }
+        return null;
+    }
+}
+ 
+ -------------------------------------------------------》》》》文件上传的几种方式总结《《《----------------------------------------------------------- 
+ 
+ 方式一：
+ /**
+	 * 获取图片资源路径，相对路径
+	 * @param files
+	 * @return
+	 */
+	public List<String> getImgPaths(List<MultipartFile> files) {
+	    if (Strings.isNullOrEmpty(filePath)) {
+			filePath = getResourcePath();
+        }
+		List<String> paths = Lists.newArrayList();
+		files.forEach(file -> {
+			File localFile = null;
+			if (!file.isEmpty()) {
+				try {
+					localFile =  saveToLocal(file, filePath);
+					String path = StringUtils.substringAfterLast(StringUtils.replace(localFile.getAbsolutePath(), "\\", "/"), filePath);
+					paths.add(path);
+				} catch (IOException e) {
+					throw new IllegalArgumentException(e);
+				}
+			}
+		});
+		return paths;
+	}
+	
+	/**
+	 * 获取项目资源路径
+	 * @return
+	 */
+	public static String getResourcePath(){
+	  File file = new File(".");
+	  String absolutePath = file.getAbsolutePath();
+	  return absolutePath;
+	}
+
+	/**
+	 * 保存到本地
+	 * @param file
+	 * @param filePath2
+	 * @return
+	 * @throws IOException
+	 */
+	private File saveToLocal(MultipartFile file, String filePath2) throws IOException {
+		DateTimeFormatter dtf2 = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+		LocalDateTime ldt = LocalDateTime.now();
+		File newFile = new File(filePath + "/" + dtf2.format(ldt) +"/"+file.getOriginalFilename());
+		//File newFile = new File(filePath + "/" + Instant.now().getEpochSecond() +"/"+file.getOriginalFilename());
+	 if (!newFile.exists()) {
+		 newFile.getParentFile().mkdirs();
+		 newFile.createNewFile();
+	 }
+	 Files.write(file.getBytes(), newFile);
+     return newFile;
+	}
+	
+	方式二：
+	
+	/**
+	 * 上传图片
+	 * @param image
+	 * @param imageFileName
+	 * @param uploadPath
+	 * @param realUploadPath
+	 * @return 图片的相对路径
+	 */
+	@SuppressWarnings("unused")
+	public String uploadImageSys(HttpServletRequest request,MultipartFile Filedata){
+		String goBackPath = "";
+		InputStream is = null;	//输入流
+		OutputStream os = null;	//输出流
+			try {
+				is =Filedata.getInputStream();	//获取输入流对象，指向上传图片对象
+				// 文件保存路径
+				String dataFileName = new SimpleDateFormat("yyyyMMdd").format(new Date(System.currentTimeMillis()));
+				String randFileName = UUID.randomUUID().toString();
+				String originalFilename = Filedata.getOriginalFilename();
+				// 文件后缀名
+				String suffix = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();// .jpg
+				String filePath = request.getSession().getServletContext().getRealPath("/")
+						.replaceFirst(GlobalConstants.PROJECT_NAME, GlobalConstants.PROJECT_FILE_NAME);
+				filePath += "/thumbnail/upload/" + dataFileName + "/";
+				File file = new File(filePath);
+				// 判断路径是否存在
+				if (!file.exists())
+					file.mkdirs();
+				String fileAllPath = filePath + randFileName + suffix;
+				String realUploadPath = filePath;
+				String imageFileName = randFileName + suffix;
+				os = new FileOutputStream(realUploadPath+"/"+imageFileName);	//创建输出流对象，指向最终要保存的目标文件对象
+				byte[] buffer = new byte[1024];		
+				int len = 0;
+				while((len = is.read(buffer))>0){
+					os.write(buffer);
+				}
+				goBackPath = dataFileName + "/" + randFileName + suffix;
+				goBackPath = "thumbnail/upload/" + goBackPath;
+			} catch (Exception e) {
+				e.printStackTrace();
+			}finally{
+				if(is!=null){
+					try{
+						is.close();	//关闭输入流
+					}catch(Exception e2){
+						e2.printStackTrace();
+					}
+				}
+				if(os!=null){
+					try{
+						os.close();	//关闭输出流
+					}catch(Exception e2){
+						e2.printStackTrace();
+					}
+				}
+				
+			}
+		return goBackPath;//相对路径
+	}
+	
+	public String uploadImage(HttpServletRequest request, MultipartFile Filedata) {
+		String goBackPath = "";
+			try {
+				// 文件保存路径
+				String dataFileName = new SimpleDateFormat("yyyyMMdd").format(new Date(System.currentTimeMillis()));
+				System.out.println("dataFileName=" + dataFileName);
+				String randFileName = UUID.randomUUID().toString();
+				String originalFilename = Filedata.getOriginalFilename();
+				// 文件后缀名
+				String suffix = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();// .jpg
+				String filePath = request.getSession().getServletContext().getRealPath("/")
+						.replaceFirst(GlobalConstants.PROJECT_NAME, GlobalConstants.PROJECT_FILE_NAME);
+				filePath += "/thumbnail/upload/" + dataFileName + "/";
+				File file = new File(filePath);
+				// 判断路径是否存在
+				if (!file.exists())
+					file.mkdirs();
+				String fileAllPath = filePath + randFileName + suffix;
+				Filedata.transferTo(new File(fileAllPath));//保存目录
+				FileInputStream fi = null;
+				FileChannel in = null;
+				fi = new FileInputStream(new File(fileAllPath));
+				in = fi.getChannel();// 得到对应的文件通道
+				fi.close();
+				in.close();
+				// 转存文件
+				goBackPath = dataFileName + "/" + randFileName + suffix;
+				goBackPath = "thumbnail/upload/" + goBackPath;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		return goBackPath;
+	}
+	
+	视频转码：参考班牌项目classcard/src/cn/uetec/classcard/func/office/service/TNewsInfoService.java （学校空间上传视频转码）
+	
+---------------------------------------------------------------- Redis相关操作 	------------------------------------------------------------------------------------------
+
+1 sortedSet 列表的操作 ：
+	新增 ：zadd myzset 1 "1" 
+	       zadd myzset 2 "2" ...  zadd myzset 7 "7"
+    查看范围 ： zrange myzset 0 -1 -- 0:表示第一个元素，-1表示最后一个元素
+	            zrange myzset 0 -1 withscores -- 显示分数
+                ZREVRANGE myzset 0 -1 （降序）
+				
+	删除 ： zremrangebyrank	myzset 0 -3 （删除5个，保留最高2位）
+			ZREVRANGE myzset 0 -1 （结果“7” “6”）	 
+ 
