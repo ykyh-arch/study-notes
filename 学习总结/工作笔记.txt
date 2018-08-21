@@ -3047,3 +3047,7 @@ public class EnumUtil {
 	删除 ： zremrangebyrank	myzset 0 -3 （删除5个，保留最高2位）
 			ZREVRANGE myzset 0 -1 （结果“7” “6”）	 
  
+ 
+ ---------------------------------------------------------------- natapp 内网穿透配置 	------------------------------------------------------------------------------------------
+ 在natapp目录下启动natapp.exe文件进入cmd命令界面，输入以下配置:
+ natapp -authtoken=yourtoken(如：eb0bf9d449048d04)--得到如： http://hxb5hk.natappfree.cc
