@@ -1,0 +1,112 @@
+--------------------------------------------- AngularJS 使用 ---------------------------------------------------------
+说明 ：AngularJS通过新的属性和表达式扩展了HTML，可以构建一个单一页面应用程序（SPAs：Single Page Applications）。
+使用引入：<script src="https://cdn.bootcss.com/angular.js/1.4.6/angular.min.js"></script>
+简介：
+AngularJS 是一个 JavaScript 框架。它可通过 <script> 标签添加到 HTML 页面。
+AngularJS 通过 指令扩展了HTML，且通过表达式绑定数据到HTML。
+指定：
+1、ng-app=" "  -- 定义angularJS的使用范围；指令定义一个 AngularJS 应用程序；
+2、ng-init="变量=值;变量='值'"  初始化变量的值，有多个变量时，中间用分号隔开；使用控制器或模块初始化数据是更好的方式
+3、ng-model="变量"  定义变量名；用于绑定应用程序数据到HTML控制器(input,select,textarea)的值
+4、ng-bind="变量"  绑定变量名，获取该变量的数据。这里的变量就是第3条的变量名。但是一般都用双重花括号（表达式）来获取变量的值，比如：{{变量}}。
+5、ng-repeat 指令会重复一个HTML元素：
+6、自定义指令，使用 .directive 函数来添加自定义的指令
+实例：
+<body ng-app="myApp">
+<runoob-directive></runoob-directive>
+<script>
+var app = angular.module("myApp", []);
+app.directive("runoobDirective", function() {
+    return {
+        template : "<h1>自定义指令!</h1>"
+    };
+});
+</script>
+</body>
+调用：元素名E、属性A、类名C、注释M
+限制使用restrict ：详情：https://www.runoob.com/angularjs/angularjs-directives.html
+应用：
+模块定义应用:
+var app = angular.module('myApp', []);
+控制器控制应用：
+app.controller('myCtrl', function($scope) {
+    $scope.firstName= "John";
+    $scope.lastName= "Doe";
+});
+表达式：类似于JavaScript 表达式：它们可以包含文字、运算符和变量。使用效果与ng-bind的相同
+不同点：
+与 JavaScript 表达式不同，AngularJS 表达式可以写在HTML中。
+与 JavaScript 表达式不同，AngularJS 表达式不支持条件判断，循环及异常。
+与 JavaScript 表达式不同，AngularJS 表达式支持过滤器。
+模型：ng-model 指令用于绑定应用程序数据到HTML控制器(input, select, textarea)的值
+作用域：
+说明- Scope应用在HTML(视图)和JavaScript(控制器)之间的纽带。
+	  Scope 是一个对象，有可用的方法和属性。
+      Scope 可应用在视图和控制器上。
+AngularJS 应用组成如下：
+View(视图), 即 HTML。
+Model(模型), 当前视图中可用的数据。
+Controller(控制器), 即 JavaScript 函数，可以添加或修改属性
+控制器：
+ 控制器 控制AngularJS应用程序的数据
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
