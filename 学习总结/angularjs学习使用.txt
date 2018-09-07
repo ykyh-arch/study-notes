@@ -23,6 +23,10 @@ app.directive("runoobDirective", function() {
 });
 </script>
 </body>
+7、ng-option 指令来创建一个下拉列表
+8、ng-disabled
+9、ng-if
+10、ng-show 
 调用：元素名E、属性A、类名C、注释M
 限制使用restrict ：详情：https://www.runoob.com/angularjs/angularjs-directives.html
 应用：
@@ -45,14 +49,60 @@ app.controller('myCtrl', function($scope) {
       Scope 可应用在视图和控制器上。
 AngularJS 应用组成如下：
 View(视图), 即 HTML。
-Model(模型), 当前视图中可用的数据。
-Controller(控制器), 即 JavaScript 函数，可以添加或修改属性
+Model(模型), 当前视图中可用的数据的绑定。
+Controller(控制器), 即JavaScript函数，可以添加或修改属性
 控制器：
- 控制器 控制AngularJS应用程序的数据
+ 控制器 控制AngularJS应用程序的数据，是 JavaScript 对象，可以有自己的属性和方法
+过滤器：
+过滤器可以使用一个管道字符（|）添加到表达式和指令中
+自定义过滤器，如：
+<script>
+var app = angular.module('myApp', []);
+app.controller('myCtrl', function($scope) {
+    $scope.msg = "Runoob";
+});
+app.filter('reverse', function() { //可以注入依赖
+    return function(text) {
+        return text.split("").reverse().join("");
+    }
+});
+</script>
+服务：服务是一个函数或对象，可在你的 AngularJS 应用中使用（指令与表达式中使用），内建了30 多个服务，参考：https://www.runoob.com/angularjs/angularjs-services.html
+$location：获取当前页面的URL；
+$http：发起请求；
+...
 
-
-
-
+请求：读取远程服务器的数据
+$http({
+    method: 'GET',//请求方式
+    url: '/someUrl'
+}).then(function successCallback(response) {
+        // 请求成功执行代码
+    }, function errorCallback(response) {
+        // 请求失败执行代码
+});
+简化形式：
+$http.get('/someUrl', config).then(successCallback, errorCallback);
+$http.post('/someUrl', data, config).then(successCallback, errorCallback);
+选择框：AngularJS 可以使用数组或对象创建一个下拉列表选项
+ng-options 的选项是一个对象， ng-repeat 是一个字符串
+表格：
+ng-repeat 指令可以完美的显示表格
+SQL：读取数据库中的数据
+HTML DOM ：AngularJS 为 HTML DOM 元素的属性提供了绑定应用数据的指令
+事件指定：
+1、ng-click 点击事件
+2、ng-hide 指令用于设置应用部分是否可见
+3、ng-show
+模块：
+模块定义了一个应用程序。
+模块是应用程序中不同部分的容器。
+模块是应用控制器的容器。
+控制器通常属于一个模块。
+var app = angular.module("myApp", []); //在模块定义中 [] 参数用于定义模块的依赖关系。中括号[]表示该模块没有依赖，如果有依赖的话会在中括号写上依赖的模块名字。
+表单:
+表单是输入控件的集合
+HTML 控件 ：input 元素 、select 元素、button 元素、textarea 元素
 
 
 
