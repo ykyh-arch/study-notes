@@ -27,6 +27,7 @@ app.directive("runoobDirective", function() {
 8、ng-disabled
 9、ng-if
 10、ng-show 
+11、ng-switch="变量名" ng-switch-when="值"
 调用：元素名E、属性A、类名C、注释M
 限制使用restrict ：详情：https://www.runoob.com/angularjs/angularjs-directives.html
 应用：
@@ -103,10 +104,12 @@ var app = angular.module("myApp", []); //在模块定义中 [] 参数用于定�
 表单:
 表单是输入控件的集合
 HTML 控件 ：input 元素 、select 元素、button 元素、textarea 元素
-
-
-
-
+HTML 表单
+输入验证：可以对HTML 控件和HTML 表单进行验证
+AngularJS API：API 意为 Application Programming Interface（应用程序编程接口）
+全局 API： 全局 API函数使用 angular 对象进行访问
+angular.$$lowercase()、angular.$$uppercase()...
+Bootstrap的使用，AngularJS 的首选样式表是 Twitter Bootstrap， Twitter Bootstrap 是目前最受欢迎的前端框架
 
 
 
