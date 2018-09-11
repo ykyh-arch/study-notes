@@ -110,10 +110,21 @@ AngularJS API：API 意为 Application Programming Interface（应用程序编�
 全局 API： 全局 API函数使用 angular 对象进行访问
 angular.$$lowercase()、angular.$$uppercase()...
 Bootstrap的使用，AngularJS 的首选样式表是 Twitter Bootstrap， Twitter Bootstrap 是目前最受欢迎的前端框架
+包含：在 AngularJS 中，可以在 HTML 中包含 HTML 文件，使用：ng-include
+动画：AngularJS 提供了动画效果，可以配合 CSS 使用。
+	  使用动画需要引入 angular-animate.min.js 库 <script src="http://cdn.static.runoob.com/libs/angular.js/1.4.6/angular-animate.min.js"></script>
+      <body ng-app="ngAnimate">
+	  ngAnimate 会监测事件，ngAnimate模型可以添加或移除 class
+AngularJS 依赖注入：依赖注入（Dependency Injection，简称DI）是一种软件设计模式，在这种模式下，一个或更多的依赖（或服务）被注入（或者通过引用传递）到一个独立的对象（或客户端）中，然后成为了该客户端状态的一部分。
+		  一句话 --- 没事你不要来找我，有事我会去找你
+		  AngularJS 提供很好的依赖注入机制。以下5个核心组件用来作为依赖注入：value、factory、service、provider、constant
 
-
-
-
+value 是一个简单的 javascript 对象，用于向控制器传递值（配置阶段）
+factory 是一个函数用于返回值。在 service 和 controller 需要时创建，通常我们使用 factory 函数来计算或返回值。
+AngularJS 中通过 provider 创建一个 service、factory等(配置阶段)。provider 中提供了一个 factory 方法 get()，它用于返回 value/service/factory
+constant(常量)用来在配置阶段传递数值，注意这个常量在配置阶段是不可用的
+AngularJS 路由 :AngularJS 路由允许我们通过不同的 URL 访问不同的内容,通过 AngularJS 可以实现多视图的单页 Web 应用（single page web application，SPA）
+通常我们的 URL 形式为 http://runoob.com/first/page，但在单页 Web 应用中 AngularJS 通过 #! + 标记 实现
 
 
 

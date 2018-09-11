@@ -14,7 +14,7 @@ Ping++ 账户：you.peng@uetec.cn
 APP密钥：3GTaKPrSfro4dMSqSqWvePrxWt21yROG，对应商户号为：1323104201
 应用appSecrect：234a60408ba57c5482fb21fc8e7fe699
 
-逸学派微信app支付商户号：
+在线课堂微信app支付商户号：
 账号：1420528002@1420528002
 密码：352382
 预留信息： Uetec123
@@ -25,3 +25,11 @@ APP密钥：anx0lxcuxr3d00bm4m5bg2kfnumbntkc，对应商户号为：1420528002
 容联云：
 账号：18512547606
 密码：uetec123
+
+逸学派
+账号：1514379791@1514379791 
+密码：Uetec123@
+预留信息： 
+APPID: wx7c9922e981a2ce7e
+商户号：1514379791  
+APP密钥：65antg8qna7iu9nbavowin9syx9yztca，对应商户号为：1514379791
