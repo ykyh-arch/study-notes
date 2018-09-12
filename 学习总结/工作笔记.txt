@@ -2737,6 +2737,29 @@ import com.google.common.collect.Ordering;
 		      return Integer.compare(new Integer(o1.getClassName()), new Integer(o2.getClassName()));
 		    });
 		 return classInfoSort.sortedCopy(list);
+		 
+又如：利用lambda 表达式：
+list.stream()
+			.sorted((x, y) -> {
+				if(x.getAge() == y.getAge()){
+					return x.getName().compareTo(y.getName());
+				}else{
+					return Integer.compare(x.getAge(), y.getAge());
+				}
+			}).collect(Collectors.toList());
+
+Collections.sort(emps, (e1, e2) -> {
+			if(e1.getAge() == e2.getAge()){
+					return e1.getName().compareTo(e2.getName());
+			}else{
+				return -Integer.compare(e1.getAge(), e2.getAge());
+			}
+		});
+		
+		for (Employee emp : emps) {
+			System.out.println(emp);
+		}					  
+		 
 拼接类：
 import com.google.common.base.Joiner;
 如 ：Joiner.on("&").useForNull("").withKeyValueSeparator("=").join(map);
