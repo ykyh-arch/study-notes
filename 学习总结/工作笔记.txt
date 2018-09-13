@@ -2878,6 +2878,35 @@ collect¡ª¡ª½«Á÷×ª»»ÎªÆäËûĞÎÊ½¡£½ÓÊÕÒ»¸ö Collector½Ó¿ÚµÄÊµÏÖ£¬ÓÃÓÚ¸øStreamÖĞÔªËØ×
 */
 Lambda±í´ïÊ½Óëstream apiÊµÀıµÄ²Î¿¼£º/java8-day02/src/com/atguigu/exer/TestTransaction.java
                                     /java8-day01/src/com/atguigu/exer/TestLambda.java
+								
+java8½Ó¿ÚĞÂÔö·½·¨£º
+½Ó¿ÚÖĞÔö¼ÓÁËÄ¬ÈÏ·½·¨ºÍ¾²Ì¬·½·¨£»Èç£º
+public interface MyInterface {
+	
+	//Ä¬ÈÏ·½·¨
+	default String getName(){
+		return "ºÇºÇºÇ";
+	}
+	
+	//¾²Ì¬·½·¨
+	public static void show(){
+		System.out.println("½Ó¿ÚÖĞµÄ¾²Ì¬·½·¨");
+	}
+
+}
+
+Ê¹ÓÃ£º
+public class SubClass /*extends MyClass*/ implements MyFun, MyInterface{
+
+	@Override
+	public String getName() {
+	    //Ö¸Ã÷µ÷ÓÃµÄ½Ó¿Ú
+		return MyInterface.super.getName();
+	}
+
+}
+//¾²Ì¬·½·¨µÄµ÷ÓÃ£º//½Ó¿ÚÃû.¾²Ì¬·½·¨
+	MyInterface.show();
 
 -------------------------------------------------------¡·¡·¡·¡·nginxÖ¸Áî¡¶¡¶¡¶----------------------------------------------------------- 
 ÑéÖ¤ÅäÖÃÊÇ·ñÕıÈ·: nginx -t
@@ -3247,8 +3276,11 @@ import cn.uetec.online.func.base.web.BaseController;
 		return new Response<Object>(CommonReturnCode.FAILURE, "»ñÈ¡»ı·Ö¹æÔòÄÚÈİÊ§°Ü");
 	}
  
- 
- 
+ ---------------------------------------------------------------- ¼ì²â¶Ë¿ÚºÍ·şÎñÆ÷ ------------------------------------------------------------------------------------------
+1.ping ip;   ¼ì²â·şÎñµØÖ·ÊÇ·ñÏàÍ¨
+2.telnet ip ¶Ë¿ÚºÅ£»¼ì²â¶Ë¿ÚºÅÊÇ·ñ´ò¿ª
+3.netstat -anp tcp;²é¿´µ±Ç°Ö÷»útcp¿ª·ÅµÄ¶Ë¿Ú
+4.ipconfig ²é¿´µ±Ç°µÄ·şÎñÆ÷ipµØÖ·
  
  
  
