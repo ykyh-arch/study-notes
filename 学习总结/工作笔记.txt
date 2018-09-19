@@ -3275,6 +3275,74 @@ import cn.uetec.online.func.base.web.BaseController;
 		}
 		return new Response<Object>(CommonReturnCode.FAILURE, "获取积分规则内容失败");
 	}
+	
+	参考：https://www.cnblogs.com/lan0725/archive/2009/12/14/1873854.html  使用ResourceBundle读取配置文件
+	Java中的ResourceBundle类可以对这种形式（ key名=value值，.properties的文件）的文件加以处理，
+	资源文件样式如：
+	#数据库配置信息
+	DRIVER=com.mysql.jdbc.Driver
+	URL=jdbc:mysql://localhost:3306/cns
+	user=test
+	password=test
+	使用ResourceBundle类处理如下：
+	package Forum;
+	import java.util.*;
+ 
+public class RedProFile {
+	 public static void main(String[] a){
+	String resourceFile = "Forum.CNS";    
+//	        创建一个默认的ResourceBundle对象   
+//	        ResourceBundle会查找包Forum下的CNS.properties的文件   
+//	        Forum是资源的包名，它跟普通java类的命名规则完全一样：   
+//	        - 区分大小写   
+//	        - 扩展名 .properties 省略。就像对于类可以省略掉 .class扩展名一样   
+//	        - 资源文件必须位于指定包的路径之下（位于所指定的classpath中）   
+//            假如你是在非Web项目中使用，则一定要写资源文件的路径，也就是包路径必须存在。
+//            如果是Web项目，不写包路径可以，此时将资源文件放在WEB-INF\classes\目录下就可以。
+	ResourceBundle rb = ResourceBundle.getBundle(resourceFile);
+	System.out.println(rb.getString("DRIVER"));//这里是分大小写的，输出值为jdbc:mysql://localhost:3306/cns
+	 }
+}
+
+配置文件一般需要在web项目启动后就自动加载.
+使用ResourceBundle类读取文件时，可以配合监听器一起使用，需要在web.xml中作相应的配置，如：<listener>
+																							 <listener-class>cn.org.j2ee.wechat.listener.InitContextListener</listener-class>
+																						 </listener>
+java文件,如：
+public class InitContextListener implements ServletContextListener {
+	
+	@Override
+	public void contextInitialized(ServletContextEvent arg0) {
+		//初始化微信上下文
+		InitWeChatContext();
+	}
+
+	private void InitWeChatContext() {
+		ResourceBundle wb = ResourceBundle.getBundle("wechat");
+		WeChatContext.getInstance().setAppId(wb.getString("appID"));
+		WeChatContext.getInstance().setAppSecrct(wb.getString("appSecrct"));
+		WeChatContext.getInstance().setValidateUrl(wb.getString("validateUrl"));
+		WeChatContext.getInstance().setToken(wb.getString("WeChatToken"));
+		WeChatContext.getInstance().setTemplateId(wb.getString("TemplateId"));
+	}
+
+	@Override
+	public void contextDestroyed(ServletContextEvent arg0) {
+		
+	}
+}
+
+wechat.properties文件格式如下：
+appID=wx0ed283a02a2ac621
+appSecrct=1cd41ef6cb78aec0f515b1e1ec1d77bc
+validateUrl=http://j2ee.org.cn/wechat-demo/wx/validate.do
+WeChatToken=wuwz
+TemplateId=Lxka0LMMgfnZld1yp9PUZgcYzfhGHFXU_kQUK74CpBE
+
+监听参考：https://www.cnblogs.com/homesea/p/4709403.html
+
+Spring 也提供了国际消息管理Message的方式读取配置文件信息.可以参考：智慧校园项目，smart-campus
+	
  
  ---------------------------------------------------------------- 检测端口和服务器 ------------------------------------------------------------------------------------------
 1.ping ip;   检测服务地址是否相通
