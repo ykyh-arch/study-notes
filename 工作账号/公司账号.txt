@@ -14,7 +14,7 @@ Ping++ 账户：you.peng@uetec.cn
 APP密钥：3GTaKPrSfro4dMSqSqWvePrxWt21yROG，对应商户号为：1323104201
 应用appSecrect：234a60408ba57c5482fb21fc8e7fe699
 
-在线课堂微信app支付商户号：
+在线课堂微信APP支付商户号：
 账号：1420528002@1420528002
 密码：352382
 预留信息： Uetec123
