@@ -1,0 +1,253 @@
+参考：http://outofmemory.cn/java/guava/base/Strings
+
+-------------------------------------------------- Guava对字符串的操作 ------------------------------------------------------------
+public class GuavaOpertionString {
+	
+	@Test
+    public void test01() {
+		//判断字符串是否为空
+		//Strings.isNullOrEmpty(input)
+        String input = "hello";
+        boolean isNullOrEmpty = Strings.isNullOrEmpty(input);
+        System.out.println("input " + (isNullOrEmpty?"is":"is not") + " null or empty.");
+        
+        //获得两个字符串相同的前缀或者后缀
+        //Strings.commonPrefix(a,b)
+        String a = "com.jd.coo.Hello";
+        String b = "com.jd.coo.Hi";
+        String ourCommonPrefix = Strings.commonPrefix(a,b);
+        System.out.println("a,b common prefix is " + ourCommonPrefix);
+
+        //Strings.commonSuffix(a,b)
+        String c = "com.google.Hello";
+        String d = "com.jd.Hello";
+        String ourSuffix = Strings.commonSuffix(c,d);
+        System.out.println("c,d common suffix is " + ourSuffix);
+        
+        //Strings的padStart和padEnd方法来补全字符串
+        int minLength = 4;
+        String padEndResult = Strings.padEnd("123", minLength, '0');
+        System.out.println("padEndResult is " + padEndResult);
+
+        String padStartResult = Strings.padStart("1", 3, '0');
+        System.out.println("padStartResult is " + padStartResult);
+	}
+
+	@Test
+    public void test02() {
+		  //使用Splitter类来拆分字符串，正则说明[] 字符集合，只匹配其中任何一个字符，字符串{n,}，表示前面的字符至少匹配n次
+		  Iterable<String> splitResults = Splitter.onPattern("[,，]{1,}")
+	                .trimResults()   //对结果进行trim
+	                .omitEmptyStrings()   //去除空串
+	                .split("hello,word,,世界，水平");
+
+	        for (String item : splitResults) {
+	            System.out.println(item);
+	        }
+	        
+	        String toSplitString = "a=b;c=d,e=f";
+	        Map<String,String> kvs = Splitter.onPattern("[,;]{1,}")
+	        		.withKeyValueSeparator('=')  //二次拆分
+	        		.split(toSplitString); 
+	        for (Map.Entry<String,String> entry : kvs.entrySet()) {
+	            System.out.println(String.format("%s=%s", entry.getKey(),entry.getValue()));
+	        }
+	        
+	        //合并字符串，Joiner.on(" ")
+	        String joinResult = Joiner.on(" ").join(new String[]{"hello","world"});
+	        System.out.println(joinResult);
+	        
+	        String mapJoinResult = Joiner.on(",")
+	        		.withKeyValueSeparator("=") 
+	        		.join(kvs);
+	        System.out.println(mapJoinResult);
+	        
+	        //大小写转换，对字符串做模式匹配，了解
+	        System.out.println(CaseFormat.LOWER_HYPHEN.to(CaseFormat.LOWER_CAMEL, "test-data"));//testData
+	        System.out.println(CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, "test_data"));//testData
+	        System.out.println(CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, "test_data"));//TestData
+	        
+	        System.out.println(CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, "testdata"));//testdata
+	        System.out.println(CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, "TestData"));//test_data
+	        System.out.println(CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, "testData"));//test-data
+	}
+	
+}
+
+-------------------------------------------------- Guava对对象的操作 ------------------------------------------------------------
+
+public class GuavaOpertionObject {
+	
+	@Test
+    public void test01() {
+		  //判断对象是否相等，是否为空
+		  Object a = null;
+	      Object b = new Object();
+	      boolean aEqualsB = Objects.equal(a, b);
+	      System.out.println(aEqualsB);
+	}
+	
+	public static void main(String [] args) {
+	      Student jim = new Student();
+	        jim.setId(1);
+	        jim.setName("Jim");
+	        jim.setAge(13);
+	        System.out.println(jim.toString());//Student{id=1, name=Jim, age=13}
+	    }
+	
+	public static class Student {
+        private int id;
+        private String name;
+        private int age;
+
+        public int getId() {
+            return id;
+        }
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getAge() {
+            return age;
+        }
+        public void setAge(int age) {
+            this.age = age;
+        }
+
+        public String toString() {
+            return Objects.toStringHelper(this.getClass())
+                    .add("id", id)
+                    .add("name", name)
+                    .add("age", age)
+                    .omitNullValues().toString();
+        }
+    }
+}
+
+-------------------------------------------------- Guava对参数校验的操作 ------------------------------------------------------------
+
+public class GuavaOpertionPreconditions {
+	
+	@Test
+    public void test01() {
+		GuavaOpertionPreconditions demo = new GuavaOpertionPreconditions();
+        demo.doSomething("Jim", 19, "hello world, hello java"); 
+	}
+	 
+	public void doSomething(String name, int age, String desc) {
+	        String str = Preconditions.checkNotNull(name, "name may not be null");
+	        Preconditions.checkArgument(age >= 18 && age < 99, "age must in range (18,99)");
+	        Preconditions.checkArgument(desc !=null && desc.length() < 100, "desc too long, max length is ", 100);
+	        //do things
+	        System.out.println(str);
+	}
+	
+}
+
+-------------------------------------------------- Guava提供Optional来避免空指针异常 ------------------------------------------------------------
+
+public class GuavaOpertionOptional {
+	
+	@Test
+    public void test01() {
+		  Optional<Student> possibleNull = Optional.of(new Student());
+	      possibleNull.get();
+	      
+//	      Optional<Student> possibleNull1 = Optional.absent();
+//	      Student jim = possibleNull1.get();
+	}
+	public static class Student { }
+}
+
+-------------------------------------------------- Guava对不可变集合的操作 ------------------------------------------------------------
+
+public class GuavaOpertionImmutable {
+	
+	@Test
+    public void test01() {
+		//方式一：使用builder创建不可变集合 
+		Set<String> immutableNamedColors = ImmutableSet.<String>builder()
+	                .add("red", "green","black","white","grey")
+	                .build();
+	        //immutableNamedColors.add("abc"); //build后不可添加元素
+	        for (String color : immutableNamedColors) {
+	            System.out.println(color);
+	        }
+	        
+	   //方式二：使用ImmutableSet.of()静态方法创建
+	   ImmutableSet<String> immutableNamedColors1 = ImmutableSet.of("red","green","black","white","grey");  
+	   for (String color : immutableNamedColors1) {
+           System.out.println(color);
+       }
+	   
+	 //方式三：使用ImmutableSet.copyOf()静态方法创建
+	   ImmutableSet<String> immutableNamedColors2 = ImmutableSet.copyOf(new String[]{"red","green","black","white","grey"});
+	   for (String color : immutableNamedColors2) {
+           System.out.println(color);
+       }
+	}
+	
+}
+
+-------------------------------------------------- Guava对集合元素进行计数的操作 ------------------------------------------------------------
+
+public class GuavaOpertionMultiset {
+	
+	@Test
+    public void test01() {
+		/*常用实现 Multiset接口的类有：
+		 *HashMultiset: 元素存放于 HashMap
+		 *LinkedHashMultiset: 元素存放于 LinkedHashMap，即元素的排列顺序由第一次放入的顺序决定
+		 *TreeMultiset:元素被排序存放于TreeMap
+		 *EnumMultiset: 元素必须是 enum类型
+		 *ImmutableMultiset: 不可修改的 Mutiset
+		 */
+		Multiset<String> multiset = HashMultiset.create();
+        String sentences = "this is a story, there is a good girl in the story.";
+        Iterable<String> words = Splitter.onPattern("[^a-z]{1,}")  //[^a-z]	反向范围字符。匹配不在指定的范围内的任何字符。
+        		.omitEmptyStrings()
+        		.trimResults()
+        		.split(sentences);
+        for (String word : words) {
+//            System.out.println(word);
+        	multiset.add(word);
+        }
+
+        for (Object element : multiset.elementSet()) {
+            System.out.println((String)element + ":" + multiset.count(element));
+        }
+	}
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
