@@ -227,7 +227,31 @@ public class GuavaOpertionMultiset {
 	
 }
 
+-------------------------------------------------- Guava对双向Map（既提供键到值的映射，也提供值到键的映射）的操作 ------------------------------------------------------------
 
+public class GuavaOpertionBiMap {
+	
+	@Test
+    public void test01() {
+		/*BiMap的常用实现有：
+		 *HashBiMap: key 集合与 value 集合都有 HashMap 实现
+		 *EnumBiMap: key 与 value 都必须是 enum 类型
+		 *ImmutableBiMap: 不可修改的 BiMap
+		*/
+		BiMap<String,String> weekNameMap = HashBiMap.create();
+        weekNameMap.put("星期一","Monday");
+        weekNameMap.put("星期二","Tuesday");
+        weekNameMap.put("星期三","Wednesday");
+        weekNameMap.put("星期四","Thursday");
+        weekNameMap.put("星期五","Friday");
+        weekNameMap.put("星期六","Saturday");
+        weekNameMap.put("星期日","Sunday");
+
+        System.out.println("星期日的英文名是" + weekNameMap.get("星期日"));
+        System.out.println("Sunday的中文是" + weekNameMap.inverse().get("Sunday"));
+	}
+	
+}
 
 
 
