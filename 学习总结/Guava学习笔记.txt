@@ -253,21 +253,380 @@ public class GuavaOpertionBiMap {
 	
 }
 
+-------------------------------------------------- Guava对Multimaps（类似于Map<K, Collection<V>>结构，一键多值的Map）的操作 ------------------------------------------------------------
 
+public class GuavaOpertionMultimaps {
+	
+	@Test
+    public void test01() {
+		/*Multimap提供了丰富的实现，所以你可以用它来替代程序里的Map<K, Collection<V>>，具体的实现如下：
+		 *	      实现                                                      Key实现	     Value实现
+		 *ArrayListMultimap	        HashMap      ArrayList
+		 *HashMultimap	            HashMap	     HashSet
+		 *LinkedListMultimap	LinkedHashMap	LinkedList
+		 *LinkedHashMultimap	LinkedHashMap	LinkedHashSet
+		 *TreeMultimap	             TreeMap	TreeSet
+		 *ImmutableListMultimap	ImmutableMap	ImmutableList
+		 *ImmutableSetMultimap	ImmutableMap	ImmutableSet
+		*/
+		 Multimap<String, String> myMultimap = ArrayListMultimap.create();  
+		    
+		  // 添加键值对
+		  myMultimap.put("Fruits", "Bannana"); 
+		 //给Fruits元素添加另一个元素 
+		  myMultimap.put("Fruits", "Apple");  
+		  myMultimap.put("Fruits", "Pear");  
+		  myMultimap.put("Vegetables", "Carrot");  
+		    
+		  // 获得multimap的size
+		  int size = myMultimap.size();  
+		  System.out.println(size);  // 4  
+		    
+		  // 获得Fruits对应的所有的值
+		  Collection<String> fruits = myMultimap.get("Fruits");  
+		  System.out.println(fruits); // [Bannana, Apple, Pear]  
+		    
+		  Collection<String> vegetables = myMultimap.get("Vegetables");  
+		  System.out.println(vegetables); // [Carrot]  
+		    
+		  //遍历Mutlimap  
+		  for(String value : myMultimap.values()) {  
+		   System.out.println(value);  
+		  }  
+		    
+		  // Removing a single value  移除单个值
+		  myMultimap.remove("Fruits","Pear");  
+		  System.out.println(myMultimap.get("Fruits")); // [Bannana, Pear]  
+		    
+		  // Remove all values for a key  
+		  myMultimap.removeAll("Fruits");  
+		  System.out.println(myMultimap.get("Fruits")); // [] (Empty Collection!)  
+		
+	}
+	
+}
 
+-------------------------------------------------- Guava对Table（结构：二维矩阵表结构）的操作 ------------------------------------------------------------
 
+public class GuavaOpertionTable {
+	
+	@Test
+    public void test01() {
+		 Table<Integer, Integer, String> table = HashBasedTable.create();
+	        for (int row = 0; row < 10; row++) {
+	            for (int column = 0; column < 5; column++) {
+	                table.put(row, column, "value of cell (" + row + "," + column + ")");
+	            }
+	        }
+	        for (int row=0;row<table.rowMap().size();row++) {
+	            Map<Integer,String> rowData = table.row(row);
+	            for (int column =0;column < rowData.size(); column ++) {
+	                System.out.println("cell(" + row + "," + column + ") value is:" + rowData.get(column));
+	            }
+	        }
+	}
+	
+}
 
+-------------------------------------------------- Guava对迭代器的操作 ------------------------------------------------------------
+public class GuavaOpertionIterator {
+	
+	@Test
+    public void test01() {
+		 List<String> list = Lists.newArrayList("Apple","Pear","Peach","Banana");
+	        Predicate<String> condition = new Predicate<String>() {
+	            @Override
+	            public boolean apply(String input) {
+	                return ((String)input).startsWith("P");
+	            }
+	        };
+	        //元素是否都满足某个条件，Iterators.all()方法
+	        boolean allIsStartsWithP = Iterators.all(list.iterator(),condition);
+	        System.out.println("all result == " + allIsStartsWithP);
+	        
+	        //获取指定元素
+	        String secondElement = Iterators.get(list.iterator(), 1);
+	        System.out.println(secondElement);
+	        
+	        //filter方法过滤符合条件的项
+	        Iterator<String> startPElements = Iterators.filter(list.iterator(), new Predicate<String>() {
+	            @Override
+	            public boolean apply(String input) {
+	                return input.startsWith("P");
+	            }
+	        });
+	        
+	        while (startPElements.hasNext()) {
+				System.out.println(startPElements.next());
+			}
+	        
+	        //Iterators.find()查询符合条件的元素
+	        String length5Element = Iterators.find(list.iterator(), new Predicate<String>() {
+	            @Override
+	            public boolean apply(String input) {
+	                return input.length() == 5;
+	            }
+	        });
+	        System.out.println(length5Element);
+	        
+	        //Iterators.transform()对迭代器元素做转换
+	        Iterator<Integer> countIterator = Iterators.transform(list.iterator(), new Function<String, Integer>() {
+	            @Override
+	            public Integer apply(String input) {
+	                return input.length();
+	            }
+	        });
+	        
+	        System.out.println("----------------------以下展示长度信息----------------------------");
+	        while (countIterator.hasNext()) {
+				System.out.println(countIterator.next());
+			}
+	}
+	
+}
 
+-------------------------------------------------- Guava对缓存的处理的操作 ------------------------------------------------------------
 
+public class GuavaOpertionCache {
+	
+	@Test
+    public void test01() throws ExecutionException, InterruptedException {
+		//缓存包括并发问题，缓存失效机制，内存不够用时缓存释放，缓存的命中率，缓存的移除等等
+		//缓存接口这里是LoadingCache，LoadingCache在缓存项不存在时可以自动加载缓存
+        LoadingCache<Integer,Student> studentCache
+                //CacheBuilder的构造函数是私有的，只能通过其静态方法newBuilder()来获得CacheBuilder的实例
+                = CacheBuilder.newBuilder()
+                //设置并发级别为8，并发级别是指可以同时写缓存的线程数
+                .concurrencyLevel(8)
+                //设置写缓存后8秒钟过期
+                .expireAfterWrite(8, TimeUnit.SECONDS)
+                //设置缓存容器的初始容量为10
+                .initialCapacity(10)
+                //设置缓存最大容量为100，超过100之后就会按照LRU最近虽少使用算法来移除缓存项
+                .maximumSize(100)
+                //设置要统计缓存的命中率
+                .recordStats()
+                //设置缓存的移除通知
+                .removalListener(new RemovalListener<Object, Object>() {
+                    @Override
+                    public void onRemoval(RemovalNotification<Object, Object> notification) {
+                        System.out.println(notification.getKey() + " 已经被移除, 移除的原因是 " + notification.getCause());
+                    }
+                })
+                //build方法中可以指定CacheLoader，在缓存不存在时通过CacheLoader的实现自动加载缓存
+                .build(
+                        new CacheLoader<Integer, Student>() {
+                            @Override
+                            public Student load(Integer key) throws Exception {
+                                System.out.println("加载学生的主键Id " + key);
+                                Student student = new Student();
+                                student.setId(key);
+                                student.setName("姓名 " + key);
+                                return student;
+                            }
+                        }
+                );
 
+        for (int i=0;i<20;i++) {
+            //从缓存中得到数据，由于我们没有设置过缓存，所以需要通过CacheLoader加载缓存数据
+            Student student = studentCache.get(1);
+            System.out.println(student);
+            //休眠1秒，每秒执行一次
+            TimeUnit.SECONDS.sleep(1);
+        }
 
+        System.out.println("缓存的状态:");
+        //最后打印缓存的命中率等 情况
+        System.out.println(studentCache.stats().toString());
+        
+        //缓存的方法：
+//        ImmutableMap<K, V> getAllPresent(Iterable<?> keys) 一次获得多个键的缓存值
+//        put和putAll方法向缓存中添加一个或者多个缓存项
+//        invalidate 和 invalidateAll方法从缓存中移除缓存项
+//        asMap()方法获得缓存数据的ConcurrentMap<K, V>快照
+//        cleanUp()清空缓存
+//        refresh(Key) 刷新缓存，即重新取缓存数据，更新缓存
+	}
+	//学生类
+	class Student{
+		private Integer id;
+		private String name;
+		public Integer getId() {
+			return id;
+		}
+		public void setId(Integer id) {
+			this.id = id;
+		}
+		public String getName() {
+			return name;
+		}
+		public void setName(String name) {
+			this.name = name;
+		}
+		
+		@Override
+		public String toString() {
+			return "Student [id=" + id + ", name=" + name + "]";
+		}
+		
+	}
+	
+}
 
+-------------------------------------------------- Guava对IO流文件的操作 ------------------------------------------------------------
 
+public class GuavaOpertionIO {
+	
+    /**
+     * 向文件中写入字节流
+     * @param fileName
+     * @param contents
+     */
+    public static void doFileWrite(final String fileName, final String contents) {
+		  //参数校验
+    	  checkNotNull(fileName, "Provided file name for writing must NOT be null.");
+	      checkNotNull(contents, "Unable to write null contents.");
+	      final File newFile = new File(fileName);
+	      try
+	      {
+	         Files.write(contents.getBytes(), newFile);
+	      }
+	      catch (IOException fileIoEx)
+	      {
+	         err.println(  "ERROR trying to write to file '" + fileName + "' - "
+	                     + fileIoEx.toString());
+	      }
+	}
+    
+    /**
+     * 获得文件内容
+     * @param filePath
+     * @throws IOException
+     */
+    public static void doReadFile(final String filePath) throws IOException {
+	    
+	    File testFile = new File(filePath);
+	    List<String> lines = Files.readLines(testFile, Charsets.UTF_8);
+	    for (String line : lines) {
+	        System.out.println(line);
+	    }
+    }
+    
+    /**
+     * 行号计数，针对大文件
+     */
+    public static class CounterLine implements LineProcessor<Integer> {
+        private int rowNum = 0;
+       @Override
+        public boolean processLine(String line) throws IOException {
+            rowNum ++;
+            return true;
+        }
 
-
-
-
-
+        @Override
+        public Integer getResult() {
+            return rowNum;
+        }
+    }
+    
+    /**
+     * 文件复制
+     * @param sourceFileName
+     * @param targetFileName
+     */
+    public static void fileCopy(final String sourceFileName, final String targetFileName){
+    	      //参数校验
+    	      checkNotNull(sourceFileName, "Copy source file name must NOT be null.");
+    	      checkNotNull(targetFileName, "Copy target file name must NOT be null.");
+    	      final File sourceFile = new File(sourceFileName);
+    	      final File targetFile = new File(targetFileName);
+    	      try
+    	      {
+    	         Files.copy(sourceFile, targetFile);
+    	      }
+    	      catch (IOException fileIoEx)
+    	      {
+    	         err.println(
+    	              "ERROR trying to copy file '" + sourceFileName
+    	            + "' to file '" + targetFileName + "' - " + fileIoEx.toString());
+    	      }
+    }
+    
+    /**
+     * 比较2文件是否相同
+     * @param fileName1
+     * @param fileName2
+     */
+    public static void equal(final String fileName1, final String fileName2){
+       //参数校验
+       checkNotNull(fileName1, "First file name for comparison must NOT be null.");
+       checkNotNull(fileName2, "Second file name for comparison must NOT be null.");
+       final File file1 = new File(fileName1);
+       final File file2 = new File(fileName2);
+       try
+       {
+          out.println(
+              "File '" + fileName1 + "' "
+            + (Files.equal(file1, file2) ? "IS" : "is NOT")
+            + " the same as file '" + fileName2 + "'.");
+       }
+       catch (IOException fileIoEx)
+       {
+          err.println(
+               "ERROR trying to compare two files '"
+             + fileName1 + "' and '" + fileName2 + "' - " + fileIoEx.toString());
+       }
+    }
+    
+    public static void main(String[] args) {
+    	String fileName = "F:/test.txt";String contents = "这是测试内容";
+    	doFileWrite(fileName,contents);
+    	
+    	String filePath = "F:/test.txt";
+    	try {
+			doReadFile(filePath);
+		} catch (IOException e) {
+			 err.println(  "读取文件内容出错");
+		}
+    	
+    	String testFilePath = "F:\\bigtest.txt";
+        File testFile = new File(testFilePath);
+        CounterLine counter = new CounterLine();
+        String firstContext =null;
+        String allContext =null;
+        try {
+			Files.readLines(testFile, Charsets.UTF_8, counter);
+			firstContext = Files.readFirstLine(testFile, Charsets.UTF_8);//
+			allContext = Files.toString(testFile,Charsets.UTF_8);
+		} catch (IOException e) {
+			 err.println(  "读取文件内容出错");
+		}
+        System.out.println(counter.getResult());//计数
+        //另外还有readBytes方法可以对文件的字节做处理，readFirstLine可以返回第一行的文本，Files.toString(File,Charset)可以返回文件的所有文本内容。
+        System.out.println(firstContext);//
+        System.out.println(allContext);//
+        
+        fileCopy("F:/test.txt","F:/test_copy.txt");
+        equal("F:/test.txt","F:/test_copy.txt");
+		
+		 //net通讯
+        HostAndPort hostAndPort = HostAndPort.fromString("127.0.0.1:8080");
+        System.out.println("host == " + hostAndPort.getHostText());
+        System.out.println("port == " + hostAndPort.getPortOrDefault(80));
+	}
+    /*
+     * Guava的Files类中还提供了其他一些文件的简捷方法。比如
+     * touch方法创建或者更新文件的时间戳。
+     * createTempDir()方法创建临时目录
+     * Files.createParentDirs(File) 创建父级目录
+     * getChecksum(File)获得文件的checksum
+     * hash(File)获得文件的hash
+     * map系列方法获得文件的内存映射
+     * getFileExtension(String)获得文件的扩展名
+     * getNameWithoutExtension(String file)获得不带扩展名的文件名
+     * 
+     */
+}
 
 
 

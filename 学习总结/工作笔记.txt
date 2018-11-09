@@ -2806,6 +2806,8 @@ private final Cache<String, String> registerCache =
 registerCache.put(randomKey, email);		  
 //失效
 registerCache.invalidate(key);
+//获取缓存
+String randomKey = captchaCache.getIfPresent("randomKey");
 apache提供的方法：
 1，获取随机字符
 RandomStringUtils.randomAlphabetic(10);//10位随机字符
