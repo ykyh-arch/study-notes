@@ -26,6 +26,16 @@ APP密钥：anx0lxcuxr3d00bm4m5bg2kfnumbntkc，对应商户号为：1420528002
 账号：18512547606
 密码：uetec123
 
+新浪微博开发者账户
+账号：weiyi.li@uetec.cn 密码：Uetec123
+App Key：3753592604
+App Secret：72f028e992239fb55f10936128362685
+
+QQ开发者
+账号：2275184734 密码：uetec123
+APP ID：101529740
+APP Key：200cfb5c2d3d967a81ca5c87dd6b6471
+
 逸学派
 账号：1514379791@1514379791 
 密码：Uetec123@
