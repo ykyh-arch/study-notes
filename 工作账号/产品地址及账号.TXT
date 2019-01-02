@@ -1,0 +1,90 @@
+http://www.1xuepai.com/pt
+智慧校园：
+智慧校园管理系统:http://120.27.149.128:8085/uetecBasicPlatform/center/index
+基础平台  http://120.27.149.128:8085/uetecBasicPlatform/center/index/basic 
+行政办公  http://120.27.149.128:8085/uetecBasicPlatform/center/index/oa
+智慧班牌  http://120.27.149.128:8085/uetecBasicPlatform/center/index/bp
+选课系统  http://120.27.149.128:8085/uetecBasicPlatform/center/index/xk
+图书管理  http://120.27.149.128:8085/uetecBasicPlatform/center/index/book
+教务综合  http://120.27.149.128:8085/uetecBasicPlatform/center/index/es
+平安校园  http://120.27.149.128:8085/uetecBasicPlatform/center/index/safe
+账号：syadmin 
+密码：123456
+
+教育装备在线监测监管平台
+http://120.27.149.128:8089/UetecOnlinePlatform/login
+账号：admin
+密码：123456
+
+资源评审平台：
+http://120.27.149.128:8099/sspx/sspx/index
+账号：sspx_admin
+密码: sspx123654
+
+微课导学：
+http://120.27.149.128:8082/uetec-vke/login
+教师帐号：uetecmzs    123456
+学生账号：uetec00003  123456
+
+教研平台
+http://120.27.149.128:8087/uetec-research-platform/research/index
+帐号：uetecwz    
+密码：123456
+
+电子备课：
+http://120.27.149.128:8087/uetec-lessons-platform/lessons/plan/areaIndex
+帐号：uetecwz   
+密码：123456
+
+资源平台:
+http://120.27.149.128:8087/uetec-resources-platform/resource/area/index
+帐号：uetecwz   
+密码：123456
+
+电子书包后台：
+http://121.40.188.86:8080/intelligenceCampus-admin-web/login
+帐号：admin
+密码：uetec123321
+
+逸学派(在线课堂)：
+http://online.uetec.cn/front/index
+教师：doudou  123456
+学生：aiwa    123456
+
+智慧班牌：
+http://www.dtlxx.com/classcard/login
+帐号：dtladmin    
+密码：123456
+
+学习自评价系统：
+http://120.27.149.128:8083/bh_selfstudy/login
+教师：王振  123456
+学生：吴磊  123456
+
+博客：
+http://www.dtlxx.com/blog/blog/index
+教师：dtlxx_ai       uetec1101
+学生：dtlxx_x13999   uetec1101
+
+体验式作业：
+http://www.dtlxx.com/blog/tyzy/index
+教师：dtlxx_ai       uetec1101
+学生：dtlxx_x13999   uetec1101
+
+快乐速算：
+http://www.dtlxx.com:7777/klss/index/toIndex
+教师：dtlxx_ai       uetec1101
+学生：dtlxx_x13999   uetec1101
+
+学习自评价系统
+http://121.43.122.129:8500/selfstudy    
+教师：hd_t_shi       123456
+学生：bhhd_0703001   123456
+
+统一服务登录：
+大通路：博客 体验式作业  资源平台  快乐速算
+cas:教研平台 在线备课 微课导学 资源平台
+智慧校园
+其他都是独立服务
+
+

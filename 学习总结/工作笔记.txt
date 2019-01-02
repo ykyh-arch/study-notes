@@ -2806,6 +2806,8 @@ private final Cache<String, String> registerCache =
 registerCache.put(randomKey, email);		  
 //失效
 registerCache.invalidate(key);
+//获取缓存
+String randomKey = captchaCache.getIfPresent("randomKey");
 apache提供的方法：
 1，获取随机字符
 RandomStringUtils.randomAlphabetic(10);//10位随机字符
@@ -3149,6 +3151,31 @@ public class EnumUtil {
 	
 	视频转码：参考班牌项目classcard/src/cn/uetec/classcard/func/office/service/TNewsInfoService.java （学校空间上传视频转码）
 	
+---------------------------------------------------------------- 删除指定目录下的资源 	------------------------------------------------------------------------------------------
+
+
+/**
+     * 递归删除目录下的所有文件及子目录下所有文件
+     * @param dir 将要删除的文件目录
+     * @return boolean Returns "true" if all deletions were successful.
+     *                 If a deletion fails, the method stops attempting to
+     *                 delete and returns "false".
+     */
+	private boolean deleteDir(File dir) {
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            //递归删除目录中的子目录下
+            for (int i=0; i<children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        // 目录此时为空，可以删除
+        return dir.delete();
+    }
+
 ---------------------------------------------------------------- Redis相关操作 	------------------------------------------------------------------------------------------
 
 1 sortedSet 列表的操作 ：

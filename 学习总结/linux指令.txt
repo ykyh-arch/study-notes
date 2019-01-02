@@ -1,0 +1,34 @@
+----------------------------------------防火墙----------------------------------
+查看所有打开的端口： firewall-cmd --zone=public --list-ports
+添加
+firewall-cmd --zone=public --add-port=80/tcp --permanent    （--permanent永久生效，没有此参数重启后失效）
+重新载入
+firewall-cmd --reload
+查看
+firewall-cmd --zone=public --query-port=80/tcp
+删除
+firewall-cmd --zone=public --remove-port=80/tcp --permanent
+ 
+批量开放端口
+firewall-cmd --permanent --zone=public --add-port=100-500/tcp
+firewall-cmd --permanent --zone=public --add-port=100-500/udp
+firewall-cmd --reload
+----------------------------------------nignix 常见指令----------------------------------
+//启动命令
+安装路径下的/usr/local/nginx/sbin/nginx
+//停止命令
+安装路径下的/usr/local/nginx/sbin/nginx -s stop 强制关闭
+或者 : /usr/local/nginx/sbin/nginx -s quit 安全关闭
+//重启命令
+安装路径下的/usr/local/nginx/sbin/nginx -s reload
+//测试配置文件
+安装路径下的/usr/local/nginx/sbin/nginx -t
+//查看进程命令
+ps -ef | grep nginx
+//平滑重启
+kill -HUP Nginx主进程号
+
+----------------------------------查看端口----------------------------------
+netstat -tunlp |grep 8081 //端口是否被占用
+ps -ef | grep 8081 //进程
+top //所有的进程信息
