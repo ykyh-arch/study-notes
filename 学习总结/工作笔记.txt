@@ -2230,6 +2230,135 @@ function isIE() { //ie?
 		}
 	}
 	
+-----------------------------------------------------------------------》》》》JAVA导出DBF文件《《《---------------------------------------------------------
+
+参考：https://blog.csdn.net/liuyanbaobaoyu/article/details/84215358
+	  https://blog.csdn.net/sy3345036/article/details/78012323
+	  
+	  /**
+	 * 导出毕业学生信息
+	 * @param pageQuery
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	@RequestMapping("/exportDbf")
+	@ResponseBody
+	public void exportDbf(String schoolId,
+			PageQuery pageQuery,String name,HttpServletRequest request,HttpServletResponse response) throws IOException {
+		DataguidPageResult<StudentInfo> result = this.getGraduateStudentInfo(schoolId, null, pageQuery, name, "2", request, null, null);
+		List<StudentInfo> list=result.getRows();
+		String schoolName = schoolInfoService.findById(schoolId).getName();
+		
+		try {
+			outputDbf(list, schoolName,response);
+		} catch (Exception e) {
+			request.setAttribute("flag", "1");
+			e.printStackTrace();
+		}finally {
+			//添加日志
+			User user = (User) request.getSession().getAttribute("user");
+			sysLogService.addSysLog(user.getId(),request, "用户"+user.getName()+"对学生事务-》学籍管理-》毕业学生管理进行了导出操作！"
+					, LogUtils.LOG_OPERATE_EXPORT);
+		}
+	}
+	
+	public boolean outputDbf(List<StudentInfo> studentInfoList, String schoolName,HttpServletResponse response) {
+		OutputStream fos = null;
+		try {
+			List<Object> query = studentInfoList.stream().map(this::toObjArr).collect(Collectors.toList());
+			String dbfName = new String(schoolName + "毕业学生信息统计.dbf");
+			StringBuffer sb = new StringBuffer();
+			// 表头字段
+			//String[] strutName = sb.append("姓名,登录名,昵称,学籍号,性别,头像").toString().split(",");
+			String[] strutName = sb.append("xingming,dengluming,nicheng,xuejihao,xingbie,touxiang").toString().split(",");
+			byte[] strutType = new byte[6];
+			strutType[0] = DBFField.FIELD_TYPE_C;
+			strutType[1] = DBFField.FIELD_TYPE_C;
+			strutType[2] = DBFField.FIELD_TYPE_C;
+			strutType[3] = DBFField.FIELD_TYPE_C;
+			strutType[4] = DBFField.FIELD_TYPE_C;
+			strutType[5] = DBFField.FIELD_TYPE_C;
+
+			// 定义DBF文件字段
+			DBFField[] fields = new DBFField[6];
+
+			for (int i = 0; i <= 5; i++) {
+				fields[i] = new DBFField();
+				fields[i].setName(strutName[i]);
+				fields[i].setDataType(strutType[i]);
+				// Date类型不能设置字段长度，这里没有处理其它没有字段长度的类型
+				if (strutType[i] == DBFField.FIELD_TYPE_C) {// 字符串
+					fields[i].setFieldLength(100);
+				} else if (strutType[i] == DBFField.FIELD_TYPE_N) {// 数字
+					fields[i].setFieldLength(15);
+				} else if (strutType[i] == DBFField.FIELD_TYPE_F) {// 浮点型
+					fields[i].setFieldLength(15);
+					fields[i].setDecimalCount(2);// 精度
+				}
+			}
+
+			DBFWriter writer = new DBFWriter();
+			//writer.setCharactersetName("GBK");
+			writer.setFields(fields);
+			// 一条条的写入记录
+			for (int j = 0; j < query.size(); j++) {
+				// 数据处理
+				Object[] object = (Object[]) query.get(j);
+
+				Object[] rowData = new Object[6];
+//				格式：
+//				rowData[0] = "1000";
+//				rowData[1] = "John";
+//				rowData[2] = new Double(5000.00);
+				
+				for (int z = 0; z <= 5; z++) {
+					if (fields[z].getDataType() == DBFField.FIELD_TYPE_N
+							|| fields[z].getDataType() == DBFField.FIELD_TYPE_F) {
+						if (object[z] != null) {
+							rowData[z] = Double.parseDouble(object[z].toString());
+						} else {
+							rowData[z] = Double.parseDouble("0");
+						}
+					} else {
+						rowData[z] = object[z];
+					}
+				}
+				writer.addRecord(rowData);
+			}
+			// 定义输出流，并关联的一个文件
+			
+			fos = new BufferedOutputStream(response.getOutputStream());
+			response.reset(); 
+			response.setHeader("Content-Disposition",  "attachment;filename=" + new String(dbfName.getBytes("gb2312"), "ISO8859-1" ));
+			response.setContentType("application/octet-stream");
+			//写入数据
+			writer.write(fos);
+			fos.flush();
+			response.flushBuffer();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				fos.close();
+			} catch (Exception e) {
+			}
+		}
+		return true;
+	}
+	
+	private Object[] toObjArr(StudentInfo studentInfo) {
+		String gender = "0".equals(studentInfo.getGender().toString())?"女":("1".equals(studentInfo.getGender().toString())?"男":"保密");
+		 Object[] rowData ={studentInfo.getName(),
+							 studentInfo.getUser().getUsername(),
+							 studentInfo.getUser().getName(),
+							 studentInfo.getStudentNum(),
+							 gender,
+							 studentInfo.getUser().getAvatar()};
+			
+		 return rowData;
+	}
+	
 -----------------------------------------------------------------------》》》》ENTER利用键盘回车触发事件《《《---------------------------------------------------------
 var that = this;
 $(document).ready(function () {

@@ -44,6 +44,11 @@ APPID: wx7c9922e981a2ce7e
 商户号：1514379791  
 APP密钥：65antg8qna7iu9nbavowin9syx9yztca，对应商户号为：1514379791
 
+内网服务
+192.168.1.43  	root  Uetec123!
+192.168.1.48  	root  Uetec123!
+192.168.1.49  	root  Uetec123!
+
 外网服务：
 120.27.149.128 账户： Administrator 密码：CRH@coreach12
 121.43.122.129 账户： Administrator 密码：Uetec123@129
