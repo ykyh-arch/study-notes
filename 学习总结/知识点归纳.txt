@@ -82,7 +82,8 @@
 					$ sudo docker login --username=ali域逸诚 registry.cn-hangzhou.aliyuncs.com
 					$ sudo docker tag [ImageId] registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]
 					$ sudo docker push registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]  
-					  
+					
+----------------------------------------------文档数据结构MongoDB的使用-------------------------------------------------------					  
 					  
 					  
 					  
