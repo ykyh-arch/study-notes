@@ -150,6 +150,13 @@
 				- 返回的是一个对象
 			- db.collection.find().count()
 				- 查询符合条件的文档的数量
+			查询条件：
+				-$gt $eq $lt $lte limit() $or
+				如：db.emp.find({sal:{$lt:2000 , $gt:1000}}).limit(5);
+					db.emp.find({$or:[{sal:{$lt:1000}} , {sal:{$gt:2500}}]});
+			分页：
+			skip()用于跳过指定数量的数据，MongoDB会自动调整skip和limit的位置
+			如：db.numbers.find().skip(10).limit(10); -第11条到20条数据	
 			如：db.stus.find({age:16 , name:"白骨精"});
 				
 		- 修改数据库中的文档
@@ -159,6 +166,10 @@
 						- 如果需要修改指定的属性，而不是替换需要使用“修改操作符”来完成修改
 							$set 可以用来修改文档中的指定属性
 							$unset 可以用来删除文档的指定属性
+							内嵌文档中：
+							$push 用于向数组中添加一个新的元素
+							$addToSet 向数组中添加一个新元素 ，如果数组中已经存在了该元素，则不会添加
+							$inc 增加到	，如:db.emp.updateMany({sal:{$lte:1000}} , {$inc:{sal:400}});						
 						- update()默认只会修改一个
 			- db.collection.updateOne()
 				- 修改集合中的一个文档
@@ -217,7 +228,10 @@
 				]);
 				db.stus.updateOne({name:"ts"},{$set:{isDel:1}});	
 				db.stus.find({isDel:0});
-				
+	文档关系：一对一（one to one），内嵌文档的形式
+			  一对多（one to many）/多对一(many to one)，内嵌文档的形式
+			  多对多(many to many)
+			  
 					  
 					  
 					  
