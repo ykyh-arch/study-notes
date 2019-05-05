@@ -394,6 +394,8 @@
 			restTemplate.postForObject(REST_URL_PREFIX+"/dept/add", dept, Boolean.class); - 参数：REST请求地址、请求参数、HTTP响应转换被转换成的对象类型
 
 	服务注册与发现：
+			-Eureka：
+			 简介：Netflix公司的子模块
 	
 
 	负载均衡：
