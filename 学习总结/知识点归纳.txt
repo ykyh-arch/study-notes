@@ -112,7 +112,7 @@
 			- 输入 mongo 连接mongodb ，出现 >				  
 					  
 	- 基本概念
-		数据库（database）、集合（collection）、文档（document）
+		数据库（database）- 类比SQL数据库、集合（collection）- 类比SQL表、文档（document）- 类比SQL表记录
 		- 在MongoDB中，数据库和集合都不需要手动创建，当我们创建文档时，如果文档所在的集合或数据库不存在会自动创建数据库和集合		
 		
 	- 基本指令
@@ -229,14 +229,180 @@
 				db.stus.updateOne({name:"ts"},{$set:{isDel:1}});	
 				db.stus.find({isDel:0});
 	文档关系：一对一（one to one），内嵌文档的形式
-			  一对多（one to many）/多对一(many to one)，内嵌文档的形式
-			  多对多(many to many)
-			  
-					  
-					  
-					  
-					  
-					  
+			  如：db.wifeAndHusband.insert([
+					{
+						name:"黄蓉",
+						husband:{
+							name:"郭靖"
+						}
+					},{
+						name:"潘金莲",
+						husband:{
+							name:"武大郎"
+						}
+					}
+
+				]);
+			  一对多（one to many）/多对一(many to one)，也可以用内嵌文档的形式
+			  多对多(many to many) 用两个集合表示
+	排序与投影：
+			查询文档时，默认情况是按照_id的值进行排列（升序）
+			sort()可以用来指定文档的排序的规则,sort()需要传递一个对象来指定排序规则 1表示升序 -1表示降序
+			limit skip sort 可以以任意的顺序进行调用
+			如：db.emp.find({}).sort({sal:1,empno:-1});
+			在查询时，可以在第二个参数的位置来设置查询结果的投影，0不显示；1：显示
+			如：db.emp.find({},{ename:1 , _id:0 , sal:1});
+	分组查询：
+		分组分片查询，aggregate的使用
+		//源数据
+		db.items.insert( [
+		  {
+		   "quantity" : 2,
+		   "price" : 5.0,
+		   "pnumber" : "p003",
+		  }...,{
+		   "quantity" : 5,
+		   "price" : 10.0,
+		   "pnumber" : "p002"
+		  }
+		])    
+		//$group语法:{ $group: { _id: <expression>, <field1>: { <accumulator1> : <expression1> }, ... } }
+		/*
+		 *_id 分组的key,expression分组的字段，如果_id为null 相当于SQL:select count(*) from table
+		 *field1 分组后展示的字段
+		 *accumulator1 分组管道函数，如：$sum\$avg\$min\$max\$push\$addToSet\$first\$last
+		 *expression1  分组显示数据相关
+		 */	
+		//查询总数,相当于SQL:select count(1) as count from items
+		db.items.count();
+		db.items.aggregate([{$group:{_id:null,count:{$sum:1}}}])
+		//统计数量，相当于SQL:select sum(quantity) as total  from  items
+		db.items.aggregate([{$group:{_id:null,total:{$sum:"$quantity"}}}]);
+		//按产品类型来进行分组，然后在统计卖出的数量是多少，相当于SQL：select sum(quantity) as total from  items  group by pnumber
+		db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}}])
+		//通过相同的产品类型来进行分组，然后查询相同产品类型卖出最多的订单详情，相当于SQL:select max(quantity) as quantity from  items  group by pnumber
+		db.items.aggregate([{$group:{_id:"$pnumber",max:{$max:"$quantity"}}}])
+		db.items.aggregate([{$group:{_id:"$pnumber",min:{$min:"$quantity"}}}])
+		//通过相同的产品类型来进行分组，统计各个产品数量，然后获取最大的数量，相当于SQL:select max(t.total) from (select sum(quantity) as total from  items  group by pnumber) t
+		db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}}])
+		db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}},{$group:{_id:null,max:{$max:"$total"}}}])
+		//通过相同的产品类型来进行分组，然后查询每个订单详情相同产品类型卖出的平均价格，相当于SQL:select avg(price) as price from  items  group by pnumber
+		db.items.aggregate([{$group:{_id:"$pnumber",price:{$avg:"$price"}}}])
+		//通过相同的产品类型来进行分组，然后查询每个相同产品卖出的数量放在数组里面,，注意值数组中的值不要超过16M
+		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}}])
+		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:{quantity:"$quantity",price:"$price"}}}}])
+		//表达式的值添加到一个数组中（无重复值），这个值不要超过16M
+		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$addToSet:"$quantity"}}}])
+		//$first：返回每组第一个文档，如果有排序，按照排序，如果没有按照默认的存储的顺序的第一个文档。
+		//$last：返回每组最后一个文档，如果有排序，按照排序，如果没有按照默认的存储的顺序的最后个文档。
+		db.items.aggregate([{$group:{_id:"$pnumber",quantityFrist:{$first:"$quantity"}}}])
+		//$project显示或不显示字段，相当于SQL:select
+		db.items.aggregate([{$group:{_id:null,count:{$sum:1}}},{$project:{"_id":0,"count":1}}])
+		//通过滤订单中，想知道卖出的数量大于8的产品有哪些产品，相当于SQL:select sum(quantity) as total from  items  group by pnumber having total>8   
+		db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}},{$match:{total:{$gt:8}}}])
+		//$match如果是放在$group之前就是当做where来使用，我们只统计pnumber =p001 产品卖出了多少个  select sum(quantity) as total from  items where pnumber='p001'
+		db.items.aggregate([{$match:{"pnumber":"p001"}},{$group:{_id:null,total:{$sum:"$quantity"}}}])
+		//$skip、$limit使用顺序不同，结果也不同，注意：$limit、$skip、$sort、$match可以使用在阶段管道，如果使用在$group之前可以过滤掉一些数据，提高性能
+		db.items.aggregate([{ $skip: 2 },{ $limit: 4 },{ $sort: { quantity : -1 }}])
+		db.items.aggregate([{ $limit: 4 },{ $skip: 2 }])
+		//将文档中的某一个数组类型字段拆分成多条，每条包含数组中的一个值
+		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}}])
+		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}},{$unwind:"$quantitys"}])
+		//$out必须为pipeline最后一个阶段管道，因为是将最后计算结果写入到指定的collection中
+		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}},{$unwind:"$quantitys"},{$project:{"_id":0,"quantitys":1}},{$out:"result"}])
+		db.result.find()
+	模糊查询：$options - 可选参数				  
+		如：db.students.find({"user_name": {$regex: /尚/, $options:'i'}}); 
+			db.students.find({"user_name": {$regex:/尚.*/i}}); 
+			db.students.find({user_name:{$in:[/^孙尚香/i,/^胡歌/]}});
+			db.students.find({user_name:{$regex:/^孙尚香/i,$nin:['孙尚香II']}});
+			db.students.find({user_name:{$regex:/香/,$options:"si"}});	
+
+----------------------------------------------缓存技术Redis的使用---------------------------------------------------------	
+	
+			
+----------------------------------------------SpringCloud技术栈的使用---------------------------------------------------------						  
+	基础概念：
+	    微服务：强调的是服务的大小，它关注的是某一个点，是具体解决某一个问题/提供落地对应服务的一个服务应用
+		-最早提出：马丁福勒
+				微服务化的核心是将传统的一站式应用，根据业务拆分成一个一个的服务，彻底
+		地去耦合,每一个微服务提供单个业务功能的服务，一个服务做一件事，
+		从技术角度看就是一种小而独立的处理过程，类似进程概念，能够自行单独启动
+		或销毁，拥有自己独立的数据库。
+		微服务架构：架构模式，微服务之间互相协调、互相配合，每个服务运行在其独立的进程中，
+			服务与服务间采用轻量级的通信机制互相协作（通常是基于HTTP协议的RESTful API），包括一些环境，有机构成的整体。
+		优点缺点：
+		-优点：内聚小，松耦合，拥有独立的进程，开发简单；
+			   易于与第三方集成，如：与持续自动化构建部署（Jenkins, Hudson）
+			   微服务只是业务逻辑的代码，不会和HTML,CSS 或其他界面组件混合（前后端分离思想）。
+		-缺点：开发人员要处理分布式系统的复杂性
+			   多服务运维难度，随着服务的增加，运维的压力也在增大
+			   系统部署依赖
+			   服务间通信成本、数据一致性、系统集成测试、性能监控……
+		微服务技术栈：
+			微服务条目			落地技术											备注			               
+			
+			服务开发			Springboot、Spring、SpringMVC
+			服务配置与管理		Netflix公司的Archaius、阿里Diamond等
+			服务注册与发现		Eureka、Consul、Zookeeper、AliBabaNacos等
+			服务调用			Rest、RPC、gRPC
+			服务熔断器			Hystrix、Envoy等
+			负载均衡			Ribbon、Feign Nginx等
+			服务接口调用(客户端调用服务的简化工具)
+								Feign等
+			消息队列			Kafka、RabbitMQ、ActiveMQ等
+			服务配置中心管理  	SpringCloudConfig、Chef等
+			服务路由（API网关） Zuul等
+			服务监控			Zabbix、Nagios、Metrics、Spectator等
+			全链路追踪			Zipkin，Brave、Dapper、Sleuth等
+			服务部署			Docker、OpenStack、Kubernetes等
+			数据流操作开发包	SpringCloud Stream（封装与Redis,Rabbit、Kafka等发送接收消息）
+			事件消息总线    	Spring Cloud Bus
+			......
+    SpringCloud入门介绍：
+		含义：SpringCloud=分布式微服务架构下的一站式解决方案，是各个微服务架构落地技术的集合体，俗称微服务全家桶
+		与springboot之间关系：SpringBoot可以离开SpringCloud独立使用开发项目，
+							  但是SpringCloud离不开SpringBoot，属于依赖的关系.
+							  SpringBoot专注于快速、方便的开发单个微服务个体，SpringCloud关注全局的服务治理框架。
+		与Dubbo的比较： 最大区别：SpringCloud抛弃了Dubbo的RPC通信，采用的是基于HTTP的REST方式。
+						REST相比RPC更为灵活，服务提供方和调用方的依赖只依靠一纸契约，这在强调快速演化的微服务环境下，显得更加合适。
+						品牌机与组装机的区别
+						Spring Cloud的功能比DUBBO更加强大，涵盖面更广，而且作为Spring的拳头项目，它也能够与Spring Framework、Spring Boot、Spring Data、Spring Batch等其他Spring项目完美融合，这些对于微服务而言是至关重要的。
+						使用Dubbo构建的微服务架构就像组装电脑，各环节我们的选择自由度很高；
+						而Spring Cloud就像品牌机，在Spring Source的整合下，做了大量的兼容性测试，保证了机器拥有更高的稳定性。
+						社区支持与更新力度
+						最为重要的是，DUBBO停止了5年左右的更新，虽然2017.7重启了(刘军)。对于技术发展的新需求，需要由开发者自行拓展升级（比如当当网弄出了DubboX），这对于很多想要采用微服务架构的中小软件组织，显然是不太合适的，中小公司没有这么强大的技术能力去修改Dubbo源码+周边的一整套解决方案，并不是每一个公司都有阿里的大牛+真实的线上生产环境测试过。
+	简单服务调用：
+			-RestTemplate + API 使用方式： 
+			 RestTemplate提供了多种便捷访问远程Http服务的方法，是一种简单便捷的访问restful服务模板类，是Spring提供的用于访问Rest服务的客户端模板工具集 
+			使用步骤：
+			1，注入Bean：
+			如：@Configuration
+				public class ConfigBean
+				{
+				 @Bean
+				public RestTemplate getRestTemplate()
+					{
+				return new RestTemplate();
+					}
+				}
+			2，声明使用：
+			@Autowired
+			private RestTemplate restTemplate;
+			
+			方法中：
+			restTemplate.postForObject(REST_URL_PREFIX+"/dept/add", dept, Boolean.class); - 参数：REST请求地址、请求参数、HTTP响应转换被转换成的对象类型
+
+	服务注册与发现：
+	
+
+	负载均衡：
+	
+	断路器：
+	
+	路由网关：
+	
+	分布式配置中心：
 					  
 					  
 					  
@@ -252,6 +418,60 @@
 					  
 					  
 		    
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
