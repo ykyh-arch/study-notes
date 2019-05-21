@@ -394,9 +394,135 @@
 			restTemplate.postForObject(REST_URL_PREFIX+"/dept/add", dept, Boolean.class); - 参数：REST请求地址、请求参数、HTTP响应转换被转换成的对象类型
 
 	服务注册与发现：
-			-Eureka：
-			 简介：Netflix公司的子模块
+			-Eureka(C/S)：
+				简介：Netflix公司的子模块，是一个基于REST的服务，用于定位服务，以实现云端中间层服务发现和故障转移。Netflix在设计Eureka时遵守的就是AP原则
+				CAP原则：CAP原则又称CAP定理，指的是在一个分布式系统中，Consistency（一致性）、 Availability（可用性）、Partition tolerance（分区容错性），三者不可兼得
+				三大角色：1、Eureka Server 提供服务注册和发现；2、Service Provider服务提供方将自身服务注册到Eureka，从而使服务消费方能够找到；3、Service Consumer服务消费方从Eureka获取注册服务列表，从而能够消费服务
+			使用注册：
+				服务端：
+				1,引用模块：POM.XML
+					<dependency>
+					<groupId>org.springframework.cloud<groupId>
+					<artifactId>spring-cloud-starter-eureka-server<artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：eureka.instance.hostname=localhost
+					  #不要向注册中心注册自己
+					  eureka.client.register-with-eureka=false
+					  #禁止检索服务
+					  eureka.client.fetch-registry=false
+					  eureka.client.service-url.defaultZone=http://${eureka.instance.hostname}:${server.port}/eureka	
+				3,申明使用：程序main入口，添加@EnableEurekaServer注解，来开启服务注册中心
+				客户端：
+				1,引用模块：POM.XML
+					 <dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-eureka</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：
+					#设置服务名
+					spring:
+					  application:
+						name: 服务名
+					eureka:
+						  client: #客户端注册进eureka服务列表内
+							service-url: 
+							  defaultZone: http://localhost:7001/eureka
+							  instance:
+								instance-id: 服务实例名（设置后可以隐藏主机名）
+							  prefer-ip-address: true #访问路径可以显示IP地址
+							  #点击显示
+							  info:
+								  app.name: 服务程序名
+								  company.name: 公司名
+								  build.artifactId: $project.artifactId$
+								  build.version: $project.version$
+							  
+				3,申明使用：主类上添加@EnableEurekaClient注解以实现Eureka中的DiscoveryClient实现，可以使用@EnableDiscoveryClient代替
+			使用发现：
+				申明使用，主启动类添加@EnableDiscoveryClient
+			    使用时注入， @Autowired
+							 private DiscoveryClient client;即可使用，注：DiscoveryClient是spring clould 对治理体系的一个抽象
+			自我保护机制：某时刻某一个微服务不可用了，eureka不会立刻清理，依旧会对该微服务的信息进行保存
+			集群处理：
+				在Eureka服务器中添加配置：
+				eureka: 
+					instance:
+						hostname: eureka1.com #eureka服务端的实例名称
+					client: 
+						register-with-eureka: false #false表示不向注册中心注册自己。
+						fetch-registry: false #false表示自己端就是注册中心，我的职责就是维护服务实例，并不需要去检索服务
+					service-url: 
+					#单机 defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/       #设置与Eureka Server交互的地址查询服务和注册服务都需要依赖这个地址（单机）。
+					defaultZone: http://eureka1.com:7002/eureka/,http://eureka3.com:7003/eureka/
+			与Dubbo的Zookeeper的比较：
+				著名的CAP理论指出，一个分布式系统不可能同时满足C(一致性)、A(可用性)和P(分区容错性)。由于分区容错性P在是分布式系统中必须要保证的，因此我们只能在A和C之间进行权衡。
+				因此,Zookeeper保证的是CP,Eureka则是AP。因此，Eureka可以很好的应对因网络故障导致部分节点失去联系的情况，而不会像zookeeper那样使整个注册服务瘫痪。
+
+			-Consul：
+				简介：Spring Cloud Consul是分布式的、高可用、横向扩展(AP原则)，它包含多个组件，但是作为一个整体，在微服务架构中为我们的基础设施提供服务发现和服务配置的工具。它包含了下面几个特性：
+					  服务发现（service discovery）
+					  健康检查（health checking）
+					  Key/Value存储（一个用来存储动态配置的系统）
+					  多数据中心（multi-datacenter）
+				使用-客户端：
+				1,引用模块：POM.XML
+					<dependency>
+					  <groupId>org.springframework.cloud</groupId>
+					  <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：
+					  spring.cloud.consul.host=localhost #域名
+					  spring.cloud.consul.port=8500 #端口
 	
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理
+				注意：consul不需要创建类似eureka-server的服务端吗？由于Consul自身提供了服务端，所以我们不需要像之前实现Eureka的时候创建服务注册中心，直接通过下载consul的服务端程序就可以使用。
+				启动consul服务：$consul agent -dev
+				
+			-Nocas：
+				简介：Spring Cloud Alibaba 项目中开发分布式应用微服务的子组件，致力于服务发现、配置和管理微服务，基于 DNS 和基于 RPC 的服务发现。
+				关键特性：
+					1、服务发现和服务健康监测；2、动态配置服务；3、动态DNS服务与服务及其元数据管理
+				使用-客户端：
+				1,引用模块：POM.XML
+					<!--Nacos的服务注册与发现模块-->
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+					</dependency>
+					<!--统一管理-->
+					<dependencyManagement>
+						<dependencies>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-dependencies</artifactId>
+								<version>Greenwich.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
+								<version>0.2.2.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+						</dependencies>
+				</dependencyManagement>
+				2,配置参数：application.properties或YML文件的配置
+				格式：
+					 spring:
+						  application:
+							name: 程序名
+						  cloud:
+							nacos:
+							  discovery:
+								server-addr: 192.168.43.142:8848 # 服务IP与端口
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理
+				
+				详情参考：https://blog.csdn.net/qq_38765404/article/details/89521124
 
 	负载均衡：
 	
