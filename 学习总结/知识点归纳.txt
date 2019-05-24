@@ -525,7 +525,63 @@
 				详情参考：https://blog.csdn.net/qq_38765404/article/details/89521124
 
 	负载均衡：
+			-Ribbon：
+			 简介：基于Netflix实现的一套客户端负载均衡的工具，主要功能是提供客户端的软件负载均衡算法。
+			 负载均衡：将用户的请求基于某种规则平摊的分配到多个服务上，从而达到系统的HA，常见的负载均衡有软件Nginx，LVS，硬件F5等
+				分类：集中式LB-即在服务的消费方和提供方之间使用独立的LB设施(可以是硬件，如F5, 也可以是软件，如nginx), 由该设施负责把访问请求通过某种策略转发至服务的提供方；
+					  进程内LB-将LB逻辑集成到消费方，消费方从服务注册中心获知有哪些地址可用，然后自己再从这些地址中选择出一个合适的服务器。Ribbon就属于进程内LB。
+			 使用：
+				1,引用模块：POM.XML
+					<dependency>
+					  <groupId>org.springframework.cloud</groupId>
+					  <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：
+					  spring.cloud.consul.host=localhost #域名
+					  spring.cloud.consul.port=8500 #端口
 	
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
+			 
 	断路器：
 	
 	路由网关：
