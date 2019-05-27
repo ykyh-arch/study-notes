@@ -525,71 +525,317 @@
 				详情参考：https://blog.csdn.net/qq_38765404/article/details/89521124
 
 	负载均衡：
-			-Ribbon：
+			-Ribbon（结合Eureka使用）：
 			 简介：基于Netflix实现的一套客户端负载均衡的工具，主要功能是提供客户端的软件负载均衡算法。
 			 负载均衡：将用户的请求基于某种规则平摊的分配到多个服务上，从而达到系统的HA，常见的负载均衡有软件Nginx，LVS，硬件F5等
 				分类：集中式LB-即在服务的消费方和提供方之间使用独立的LB设施(可以是硬件，如F5, 也可以是软件，如nginx), 由该设施负责把访问请求通过某种策略转发至服务的提供方；
 					  进程内LB-将LB逻辑集成到消费方，消费方从服务注册中心获知有哪些地址可用，然后自己再从这些地址中选择出一个合适的服务器。Ribbon就属于进程内LB。
 			 使用：
 				1,引用模块：POM.XML
+					 <dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-ribbon</artifactId>
+					</dependency>
 					<dependency>
-					  <groupId>org.springframework.cloud</groupId>
-					  <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-eureka</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：（eureka配置）
+					server:
+						port: 80
+						eureka:
+							client:
+							register-with-eureka: false
+							service-url: 
+							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
+	
+				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；2、在配置文件ConfigBean 中添加@LoadBalanced注解
+				  -》结论：Ribbon和Eureka整合后服务消费方可以直接调用服务而不用再关心地址和端口号
+			    4,策略IRule：简单轮询负载均衡RoundRobinRule，区别于RetryRule，随机负载均衡，加权响应时间负载均衡 ，区域感知轮询负载均衡
+			 自定义Ribbon：	
+				主启动类添加@RibbonClient注解，格式：@RibbonClient(name="MICROSERVICECLOUD",configuration=MySelfRule.class)，注意：这个自定义配置类不能放在@ComponentScan所扫描的当前包下以及子包下，
+					否则我们自定义的这个配置类就会被所有的Ribbon客户端所共享，也就是说我们达不到特殊化定制的目的了。
+				在配置文件ConfigBean中添加@LoadBalanced注解
+			
+			-Feign（声明式服务调用，WebService客户端）：它的使用方法是定义一个接口，然后在上面添加注解，同时也支持JAX-RS（Java API for RESTful Web Services）标准的注解。
+			 特性：
+				可插拔式的注解支持，包括Feign注解和JAX-RS注解;
+				支持可插拔的HTTP编码器和解码器;
+				支持Hystrix和它的Fallback;
+				支持Ribbon的负载均衡;
+				支持HTTP请求和响应的压缩
+			 使用：
+				1,引用模块：POM.XML
+					 <dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-feign</artifactId>
+					</dependency>
+					　<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-eureka</artifactId>
+						<version>1.3.5.RELEASE</version>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：（整合eureka配置）
+					server:
+						port: 80
+						eureka:
+							client:
+							register-with-eureka: false
+							service-url: 
+							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
+	
+				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；同时添加@EnableFeignClients 来开启feign
+			                2, 定义接口：
+							   格式：value=“服务名称”,configuration = xxx.class 这个类配置Hystrix的一些精确属性
+			                   @FeignClient(value = "serviceName",fallback = FeignFallBack.class)
+							    public interface FeignService {
+									@RequestMapping(value = "/ml", method= RequestMethod.GET)
+									String method1(@RequestParam("name") String name) ;
+								}
+								@Component
+								public class FeignFallBack implements FeignService{
+							　　//实现的方法是服务调用的降级方法
+								@Override
+								public String method1() {
+									return "error";
+								}
+								
+	服务熔断器（断路器）：		 
+			-Hystrix：
+			 概念来源：服务雪崩：
+				服务扇出：多个微服务之间调用的时候，假设微服务A调用微服务B和微服务C，微服务B和微服务C又调用其它的微服务，这就是所谓的“扇出”效应。
+				解决方案：熔断模式（容错处理机制）、隔离模式（容错处理机制）、限流模式（预防模式）
+			 简介：Hystrix是一个用于处理分布式系统的延迟和容错的开源库，在分布式系统（SOA面向服务架构）里，许多依赖不可避免的会调用失败，比如超时、异常等，Hystrix能够保证在一个依赖出问题的情况下，不会导致整体服务失败，避免级联故障，以提高分布式系统的弹性。
+				   “断路器”本身是一种开关装置，当某个服务单元发生故障之后，通过断路器的故障监控（类似熔断保险丝），
+				   向调用方返回一个符合预期的、可处理的备选响应（FallBack），而不是长时间的等待或者抛出调用方无法处理的异常，这样就保证了服务调用方的线程不会被长时间、不必要地占用，从而避免了故障在分布式系统中的蔓延，乃至雪崩。
+			 服务熔断
+				使用：
+					概念：当扇出链路的某个微服务不可用或者响应时间太长时，会进行服务的降级，进而熔断该节点微服务的调用，快速返回"错误"的响应信息。 
+						  SpringCloud框架里熔断机制通过Hystrix实现。Hystrix会监控微服务间调用的状况，当失败的调用到一定阈值，缺省是5秒内20次调用失败就会启动熔断机制。熔断机制的注解是@HystrixCommand。
+					1,引用模块：POM.XML
+						 <dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-cloud-starter-hystrix</artifactId>
+						</dependency>
+					2,配置参数：application.properties或YML文件的配置
+					格式：（配合eureka配置）
+						server:
+							port: 80
+							eureka:
+								client:
+								register-with-eureka: false
+								service-url: 
+								defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
+		
+					3,申明使用：1、程序main入口，添加@EnableCircuitBreaker注解，开启熔断支持；
+								2、在控制层申明使用
+									格式示例：fallbackMethod 快速应急的处理方法，进行服务降级处理
+									@RequestMapping(value="/dept/get/{id}",method=RequestMethod.GET)
+									@HystrixCommand(fallbackMethod = "processHystrix_Get")
+									public Dept get(@PathVariable("id") Long id){
+									    Dept dept =  this.service.get(id);
+										if(null == dept){
+										throw new RuntimeException("该ID："+id+"没有没有对应的信息");
+									    }
+										return dept;	
+									}
+									public Dept processHystrix_Get(@PathVariable("id") Long id){ 
+										return new Dept().setDeptno(id)
+											   .setDname("该ID："+id+"没有没有对应的信息,null--@HystrixCommand")
+											   .setDb_source("no this database in MySQL");
+									}
+			 
+			 服务降级Fallback
+				使用： 
+					概念：整体资源快不够了，忍痛将某些服务先关掉，待渡过难关，再开启回来。
+						  服务降级处理是在客户端实现完成的，与服务端没有关系。
+				    申明使用（与Feign结合使用）：	
+						格式示例：
+						@FeignClient(value = "MICROSERVICECLOUD",fallbackFactory=DeptClientServiceFallbackFactory.class)
+						public interface DeptClientService{
+							@RequestMapping(value = "/dept/get/{id}",method = RequestMethod.GET)
+							public Dept get(@PathVariable("id") long id);
+			            }
+						
+						@Component
+						public class DeptClientServiceFallbackFactory implements FallbackFactory{
+						
+							@Override
+							public Dept get(@PathVariable("id") long id){
+								...
+							}  
+						}
+						
+						注意：在application.properties或YML文件的配置添加一行配置
+						      feign: 
+								hystrix: 
+									enabled: true //开启   
+			 
+			 服务监控HystrixDashboard
+			    使用：
+				    概念：Hystrix还提供了准实时的监控（Hystrix Dashboard），Spring Cloud也提供了Hystrix Dashboard的整合，对监控内容转化成可视化界面。
+					1,引用模块：POM.XML
+						 <dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-cloud-starter-hystrix</artifactId>
+						</dependency>
+						<dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-boot-starter-actuator</artifactId>
+						</dependency>
+						
+						在服务的监控一方添加如下配置
+						<dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-cloud-starter-hystrix-dashboard</artifactId>
+						</dependency>
+					2,配置参数：application.properties或YML文件的配置
+					格式：
+						server:
+							port: 9901
+		
+					3,申明使用：1、程序main入口，添加@EnableHystrixDashboard注解，开启熔断监控的支持；
+	
+	路由网关：
+			-Zuul：
+			 概念：代理+路由+过滤三大功能，可以与Eureka整合并注册到注册中心里面
+			 使用：
+				1,引用模块：POM.XML
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-eureka</artifactId>
+					</dependency>
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-zuul</artifactId>
 					</dependency>
 				2,配置参数：application.properties或YML文件的配置
 				格式：
-					  spring.cloud.consul.host=localhost #域名
-					  spring.cloud.consul.port=8500 #端口
-	
-				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-			 
-	断路器：
-	
-	路由网关：
+					zuul: 
+					    prefix: /pre //前缀
+						ignored-services: 服务名  //多个指定微服务以半角逗号分隔，所有可以用"*"通配符代替
+						routes: 
+							serverName.path: /serverName/**
+							serverName.serviceId: 服务名 //给微服务起别名
+							//或使用：serverName.url: http://${IP}:${PORT}/  //这种基于未使用服务注册中心的
+						
+
+				3,申明使用：1、程序main入口，添加@EnableZuulProxy注解，开启Zuul的支持；
+				
 	
 	分布式配置中心：
-					  
-					  
-					  
+				 -SpringCloud Config（与Git整合使用）
+				 概念来源：分布式系统面临的---配置问题
+				 概念：为微服务架构中的微服务提供集中化的外部配置支持，配置服务器为各个不同微服务应用的所有环境提供了一个中心化的外部配置
+				    分类：服务端和客户端
+						  服务端也称为分布式配置中心，它是一个独立的微服务应用，用来连接配置服务器并为客户端提供获取配置信息，加密/解密信息等访问接口
+						  客户端则是通过指定的配置中心来管理应用资源，以及与业务相关的配置内容，并在启动的时候从配置中心获取和加载配置信息配置服务器默认采用git来存储配置信息，这样就有助于对环境配置进行版本管理，并且可以通过git客户端工具来方便的管理和访问配置内容。
+					规则：1、不同环境不同配置，动态化的配置更新
+						  2、运行期间动态调整配置，不再需要在每个服务部署的机器上编写配置文件，服务会向配置中心统一拉取配置自己的信息
+						  3、当配置发生变动时，服务不需要重启即可感知到配置的变化并应用新的配置
+						  4、将配置信息以REST接口的形式暴露
+				 使用：
+					 1、用自己的Github账户建一个统一配置中心仓库，并克隆到本地；
+					 2、新建配置文件application.yml（保存格式必须为UTF-8）
+					    格式参考示例：
+						spring:
+						  profiles:
+							active:
+							- dev
+						---
+						spring:
+						  profiles: dev     #开发环境
+						  application: 
+							name: microservicecloud-config-dev
+						---
+						spring:
+						  profiles: test   #测试环境
+						  application: 
+							name: microservicecloud-config-test
+						#  请保存为UTF-8格式
+					 3、push到git仓库
+					 服务端配置使用：
+						1,引用模块：POM.XML
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-config-server</artifactId>
+							</dependency>
+						2,配置参数：application.properties或YML文件的配置
+									格式：	
+									spring:
+										application:
+											name: microservicecloud-config
+										cloud:
+											config:
+												server:
+													git:
+														uri: git@github.com***.git #GitHub上面的git仓库名字
+						3,申明使用：1、程序main入口，添加@EnableConfigServer注解，开启Config的支持；		
+						配置读取规则：
+						  1、/{application}-{profile}.yml 如：http://config-3344.com:3344/application-dev.yml
+						  2、/{application}/{profile}[/{label}] 如：http://config-3344.com:3344/application/dev/master
+						  3、/{label}/{application}-{profile}.yml 如：http://config-3344.com:3344/master/application-dev.yml
+					 客户端配置使用：
+					      前提准备：
+							本地仓库新建配置文件yml并提交到git仓库里，如：microservicecloud-config-client.yml
+								参考示例：
+									spring:
+										profiles:
+											active:
+												- dev
+									---
+									server: 
+										port: 8201 
+									spring:
+										profiles: dev
+										application: 
+											name: microservicecloud-config-client
+									eureka: 
+										client: 
+											service-url: 
+												defaultZone: http://eureka-dev.com:7001/eureka/   
+									---
+									server: 
+										ort: 8202 
+									spring:
+										profiles: test
+										application: 
+											name: microservicecloud-config-client
+									eureka: 
+										client: 
+											service-url: 
+												defaultZone: http://eureka-test.com:7001/eureka/
+
+						  1,引用模块：POM.XML
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-starter-config</artifactId>
+							</dependency>
+						  2,配置参数：bootstrap.yml配置文件的配置（系统级），而application.yml是用户级
+									格式：	
+									spring:
+										cloud:
+											config:
+												name: microservicecloud-config-client #需要从github上读取的资源名称，注意没有yml后缀名
+												profile: dev #本次访问的配置项
+												label: master   
+												uri: http://config-3344.com:3344  #本微服务启动后先去找3344号服务，通过SpringCloudConfig获取GitHub的服务地址
+						  3,申明使用：1、程序main入口，添加@EnableConfigServer注解，开启Config的支持；	
+						  
+						  
+						  
+						  
+						  
+						  
+						  
+						  
+						  
+						  
+						  
+						  
+----------------------------------------------Spring Cloud Alibaba 技术栈的使用---------------------------------------------------------						  
 					  
 					  
 					  
