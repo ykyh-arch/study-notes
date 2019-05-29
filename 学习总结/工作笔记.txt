@@ -3506,9 +3506,30 @@ Spring Ò²Ìá¹©ÁË¹ú¼ÊÏûÏ¢¹ÜÀíMessageµÄ·½Ê½¶ÁÈ¡ÅäÖÃÎÄ¼þÐÅÏ¢.¿ÉÒÔ²Î¿¼£ºÖÇ»ÛÐ£Ô°ÏîÄ¿£
 3.netstat -anp tcp;²é¿´µ±Ç°Ö÷»útcp¿ª·ÅµÄ¶Ë¿Ú
 4.ipconfig ²é¿´µ±Ç°µÄ·þÎñÆ÷ipµØÖ·
  
+---------------------------------------------------------------- EasyUI ½â¾ö datagrid ÖÐ NumberBox ÏÞÖÆÐ¡ÊýÎ»Êýºó²»ÄÜÊäÈëÐ¡ÊýµãÎÊÌâ ------------------------------------------------------------------------------------------
  
- 
- 
+ //½â¾önumberboxÐ¡ÊýµãÎÊÌâ
+ (function($){
+     $.fn.numberbox.defaults.filter = function(e){
+         var opts = $(this).numberbox('options');
+         var s = $(this).numberbox('getText');
+         if (e.which == 45){    //-
+             return (s.indexOf('-') == -1 ? true : false);
+         }
+         var c = String.fromCharCode(e.which);
+         if (c == opts.decimalSeparator){
+             return (s.indexOf(c) == -1 ? true : false);
+         } else if (c == opts.groupSeparator){
+             return true;
+         } else if ((e.which >= 48 && e.which <= 57 && e.ctrlKey == false && e.shiftKey == false) || e.which == 0 || e.which == 8) {
+             return true;
+         } else if (e.ctrlKey == true && (e.which == 99 || e.which == 118)) {
+             return true;
+         } else {
+             return false;
+         }
+     }
+ })(jQuery);
  
  
  
