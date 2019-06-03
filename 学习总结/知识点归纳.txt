@@ -1972,7 +1972,13 @@
 				RabbitMQ：
 					简介：是一个由erlang开发的AMQP(Advanved Message Queue Protocol)的开源实现。
 					核心概念：
-						
+						Message：消息，它由消息头和消息体组成。消息体是不透明的，而消息头则由一系列的可选属性组
+								 成，这些属性包括routing-key（路由键）、 priority（相对于其他消息的优先权）、 delivery-mode（指出
+								 该消息可能需要持久性存储）等。
+						Publisher：消息的生产者，也是一个向交换器发布消息的客户端应用程序。
+						Exchange：交换器，用来接收生产者发送的消息并将这些消息路由给服务器中的队列。
+						Exchange有4种类型： direct(默认)， fanout, topic, 和headers，不同类型的Exchange转发消息的策略有所区别。							
+							
 					
 ----------------------------------------------NoSQL缓存技术Redis的使用-------------------------------------------------------------								
 	一、NoSQL入门：
