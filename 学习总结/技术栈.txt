@@ -1993,8 +1993,66 @@
 									  自己的队列、交换器、绑定和权限机制。vhost 是 AMQP 概念的基础，必须在连接时指定，RabbitMQ 默认的 vhost 是 / 。
 						Broker：表示消息队列服务器实体   
 					运行机制：
+						一句话概括：生产者将消息发送到Exchange（交换机），Exchange根据路由规则（routing-key）将消息Binding绑定到不同的消息队列，消费者
+									从消息队列里取出消息
+						Exchange的类型：Exchange分发消息时根据类型的不同分发策略有区别，目前共四种类型：
+										direct、 fanout、 topic、 headers 。 headers 匹配 AMQP 消息的 header而不是路由键，
+										headers 交换器和 direct 交换器完全一致，但性能差很多，目前几乎用不到了，
+										所以直接看另外三种类型：
+									1、Direct Exchange：完全匹配、单播模式（消息中的routing-key与消息队列中的binding key完全一致）
+									2、Fanout（扇出） Exchange：广播模式（与消息中的routing-key无关的，交换器将消息转发到所有的消息队列里）
+									3、Topic Exchange：模式匹配分发消息，将路由键与绑定键的字符用.隔开，支持识别通配符：符号“#”和符号 “*” 。
+													   #匹配0个或多个单词，*匹配一个单词。
+				与Springboot的整合：
+					1、添加依赖：
+						 <dependency>
+							<groupId>org.springframework.boot</groupId>
+							<artifactId>spring-boot-starter-amqp</artifactId>
+						</dependency>
+					2、配置文件中添加配置：
+							#RabbitMQ相关的配置信息
+							spring.rabbitmq.host=127.0.0.1
+							spring.rabbitmq.port=5672
+							spring.rabbitmq.username=guest
+							spring.rabbitmq.password=guest
+					3、申明使用：
+						AmqpTemplate - 发送消息
+						@RabbitListener(queues="") - 监听消息
 						
-				
+		七、Springboot与检索ElasticSearch：
+				简介：ElasticSearch是一个分布式搜索服务，提供Restful API，底层基于Apache Lucene，采用多shard（分片）的方式保证数据安全，并且提供自动resharding的功能，
+					  github等大型的站点也是采用了ElasticSearch作为其搜索服务。
+				特点：1、分布式实时文件存储，并将每一个字段都编入索引
+					  2、实时分析的分布式搜索引擎
+					  3、可以扩展到上百台服务器，处理PB级别的结构化或非结构化数据（1PB=1024TB）
+				与Mysql对比：
+					关系数据库     ⇒ 数据库         ⇒ 表          ⇒ 行              ⇒ 列(Columns)
+					Elasticsearch  ⇒ 索引(Index)    ⇒ 类型(type)  ⇒ 文档(Docments)  ⇒ 属性/字段(Fields)
+				注意与MongoDB的区别：数据库         ⇒ 集合        ⇒ 文档            ⇒ 属性
+				交互：与Elasticsearch的交互，可以使用Java API，也可以直接使用HTTP的Restful API方式
+				核心：提供了强大的索引功能；
+				与Springboot的整合：
+					1、添加依赖：
+						 <dependency>
+							<groupId>org.springframework.boot</groupId>
+							<artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+							<version>2.0.2.RELEASE</version>
+						</dependency>
+					2、配置文件中添加配置：	
+						#elasticsearch集群名称，默认的是elasticsearch
+						spring.data.elasticsearch.cluster-name=
+						#节点的地址 注意api模式下端口号是9300，千万不要写成9200
+						spring.data.elasticsearch.cluster-nodes=192.168.11.24:9300
+						#是否开启本地存储
+						spring.data.elasticsearch.repositories.enable=true
+					3、申明使用：
+						参考：https://blog.csdn.net/linzhiqiang0316/article/details/80343401	
+						ElasticsearchRepository、 ElasticsearchTemplate、 JestClient
+						
+		八、Springboot与任务：
+				异步：与第三方系统交互的时候，往往采用异步任务。在Spring 3.x之后，就已经内置了@Async来完美解决这个问题。使用@EnableAysnc、 @Aysnc即可；
+				定时：
+					
 					
 ----------------------------------------------NoSQL缓存技术Redis的使用-------------------------------------------------------------								
 	一、NoSQL入门：
