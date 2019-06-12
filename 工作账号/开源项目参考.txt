@@ -3,3 +3,4 @@ https://gitee.com/explore/starred/back-stage-management - GVP 码云最有价值的开源
 http://www.itmuch.com/
 https://pnote.net/pan/ --百度网盘提取码查询
 https://github.com/wu-dada/baidupankey
+https://www.extractpdf.com/zh.html --pdf在线提取
