@@ -2222,7 +2222,7 @@
 					– 关闭http端点
 					• management.port=-1																
 					
-----------------------------------------------NoSQL缓存技术Redis的使用-------------------------------------------------------------								
+----------------------------------------------NoSQL缓存技术Redis的使用----------------------------------------------------------------------------------								
 	一、NoSQL入门：
 			时代背景：
 				单机MySQL:APP->DAL（数据访问层）->MySQL Instance （读写混合）
@@ -2870,22 +2870,92 @@
 														   chkconfig [--level 5] iptables off
 					
 				注意：chkconfig重新设置服务后自启动或关闭，需要重启机器 reboot 才能生效
+		防火墙：
+			查看所有开放的端口：firewall-cmd --zone=public --list-ports
+			添加：				firewall-cmd --zone=public --add-port=80/tcp --permanent    （--permanent永久生效，没有此参数重启后失效）			
+			重新载入：			firewall-cmd --reload
+			查看：				firewall-cmd --zone=public --query-port=80/tcp
+			删除：				firewall-cmd --zone=public --remove-port=80/tcp --permanent 
+			批量开放端口：
+				firewall-cmd --permanent --zone=public --add-port=100-500/tcp
+				firewall-cmd --permanent --zone=public --add-port=100-500/udp
+				firewall-cmd --reload
 					
 		Linux包管理：
 			rpm：一种用于互联网下载包的打包及安装工具，，它包含在某些 Linux 分发版中，它生成具有.RPM扩展名的文件。RPM 是 RedHat Package Manager（RedHat 软件包管理工具）的缩写，类似 windows
 				 的 setup.exe，Linux 的分发版本都有采用（suse,redhat, centos 等等），可以算是公认的行业标准了
 			    查询指令：
 					查询已安装的 rpm 列表：rpm –qa|grep xx，如：rpm –qa|grep firefox
+					rpm -qa :查询所安装的所有 rpm 软件包
+					rpm -qa | more [分页显示]
+					rpm -qa | grep X [rpm -qa | grep firefox ]
+					rpm -q 软件包名 :查询软件包是否安装，如：rpm -q firefox					
+					rpm -qi 软件包名 ：查询软件包信息
+					rpm -ql 软件包名 :查询软件包中的文件，如：rpm -ql firefox					
+					rpm -qf 文件全路径名 查询文件所属的软件包，如：rpm -qf /etc/passwd	rpm -qf /root/install.log
+				卸载：
+					rpm -e RPM包的名称，如：rpm -e firefox
+					注意：1) 如果其它软件包依赖于您要卸载的软件包，卸载时则会产生错误信息
+						  2) 如果非要卸载，添加参数：--nodeps,就可以强制删除，但是一般不推荐这样做，因为依赖于该软件包的程序可能无法运行，如：rpm -e --nodeps foo
+				安装：					
+					rpm -ivh RPM包全路径名称，如：rpm -ivh firefox.XXX.rpm
+					参数说明：
+						i=install 安装
+						v=verbose 提示
+						h=hash 进度条
+			yum：是一个 Shell 前端软件包管理器。基于RPM包管理，能够从指定的服务器自动下载 RPM 包并且安装，可以自动处理依赖性关系，并且一次安装所有依赖的软件包，使用 yum 的前提是可以联网		
+				基本指令：
+					查询yum服务器是否有需要安装的软件：yum list|grep xx，如：yum list|grep firefox 
+					安装指定的yum包：yum install xxx，如：yum install firefox
 					
+	三、搭建：JavaEE环境：
+			JDK：配置环境变量，vim /etc/profile
+				 JAVA_HOME=/opt/jdk1.7.0_79
+				 PATH=/opt/jdk1.7.0_79/bin:$PATH
+				 export JAVA_HOME PATH
+			注意：需要注销用户，环境变量才能生效！	 
+			
+			Tomcat：解压[tar -zxvf apache-tomcat.tar.gz] -> 启动：bin/下执行.startup.sh
+			注意：需要开放端口，外部才能访问！
+				修改防火墙开放端口[centos7.0以下的版本]：vim /etc/sysconfig/iptables，
+				添加一行：-A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 8080:9000 -j ACCEPT，
+				重启防火墙service iptables restart
+			
+			Eclipse：解压 -> 安装目录执行./eclipse
+			
+			MySql：略
 				
+	四、大数据Shell编程：	
+		简介：
+			1)Linux 运维工程师在进行服务器集群管理时，需要编写Shell程序来进行服务器管理
+			2)对于JavaEE和Python程序员来说，工作的需要，要求编写一些Shell脚本进行程序或者是服务器的维护，比如编写一个定时备份数据库的脚本
+			3)对于大数据程序员来说，需要编写Shell程序来管理集群
 			
-			
-			
-			
-			
-	
-	
-	
+			Shell是一个命令行CMD解释器，它为用户提供了一个向Linux内核发送请求以便运行程序的界面系统
+			级程序，用户可以用Shell来启动、挂起、停止甚至是编写一些程序	
+		Shell入门：
+			脚本要求：
+				1) 脚本以#!/bin/bash 开头
+				2) 脚本需要有可执行权限+x
+			执行方式：
+				1) 输入脚本的绝对路径或相对路径
+				2) 
+					
+	附：
+		nginx常用指令：
+			启动命令：[安装路径下]/usr/local/nginx/sbin/nginx
+			停止命令：[安装路径下]/usr/local/nginx/sbin/nginx -s stop 强制关闭
+					  [安装路径下]/usr/local/nginx/sbin/nginx -s quit 安全关闭
+			重启命令：[安装路径下]/usr/local/nginx/sbin/nginx -s reload		  
+			测试配置文件：[安装路径下]/usr/local/nginx/sbin/nginx -t			
+			查看进程：ps -ef | grep nginx
+			平滑重启：kill -HUP Nginx主进程号
+		查看端口：
+			netstat -tunlp |grep 8081 								-端口是否被占用
+			ps -ef | grep 8081 										-进程
+			top 
+		
+		
 	
 	
 	
