@@ -3061,8 +3061,153 @@
 					程序
 					done
 					或者
+					for (( 初始值;循环控制条件;变量变化 ))
+					do
+					程序
+					done
+				while循环控制：
+					while [ 条件判断式 ]
+					do
+					程序
+					done
+				
+			读取控制台输入：
+				read(选项)(参数)
+				选项：
+					-p：指定读取值时的提示符
+					-t：指定读取值时等待的时间（秒），如果没有在指定的时间内输入，就不再等待了
+				参数：
+					变量：指定读取值的变量名
+				如：
+					read -t 10 -p "请输入一个数NUM=" NUM
+					echo "你输入的值是NUM=$NUM" 
+			函数：
+				分类：系统函数、自定义函数
+				系统函数：
+					basename：返回完整路径最后 / 的部分，常用于获取文件名
+					basename [pathname] [suffix] 							-basename 命令会删掉所有的前缀包括最后一个（‘/’）字符，然后将字符串显示出来，
+																			 suffix 为后缀，如果 suffix 被指定了，basename 会将 pathname 或 string 中的 suffix 去掉
+					如：basename /home/1.txt								-结果： 1.txt
+						basename /home/1.txt .txt  							-结果： 1
+	
+					dirname：返回完整路径最后 / 的前面的部分，常用于返回路径部分
+					dirname 文件绝对路径                                    -从给定的包含绝对路径的文件名中去除文件名（非目录的部分），然后返回剩下的路径（目录的部分）
+					如：dirname /home/1.txt									-结果： /home
+				
+				自定义函数：
+					[ function ] funname[()]
+					{
+					Action;
+					[return int;]
+					}
+					调用直接写函数名：funname [值]
+					如：计算2个输入参数的和
+						function getSum(){
+							SUM=$[SN1+$N2]
+							echo "参数的和=$SUM"
+						}
+						
+						read -p "请输入一个数N1=" N1
+						read -p "请再输入一个数N2=" N2
+						
+						调用：getSum $N1 $N2
+			
+			综合案例：
+				需求分析（提示：使用crond定时器）
+				1)每天凌晨 2:10 备份 数据库 DB 到 /data/backup/db
+				2)备份开始和备份结束能够给出相应的提示信息
+				3)备份后的文件要求以备份时间为文件名，并打包成 .tar.gz 的形式，比如：2018-03-12_230201.tar.gz
+				4) 在备份的同时，检查是否有 10 天前备份的数据库文件，如果有就将其删除
+				编写脚本(备份逻辑)：
+					vim /usr/sbin/mysql_db_backup.sh
+						BACKUP=/data/backup/db
+						echo "------------------------开始备份---------------------"
+						echo "------------------------备份的路径是：$BACKUP/$DATETIME.tar.gz---------------------"
+						#主机
+						HOST=localhost
+						#用户名
+						DB_USER=root
+						#密码
+						DB_PWD=123456
+						#备份数据库的名称
+						DATEBASE=DB
+						#创建备份的路径，如果备份的路径文件夹存在，就使用，否则则创建
+						[ ! -d "$BACKUP/$DATETIME" ] && mkdir -p "$BACKUP/$DATETIME"
+						#执行mysql备份数据库的指令
+						mysqldump -u${DB_USER} -p${DB_PWD} --host=$HOST $DATEBASE | gzip > $BACKUP/$DATETIME/$DATETIME.tar.gz
+						#打包备份文件
+						cd $BACKUP
+						tar -zcvf $DATETIME.tar.gz $DATETIME
+						#删除临时文件
+						rm -rf $BACKUP/$DATETIME
+						#删除10天前的备份文件
+						find $BACKUP -mtime +10 -name "*.tar.gz" -exec rm -rf {} \; 
+						echo "------------------------备份文件成功---------------------"
+				将脚本添加到crontab配置里：
+					10 2 * * * /usr/sbin/mysql_db_backup.sh
+					
+	五、其他：
+			Ubuntu：
+				含义：Ubuntu（友帮拓、优般图、乌班图）是一个以桌面应用为主的开源 GNU/Linux 操作系统，Ubuntu是基于 GNU/Linux，支持 x86、amd64（即 x64）和 ppc（Pocket PC，掌上电脑的操作平台） 架构，由全球化的专业开发团队（Canonical Ltd）
+					  打造的。专业的 Python 开发者一般会选择 Ubuntu 这款 Linux 系统作为生产平台
+				安装：略，支持中文需要安装中文语言包
+					  左侧图标栏System Settings（系统设置）->Language Support（语言支持）选项卡 ->Install / Remove Languages ->
+					  Chinese(Simplified) -> Apply Changes ->把汉语（中国）拖到第一位 -> 重启
+				用户：安装 ubuntu 成功后，都是普通用户权限，并没有最高 root 权限，如果需要使用 root 权限的时候，
+					  通常都会在命令前面加上 sudo。使用 su 命令来直接切换到 root 用户的，但是如果没有给 root 设置初始密码，就会抛出 su :
+					  Authentication failure 这样的问题
+				设置密码：
+					  1) 输入 sudo passwd 命令，输入一般用户密码并设定 root 用户密码
+					  2) 设定 root 密码成功后，输入 su 命令，并输入刚才设定的 root 密码，就可以切换成 root 了
+					     提示符$代表一般用户，提示符#代表 root 用户
+					  3) 输入 exit 命令，退出 root 并返回一般用户
+				软件管理：
+					apt 是 Advanced Packaging Tool 的简称，是一款安装包管理工具
+					在 Ubuntu 下，我们可以使用 apt 命令可用于软件包的安装、删除、清理等，类似于 Windows 中的软件管理工具
+				使用：
+					sudo apt-get update 										-更新镜像源
+					sudo apt-get install package 								-安装包
+					sudo apt-get remove package 								-删除包
+					sudo apt-cache search package 								-搜索软件包
+					sudo apt-cache show package									-获取包的相关信息，如说明、大小、版本等
+					sudo apt-get install package --reinstall					-重新安装包
+					
+					sudo apt-get -f install										-修复安装
+					sudo apt-get remove package --purge 						-删除包，包括配置文件等
+					sudo apt-get build-dep package 								-安装相关的编译环境
+
+					sudo apt-get upgrade 										-更新已安装的包
+					sudo apt-get dist-upgrade 									-升级系统
+					sudo apt-cache depends package 								-了解使用该包依赖那些包
+					sudo apt-cache rdepends package 							-查看该包被哪些包依赖
+					sudo apt-get source package									-下载该包的源代码
+				
+				国内镜像源：https://mirrors.tuna.tsinghua.edu.cn/
+				
+				备份镜像源：sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup
+				
+			使用SSH远程登录：
+				SSH 为 Secure Shell 的缩写，由 IETF 的网络工作小组（Network Working Group）所制定；SSH 为
+				建立在应用层和传输层基础上的安全协议
+				SSH 是目前较可靠，专为远程登录会话和其他网络服务提供安全性的协议。常用于远程登录，以
+				及用户之间进行资料拷贝。几乎所有 UNIX 平台—包括 HP-UX、Linux、AIX、Solaris、Digital UNIX、
+				Irix，以及其他平台，都可运行 SSH。
+				使用 SSH 服务，需要安装相应的服务器和客户端。客户端和服务器的关系：如果，A 机器想被 B
+				机器远程控制，那么，A 机器需要安装 SSH 服务器，B 机器需要安装 SSH 客户端
+				和 CentOS 不一样，Ubuntu 默认没有安装 SSHD 服务，因此，我们不能进行远程登录
+				
+				安装：
+					sudo apt-get install openssh-server                         -安装了 SSH 服务端和客户端
+					service sshd restart                                        -启动了 sshd 服务，监听端口 22
 					
 					
+				从Linux 客户机连接Linux 服务机：
+					基本语法：
+					ssh 用户名@IP，如：ssh atguigu@192.168.188.131，使用 ssh 访问，如访问出现错误。可查看是否有该文件 ～/.ssh/known_ssh 尝试删除该文件解决
+					登出：exit 或者 logout				
+				
+----------------------------------------------Nginx WEB服务器的使用----------------------------------------------------------------------------------												
+	
 	附：
 		nginx常用指令：
 			启动命令：[安装路径下]/usr/local/nginx/sbin/nginx
