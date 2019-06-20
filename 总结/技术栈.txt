@@ -3207,8 +3207,40 @@
 					登出：exit 或者 logout				
 				
 ----------------------------------------------Nginx WEB服务器的使用----------------------------------------------------------------------------------												
-	
-	附：
+	一、基本介绍：参考：https://www.runoob.com/linux/nginx-install-setup.html
+			含义：Nginx("engine x")是一款是由俄罗斯的程序设计师Igor Sysoev所开发高性能的Web和反向代理服务器，也是一个IMAP/POP3/SMTP邮件代理服务器。
+				  在高连接并发的情况下，Nginx是Apache服务器不错的替代品，目前的版本有：稳定版、开发版和历史稳定版
+			安装：
+				下载地址: http://nginx.org/download/nginx-1.4.2.tar.gz				  
+				yum install pcre pcre-devel									-nginx依赖于pcre库,要先安装pcre、pcre-devel
+				cd /usr/local/src/
+				wget http://nginx.org/download/nginx-1.4.2.tar.gz
+				tar -zxvf nginx-1.4.2.tar.gz 								-解压
+				cd nginx-1.4.2
+				./configure --prefix=/usr/local/nginx						-配置安装路径
+				make && make install 										-安装
+			启动：
+				目录结构：cd /usr/local/nginx，会看到：				
+					conf 														-配置文件  
+					html 														-网页文件
+					logs  														-日志文件 
+					sbin  														-主要二进制程序
+				启动：./sbin/nginx
+				注意：默认端口80，如果被占用，需要停止80端口所对应的程序或服务
+					  1）查看端口：netstat -antp | grep 80                      -得到80端口对应的进程ID
+					  2）暴力停止：Pkill -9 PID
+			信号源控制：
+				1）TERM、INT													-快速关闭
+				2）QUIT 														-优雅的关闭进程,即等请求结束后再关闭
+				3）HUP 															-改变了配置文件,平滑的重读配置文件（新配置替代旧配置）
+				4）USR1 														-重读日志,在日志按月/日分割时有用
+				5）USR2															-平滑的升级
+				6）WINCH														-优雅关闭旧的进程(配合USR2来进行升级)
+				具体语法:
+					Kill -信号选项 nginx的PPID（主进程ID），如：Kill -HUP 4873
+					Kill -信号控制 `cat [安装路径下]/logs/nginx.pid`，如：Kil -USR1 `cat [安装路径下]/logs/nginx.pid`					
+		
+		附[总结]：
 		nginx常用指令：
 			启动命令：[安装路径下]/usr/local/nginx/sbin/nginx
 			停止命令：[安装路径下]/usr/local/nginx/sbin/nginx -s stop 强制关闭
@@ -3218,9 +3250,333 @@
 			查看进程：ps -ef | grep nginx
 			平滑重启：kill -HUP Nginx主进程号
 		查看端口：
-			netstat -tunlp |grep 8081 								-端口是否被占用
+			netstat -antp |grep 80									-端口是否被占用
 			ps -ef | grep 8081 										-进程
 			top 
+			
+	二、配置文件：					
+			位置：/usr/local/nginx/conf/nginx.conf
+			文件解析：
+				全局区：
+					#工作的子进程,可以自行修改,但太大无益,因为要争夺CPU,一般设置为 CPU数*核数
+					worker_processes 1; 
+					
+					#一般配置nginx连接的特性
+					Event {					
+					 #如1个worker能同时允许多少连接，如下指一个子进程最大允许连1024个连接
+					 worker_connections  1024;
+					}
+					
+					#配置http服务器的主要段
+					http { 
+						 #日志
+						 #access_log  logs/access.log  main;
+						 #虚拟主机段
+						 Server1 {							   
+								#定位,把特殊的路径或文件再次定位，如image目录单独处理；.php单独处理
+								Location {
+								}
+
+						 }
+						 Server2 {
+						 }
+					}
+					
+					如：
+						基于域名虚拟主机
+						server {
+							#监听端口  
+							listen 80;
+							#监听域名，需要域名映射，在hosts文件中添加映射
+							server_name 1xuepai.com; 
+							#定位,把特殊的路径或文件再次定位
+							#日志
+							#access_log  logs/host.access.log  main;
+							location / {
+									#根目录定位，绝对路径
+									root /var/www/1xuepai.com;  
+									index index.html;
+							}
+						}
+						基于端口虚拟主机
+						server {
+							#监听端口
+							listen 8080;
+							#监听端口
+							server_name 192.168.1.175;
+							location / {
+									#根目录定位，绝对路径
+									root /var/www/html8080;
+									index index.html;
+							}
+						}
+					
+					日志管理：
+						在nginx的http段与server段,都有类似信息#access_log信息;
+						如在server段：#access_log logs/host.access.log  main说明该server段访问日志的文件是logs/host.access.log,
+						使用的格式”main”格式。除了main格式，也可以自定义其他格式
+						
+					格式说明：
+						main格式：
+							log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+											  '$status $body_bytes_sent "$http_referer" '
+											  '"$http_user_agent" "$http_x_forwarded_for"';
+
+							main格式是默认定义好一种日志的格式,并起个名字，便于引用
+							main类型的日志,记录的 remote_addr.... http_x_forwarded_for等选项
+
+							1: 日志格式选项说明（以main格式为例）：											
+									远程IP - 远程用户/用户时间 请求方法(GET/POST)
+									请求状态 请求体body长度 referer来源信息
+									http_user_agent用户代理/蜘蛛，被转发的请求的原始IP
+									http_x_forwarded_for:在经过代理时,代理把本来IP加在此头信息中,传输你的原始IP
+
+							2: 声明一个log_format并命名：
+									log_format mylog '$remote_addr- "$request" '
+													 '$status $body_bytes_sent "$http_referer" '
+														'"$http_user_agent" "$http_x_forwarded_for"';
+						
+							3：使用：
+								如：在http/server/location,我们就可以引用 mylog 自定义的日志格式
+									Nginx允许针对不同的server做不同的Log ，(有的web服务器不支持,如lighttp)
+								
+								声明log   	log位置         	 log格式;
+								access_log logs/access_mylog.log  mylog;   
+								
+					案例：Shell编程+Crontab定时任务+nginx信号管理，完成日志按日期存储						
+						  分析思路: 
+							凌晨00:01,把昨天的日志重命名，放在相应的目录下，再USR1信息号控制nginx重新生成新的日志文件							
+							
+							脚本:
+							编辑脚本vim logback.sh
+							#!/bin/bash
+							base_path='/usr/local/nginx/logs'
+							log_path=$(date -d yesterday +"%Y%m")
+							day=$(date -d yesterday +"%d")
+							mkdir -p $base_path/$log_path
+							mv $base_path/access.log $base_path/$log_path/access_$day.log
+							#echo $base_path/$log_path/access_$day.log
+							kill -USR1 `cat /usr/local/nginx/logs/nginx.pid`  -- 加载日志
+
+							定时任务
+							Crontab 编辑定时任务，crontab -e 
+							01 00 * * * /xxx/path/logback.sh  每天0时1分(建议在02-04点之间,系统负载小)
+							
+					定位Location管理[server段]：
+						含义：location 有”定位”的意思, 根据Uri来进行不同的定位
+							  在虚拟主机的配置中,是必不可少的,location可以把网站的不同部分,定位到不同的处理方式上，比如, 碰到.php，如何调用PHP解释器?就需要location					
+						
+						基础语法：
+							#中括号可以不写任何参数,此时称为一般匹配，也可以写参数	
+							location [=|~|~*|^~] patt {
+							}							  						
+							因此,大类型可以分为3种
+							location patt{}  [一般匹配]
+							location = patt {} [精准匹配]							
+							location ~ patt{} [正则匹配]
+						
+						Uri解析过程：						
+							   先判断有没有精准匹配,如果有,则停止匹配过程，返回结果
+							   #如果 $uri == patt,匹配成功，使用configA
+							   location = patt {
+									config A
+							   }
+							   如：
+								  #精准匹配
+								  location = / {
+											root   /var/www/html/;
+											index  index.htm index.html;
+								  }	
+								  #一般匹配
+								  location / {
+											root   /usr/local/nginx/html;
+											index  index.html index.htm;
+								  }
+							说明：
+								如果访问http://xxx.com/，定位流程是：								　
+								1: 精准匹配中”/”,得到index页为index.htm，结束
+								2: 再次访问http://xxx.com/index.htm,此次内部转跳uri已经是”/index.htm”,根目录为/usr/local/nginx/html								
+								3: 最终结果,访问了/usr/local/nginx/html/index.htm
+							
+							再来看，正则也来参与
+								location / {
+									root   /usr/local/nginx/html;
+									index  index.html index.htm;
+								}
+
+								location ~ image {
+									root /var/www/;
+									index index.html;
+								}
+							说明：
+								如果我们访问http://xx.com/image/logo.png
+								此时，“/”与”/image/logo.png”匹配
+								同时，”image”正则 与”image/logo.png”也能匹配,谁发挥作用?
+								正则表达式的成果将会使用，图片真正会访问/var/www/image/logo.png 								
+							再如：
+								location / {
+									root   /usr/local/nginx/html;
+									index  index.html index.htm;
+								}
+								 
+								location /foo {
+									root /var/www/html;
+									index index.html;
+								}
+							我们访问 http://xxx.com/foo
+							对于uri“/foo”,两个location的patt,都能匹配，即 ‘/’能从左前缀匹配 ‘/foo’, ‘/foo’也能左前缀匹配’/foo’，							
+							此时, 真正访问/var/www/html/index.html，原因:’/foo’匹配的更长,因此使用它
+						结论：
+							1）请求Uri，先判断是否有精准匹配，如果命中，返回结果并结束解析过程
+							2）判断普通命中，如果多个命中，记录最长的命中结果，注意只是记录不结束，以最长的为准（与普通匹配顺序无关）
+							3）判断正则匹配，按顺序从上到下匹配，只要有1个匹配，结束匹配过程并返回结果（与正则顺序有关）
+						
+					重写rewrite：功能类似于location
+						前提：Linux系统得安装pcre库（Perl Compatible Regular Expressions，perl兼容正则表达式），安装pcre库是为了使Nginx支持HTTP Rewrite模块
+						含义：该指令通过正则表达式的使用来改变URI.可以同时存在一个或者多个指令，按照顺序一次对URL进行匹配和处理
+						位置：该指令在server块或server块内的location块中配置 
+						相关指令：
+							关键字：
+								if  (条件) {}  #设定条件,再进行重写 
+								set #设置变量
+								return #返回状态码 
+								break #跳出rewrite
+								rewrite #重写
+
+							语法格式：
+							If 空格 (条件) {
+								重写模式
+							}
+							说明：
+								条件写法：3种
+								1: “=”来判断相等, 用于字符串比较
+								2: “~” 用正则来匹配(此处的正则区分大小写)， ~* 不区分大小写的正则								  
+								3: -f -d -e来判断是否为文件,为目录,是否存在
+							全局变量：
+								$args							-请求URL中的请求参数，如：http://www.myweb.name/server/source?arg1=value1&arg2=value2中的arg1=value1&arg2=value2
+								$content_length					-请求头中的Content_Length字段
+								$content_type					-请求头中的Content_type字段
+								$document_root					-请求的根路径
+								$document_uri					-请求中的uri，不包括请求指令，如：http://www.myweb.name/server/source?arg1=value1&arg2=value2中的/server/source
+								$host							-请求URL中的主机部分，如：http://www.myweb.name/server中的www.myweb.name，在nginx中server中的server_name配置项配置
+								$http_user_agent				-客户端的代理信息
+								$http_cookie					-客户端的cookie信息
+								$limit_rate						-Nginx服务器对网络速率的限制，限速
+								$remote_addr					-客户端地址
+								$remote_port					-客户端与服务端连接的端口号
+								$remote_user					-客户端用户
+								$request_body_file        		-请求体本地资源文件名称
+								$request_method					-请求方法，如：GET/POST
+								$request_filename				-请求资源文件路径名	
+								$request_uri					-请求中的uri，包括请求指令	
+								$query_string					-与$args相同
+								$scheme							-客户端请求使用的协议，如：HTTP、HTTPS、FTP协议
+								$server_protocol         		-客户端请求协议的版本，如：HTTP/1.0、HTTP/1.1
+								$server_addr					-服务器地址
+								$server_name					-服务器名称
+								$server_port					-服务器端口号
+								$uri							-与$document_uri相同								
+							例子:
+								#客户端为100的禁止访问
+								if  ($remote_addr = 192.168.1.100) {
+									return 403;
+								}
+								#判断IE浏览器并重写
+								if ($http_user_agent ~ MSIE) {
+										rewrite ^.*$ /ie.htm;
+										break; #不break会循环重定向
+								}
+
+								if (!-e $document_root$fastcgi_script_name) {
+									rewrite ^.*$ /404.html break; #此处还要加break
+								} 
+								说明：
+									以xx.com/dsafsd.html这个不存在页面为例，观察访问日志(tail logs/access.log), 日志中显示的访问路径,依然是GET /dsafsd.html HTTP/1.1						
+									提示: 服务器内部的rewrite和302重定向跳转不一样，跳转的话URL都变了，变成重新http请求404.html，
+										  而内部rewrite，上下文没变，就是说fastcgi_script_name（默认SCRIPT_FILENAME = $fastcgi_script_name）仍然是dsafsd.html，因此会循环重定向，所有需要break										 
+							
+							set:设置变量，可以用来达到多条件判断时作标志用来达到apache下的rewrite_condition的效果							
+								如下: 
+								#判断浏览器并重写，且不用break
+								if ($http_user_agent ~* msie) {
+												set $isie 1;
+								}
+								if ($fastcgi_script_name = ie.html) {
+									set $isie 0;
+								}
+								if ($isie 1) {
+									rewrite ^.*$ ie.html;
+								}
+							
+						Rewrite语法：Rewrite 正则表达式  重定向后的位置					
+						goods-3.html ---->goods.php?goods_id=3
+						goods-([\d]+)\.html --->goods.php?goods_id =$1  
+
+						location /ecshop {						
+							index index.php;
+							rewrite goods-([\d]+)\.html$ /ecshop/goods.php?id=$1;
+							rewrite category-(\d+)-b(\d+)\.html /ecshop/category.php?id=$1&brand=$2;					
+						}
+						#注意:用Url重写时, 正则里如果有”{}”,正则要用双引号""包起来
+						
+					nginx + php 编译流程：	
+						fastcgi含义：
+							apache是把php当做自己的一个模块来启动的，而nginx则是把http请求变量转发给php进程，
+							即php独立进程，与nginx进行通信称为fastcgi运行方式
+						总结：	
+							把请求的信息转发给默认9000端口的PHP进程，让PHP进程处理指定目录下的PHP文件					
+							如下例子:
+							location ~ \.php$ {
+								root html;
+								fastcgi_pass   127.0.0.1:9000;
+								fastcgi_index  index.php;
+								fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+								include        fastcgi_params;
+							}
+							说明：
+								1: 碰到php文件
+								2: 把根目录定位到html
+								3: 把请求上下文转交给9000端口PHP进程
+								4: 并告诉PHP进程，当前的脚本是 $document_root$fastcgi_script_name(注:PHP会去找这个脚本并处理)
+								
+					网页压缩与传播速度优化：
+						案例：
+							观察网易新闻news.163.com的头信息
+							请求:
+							Accept-Encoding:gzip,deflate,sdch,br
+							响应:
+							Content-Encoding:gzip
+							Content-Length:36093
+							再把页面另存下来,观察,约10W字节,实际传输的36093字节,原因-就在于gzip压缩上							
+							原理: 
+							浏览器---请求---->声明可以接受gzip压缩或deflate压缩或compress或sdch压缩或br压缩
+							从http协议的角度看---请求头声明acceopt-encoding: gzip deflate sdch br (是指压缩算法,其中sdch是google倡导的一种压缩方式,目前支持的服务器尚不多)
+							服务器-->回应---把内容用gzip方式压缩---->发给浏览器
+									浏览<-----解码gzip-----接收gzip压缩内容----
+
+							推算一下节省的带宽:
+							假设 news.163.com  PV  2亿
+							2*10^8  *  9*10^4 字节 == 
+							2*10^8 * 9 * 10^4  * 10^-9 = 12*K*G = 18T，节省的带宽是非常惊人的！
+						
+						使用：
+							位置：HTTP段
+							参数说明：
+								#gzip配置的参数
+								gzip on|off  #是否开启gzip
+								gzip_buffers 32 4K| 16 8K #缓冲(压缩在内存中缓冲几块? 每块多大?)
+								gzip_comp_level [1-9] #推荐6 压缩级别(级别越高,压的越小,越浪费CPU计算资源)
+								gzip_disable #正则匹配URI 什么样的Uri不进行gzip
+								gzip_min_length 200 #开始压缩的最小长度(再小就不要压缩了,意义不在)
+								gzip_http_version 1.0|1.1 #开始压缩的http协议版本(可以不设置,目前几乎全是1.1协议)
+								gzip_proxied          #设置请求者代理服务器,该如何缓存内容
+								gzip_types text/plain  application/xml #对哪些类型的文件用压缩 如txt,xml,html ,css
+								gzip_vary on|off  #是否传输gzip压缩标志
+
+								注意: 
+								图片/mp3这样的二进制文件,不必压缩,因为压缩率比较小, 比如100->80字节,而且压缩也是耗费CPU资源的								
+								比较小的文件不必压缩
+	
 		
 		
 	
