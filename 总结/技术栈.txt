@@ -2392,7 +2392,7 @@
 						string类型是二进制安全的。意思是redis的string可以包含任何数据。比如jpg图片或者序列化的对象。一个redis中字符串value最多可以是512M。
 				hash：哈希无序，类似java里的Map；Redis hash 是一个键值对集合。hash是一个string类型的field和value的映射表，hash特别适合用于存储对象。
 				list：列表，是简单的字符串列表，按照插入顺序排序元素可以重复。你可以添加一个元素导列表的头部（左边）或者尾部（右边）。它的底层实际是个链表。
-				set：集合，Redis的Set是string类型的无序不可重复集合，它是通过HashMap实现实现的。
+				set：集合，Redis的Set是string类型的无序不可重复集合，它是通过HashSet实现实现的。
 				zset：sorted set有序集合，Redis zset 和 set 一样也是string类型元素的集合,且不允许重复的成员。
 					  不同的zset是每个元素都会关联一个double类型的分数。redis正是通过分数来为集合中的成员进行从小到大的排序。zset的成员是唯一的,但分数(score)却可以重复。
 				使用：参考http://redisdoc.com/
@@ -2428,14 +2428,27 @@
 						它是一个字符串链表，left、right都可以插入添加；
 						如果键不存在，创建新的链表；如果键已存在，新增内容；如果值全移除，对应的键也就消失了。
 						链表的操作无论是头和尾效率都极高，但假如是对中间元素进行操作，效率就很惨淡了。
-				Set[单值多value，底层是hashMap]：		
+				Set[单值多value，底层是hashSet]：		
 					sadd/smembers/sismember：如：sadd set1 v1 v2 v3
-					 scard：获取集合里面的元素个数，如：
-					
-								
-
-						
-						
+					scard：获取集合里面的元素个数，如：scard set1
+					srem key value：删除集合中元素，如：srem set1 v1
+					srandmember key 某个整数：随机出几个指定个数的元数，如：srandmember set1 2
+					spop key ：随机出栈，如：spop set1
+					smove key1 key2 在key1里某个值：作用是将key1里的某个值赋给key2，如：smove set1 set2 v1
+					数学集合类：
+						差集：sdiff，在第一个set里面而不在后面任何一个set里面的项
+						交集：sinter
+						并集：sunion
+				Hash[KV模式不变，但V是一个键值对，类似Java中的Map<String,Object>]：
+					 hset/hget/hmset/hmget/hgetall/hdel：如：hmset hash1 id 1 name lisi age 20
+					 hlen：
+					 hexists key 在key里面的某个值的key：如：hexists hash1 id
+					 hkeys/hvals key：如：hkeys hash1  ----->结果：id name age
+					 hincrby/hincrbyfloat：给key里面的某个key的值增加整数/浮点数
+					 hsetnx：给key里面的某个key不存在才赋值，如：hsetnx hash1 k1 44
+				Zset[sorted set有序集合]：	 
+					在set基础上，加一个score值。之前set是k1 v1 v2 v3，现在zset是k1 score1 v1 score2 v2	
+					zadd/zrange：
 							
 							
 							
