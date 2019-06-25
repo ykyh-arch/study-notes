@@ -2448,10 +2448,76 @@
 					 hsetnx：给key里面的某个key不存在才赋值，如：hsetnx hash1 k1 44
 				Zset[sorted set有序集合]：	 
 					在set基础上，加一个score值。之前set是k1 v1 v2 v3，现在zset是k1 score1 v1 score2 v2	
-					zadd/zrange：
-							
-							
-							
+					zadd/zrange：如：zadd z1 70 v1 80 v2 90 v3，zrange z1 0 -1 withscores
+					zrangebyscore key 开始score 结束score [withscores] [limit]：如：zrangebyscore z1 (60 90 withscores			-(不包含，limit 开始下标步 多少步
+					删除元素：zrem key 某score下对应的value值，如：zrem z1 v1
+					zcard/zcount key score区间/zrank key 下标值/zscore key 对应值，获得分数
+						zcard：获取集合中元素个数，如：zcard z1
+						zcount：获取分数区间内元素个数，zcount key 开始分数区间 结束分数区间，如：zcount z1 60 80 
+						zrank： 获取下标位置，如：zrank z1 v1
+						zscore：按照key获得对应的分数，如：zscore z1 v1
+					zrevrank key values值，作用是逆序获得下标，如：zrerank z1 v1
+					zrevrange：与zrange相反
+					zrevrangebyscore  key 结束score 开始score：与zrangebyscore相反
+					
+			配置文件[redis.conf]：
+				位置：指定的配置文件目录下
+				解析：
+					units[单位]：
+					如：
+					# 1k => 1000 bytes
+					# 1kb => 1024 bytes
+					# 1m => 1000000 bytes
+					# 1mb => 1024*1024 bytes
+					# 1g => 1000000000 bytes
+					# 1gb => 1024*1024*1024 bytes
+						1  配置大小单位,开头定义了一些基本的度量单位，只支持bytes，不支持bit
+						2  对大小写不敏感
+					
+					INCLUDES[包含]：
+						通过includes包含，redis.conf可以作为总闸，包含其他的配置信息
+						如：
+						# include /path/to/local.conf
+						# include /path/to/other.conf
+					
+					GENERAL[通用]:
+						daemonize：是否开启守护进程模式，默认没有开启
+						pidfile：进程ID所在文件，默认位置：pidfile /var/run/redis.pid
+						port：监听端口，默认6379，如果设为0，禁用监听TCP socket
+						tcp-backlog：
+							设置tcp的backlog，backlog其实是一个连接队列，backlog队列总和=未完成三次握手队列 + 已经完成三次握手队列。
+							在高并发环境下你需要一个高backlog值来避免慢客户端连接问题。
+							注意Linux内核会将这个值减小到/proc/sys/net/core/somaxconn的值，所以需要确认增大somaxconn和tcp_max_syn_backlog两个值来达到想要的效果。
+						timeout：超时断开连接，默认0，表示关闭
+						bind：绑定IP/域名，非必配项
+						tcp-keepalive：单位为秒，如果设置为0，则不会进行Keepalive检测，建议设置60，长链接保持心跳，超出设置的数值，会断开socket连接
+						loglevel：日志级别，默认有4种，默认是：verbose
+							# debug (a lot of information, useful for development/testing)
+							# verbose (many rarely useful info, but not a mess like the debug level)
+							# notice (moderately verbose, what you want in production probably)
+							# warning (only very important / critical messages are logged)
+						logfile：日志文件名，默认：stdout # output for logging but daemonize, logs will be sent to /dev/null
+						syslog-enabled：是否把日志输出到syslog中，默认NO
+						syslog-ident：指定syslog里的日志标志，默认redis
+							# Specify the syslog identity.
+							# syslog-ident redis
+						syslog-facility：指定syslog设备，值可以是USER或LOCAL0-LOCAL7，默认为local0
+						databases：数据库，默认16个库，切换库：select dbid # dbid is a number between 0 and 'databases'-1
+					
+					SNAPSHOTTING[快照]：RDB是整个内存的压缩过的Snapshot，RDB的数据结构，可以配置复合的快照触发条件！
+						Save：# Save the DB on disk 将数据保存到磁盘，语法：save <秒钟> <写操作次数> 或 save <seconds> <changes>
+							默认：
+							#   after 900 sec (15 min) if at least 1 key changed
+							#   after 300 sec (5 min) if at least 10 keys changed
+							#   after 60 sec if at least 10000 keys changed
+							save 900 1 						 -15分钟内改了1次                      
+							save 300 10						 -5分钟内改了10次
+							save 60 10000					 -1分钟内改了1万次
+						
+						    注意：如果想禁用RDB持久化的策略，只要不设置任何save指令，或者给save传入一个空字符串参数也可以，如：save ""
+						
+						stop-writes-on-bgsave-error：默认yes，即当bgsave快照操作出错时停止写数据到磁盘，这样后面写错做均会失败，为了不影响后续写操作，故需将该项值改为no。
+			
 ----------------------------------------------Linux运维相关知识---------------------------------------------------------------------									
 							
 	方向：运维工程师、嵌入式工程师
