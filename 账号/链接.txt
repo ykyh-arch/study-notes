@@ -9,3 +9,4 @@ http://maven.outofmemory.cn/ -MAVEN中央仓库
 https://52sharing.cn -吾爱分享网
 https://www.baidu.com/robots.txt -百度蜘蛛
 https://gitee.com/loolly/hutool -HutoolJava常用的工具包
+https://github.com/fengyuanchen/viewerjs -图片查看器
