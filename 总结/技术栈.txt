@@ -2307,7 +2307,7 @@
 			分布式数据库中CAP原理CAP+BASE[重点]：
 				ACID：数据库事务四个基本要素，原子性[Atomicity]、一致性[Consistency]、隔离性/独立性[Isolation]、持久性[Durability]
 						  原子性：说的是事务里的所有操作要么全部做完，要么都不做，事务成功的条件是事务里的所有操作都成功，只要有一个操作失败，整个事务就失败，需要回滚
-						  一致性：数据库要一直处于一致的状态，事务的运行不会改变数据库原本的一致性约束
+						  一致性：数据库要一直处于一致的状态，事务的运行不会改变数据库原本的一致性约束，也即在事务开始之前和事务结束以后，数据库的完整性没有被破坏
 						  独立性：指并发的事务之间不会互相影响，如果一个事务要访问的数据正在被另外一个事务修改，只要另外一个事务未提交，它所访问的数据就不受未提交事务的影响
 						  持久性：一旦事务提交后，它所做的修改将会永久的保存在数据库上，即使出现宕机也不会丢失
 						  
@@ -2835,8 +2835,222 @@
 						由于所有的写操作都是先在Master上操作，然后同步更新到Slave上，所以从Master同步到Slave机器有一定的延迟，
 						当系统很繁忙的时候，延迟问题会更加严重，Slave机器数量的增加也会使这个问题更加严重。
 				
-			Redis对应Java客户端：Jedis、Spring-data-redis			
+			Redis对应Java客户端：Jedis、Spring-data-redis
+
+----------------------------------------------MysqL高级运维知识---------------------------------------------------------------------
+	一、Mysql运算符：
+		安全等于运算符[<=>]：规则均为NULL时，其返回值为1，否则返回0；
+						如：
+						SELECT NULL <=>1;  						-0
+						SELECT 1<=>0;							-0
+						SELECT NULL <=>NULL; 					-1
+		最值运算符：
+			LEAST()或least()运算符，返回最小值；如：SELECT LEAST(2,0),LEAST('a','b','c'),LEAST(10,NULL);					-0,a,null
+			GREATEST()或greatest()运算符，返回最大值；SELECT GREATEST(2,0),GREATEST('a','b','c'),GREATEST(10,NULL);			-2,c,null
+		REGEXP[正则]运算符:
+			正则表达式：在不同的开发语言中，正则表达式的基本语法都是一样的，只是在使用方式上有所差别
+			注意：MySQL 支持转义字符 
+				# 单引号：\'
+				# 双引号：\''，如：INSERT INTO test(`name`) value('\'');
+				# 反斜杠：\\
+				# 回车符：\r
+				# 换行符：\n
+				# 制表符：\tab
+				# 退格符：\b
+			规则：
+				# '\b' 匹配一个字边界，即字与空格间的位置
+				# '\B' 匹配\b之外的任意字符
+				# '\d' 匹配0-9的任意一个数字，如：/^\d$/ 表示数字
+				# '\D' 匹配\d之外的任意字符
+				# '\f' 匹配换页符
+				# '\r' 匹配回车符
+				# '\s' 匹配任何空白字符(包括空格、制表符、换页符、换行符等)
+				# '\S' 匹配任何非空白字符
+				# '\t' 匹配制表符
+				# '\v' 匹配垂直制表符
+				# '\n' 匹配换行符
+				# '\w' 匹配包括下划线在内的任意单词字符(包括A-Z、a-z、0-9、_，就是行话:数字、字母、下划线)，
+						如：/^\w{6,16}$/ 表示6-16位字母、数字、下划线组成的
+				# '\W' 匹配\w之外的所有字符
+				# '^'  匹配以该字符后面的字符开头的字符串，如：SELECT name FROM t_person WHERE name REGEXP '^st';
+				# '$'  匹配以该字符前面的字符结尾的字符串，如：SELECT name FROM t_person WHERE name REGEXP 'ok$';
+				# '.'  表示任何一个单字符，除\n外
+				# '[]' 匹配在方括号内的任一个字符
+						 如：“[abc]" 匹配a、b或c。“[a-z]”匹配任何单个字母，而“[0-9]”匹配任何单个数字	
+				# '*' 匹配零个或多个在他前面的字符或子表达式，如：'zx*' 可以匹配z后面跟0到无数个x(「z」或「zxx」皆可)
+					  如：“x*”匹配任何数量的'*'字符,等价于'{0,}'，“[0-9]*”匹配任何数量的数字，而“.*”匹配任何数量的任何字符
+				# '?' 匹配零次或一次匹配前面的字符或子表达式 
+				# '+' 匹配至少一个在他前面的字符，等价于{1,}
+				# '|' 或，如：p1|p2|p3表示匹配 p1 或 p2 或 p3；g|food 匹配g或food；(g|f)ood 匹配good或food
+				# '[^字符集合]' 匹配不在指定集合中的任何字符，如： '[^abc]' 可以匹配不在abc内的任意字符
+				# '{n,}'或'{n,m}'，如：“字符串{n,}”表示前面的字符串至少匹配n次；“字符串{n,m}”表示匹配前面的字符串不少于n次，不多于m次
+				  示例：'a{5,8}'匹配5-8个a；'123{3}'匹配结果12333；'(456){2}'匹配结果456456
+			  
+		逻辑运算符：
+			逻辑与：AND 或&&；逻辑或 OR或||
+				如：
+				SELECT * FROM testuser WHERE gender ='女' AND `name` LIKE '%赵%';
+				SELECT * FROM testuser WHERE gender ='女' && `name` LIKE '%赵%';
+			异或XOR运算符：
+				当任意一个操作数为NULL时，返回值为NULL;对于非NULL的操作数，
+				如果两个操作数都是非0值或者都是0值，则返回结果为0，反之为1，
+				XOR等同于a AND (NOT b))或者NOT a AND (b)
+				如：SELECT 1 XOR 1, 0 XOR 0,1 XOR 0,1 XOR NULL,1 XOR 1 XOR 1;					-0,0,1,null,1
+		
+		Mysql事务管理：
+			Mysql事务是必须满足4个条件（ACID）：
+				原子性（Atomicity，或称不可分割性）、一致性（Consistency）、隔离性（Isolation，又称独立性）、持久性（Durability）
+			注意：
+				1）在 MySQL 中只有使用了 Innodb 数据库引擎的数据库或表才支持事务；
+				2）事务处理可以用来维护数据库的完整性，保证成批的 SQL 语句要么全部执行，要么全部不执行；
+				3）事务用来管理 insert,update,delete 语句；
+		    事务控制语句：
+				BEGIN 或 START TRANSACTION 显式地开启一个事务
+				COMMIT 或 COMMIT WORK。COMMIT 会提交事务，并使已对数据库进行的所有修改成为永久性的
+				ROLLBACK 或 ROLLBACK WORK。回滚会结束用户的事务，并撤销正在进行的所有未提交的修改
+				SAVEPOINT identifier，SAVEPOINT 允许在事务中创建一个保存点，一个事务中可以有多个 SAVEPOINT
+				RELEASE SAVEPOINT identifier 删除一个事务的保存点，当没有指定的保存点时，执行该语句会抛出一个异常
+				ROLLBACK TO identifier 把事务回滚到标记点
+				SET TRANSACTION 用来设置事务的隔离级别。InnoDB 存储引擎提供事务的隔离级别有READ UNCOMMITTED、READ COMMITTED、REPEATABLE READ 和 SERIALIZABLE
+			事务的处理方式：
+				方式一：用 BEGIN, ROLLBACK, COMMIT来实现
+				方式二：直接用 SET 来改变 MySQL 的自动提交模式；SET AUTOCOMMIT=0 禁止自动提交；SET AUTOCOMMIT=1 开启自动提交；
+			结论：
+				在 MySQL 命令行的默认设置下，事务都是自动提交的，即执行 SQL 语句后就会马上执行 COMMIT 操作。
+				因此要显式地开启一个事务务须使用命令 BEGIN 或 START TRANSACTION，或者执行命令 SET AUTOCOMMIT=0，用来禁止使用当前会话的自动提交。
+				如：
+					BEGIN;
+					SQL insert,update,delete 语句；
+					COMMIT/ROLLBACK;					-数据库表有改变/数据库表没有改变
+		
+		Mysql视图[虚表]：
+			含义：视图（view）是一种虚拟存在的表，是一个逻辑表，本身并不包含数据，而是由一个SELECT语句保存在数据字典中的。
+				  通过视图，可以展现基表的部分数据；视图数据来自定义视图的查询中使用的表，使用视图动态生成。
+			优点：
+				为了保障数据安全性，提高查询效率，简单（是过滤好的复合条件的结果集）、安全（用户只能查询或修改所能见到得到的数据）、数据独立（屏蔽真实表结构变化带来的影响）
+			
+			语法：	  
+				# CREATE [OR REPLACE] [ALGORITHM = {UNDEFINED | MERGE | TEMPTABLE}]     -- 创建、替换、选择算法[未定义的[默认]，合并，临时的] 
+				# VIEW view_name [(column_list)] 										-- 视图名、列名
+				# AS select_statement 													-- 查询SELECT语句
+				# [WITH [CASCADED | LOCAL] CHECK OPTION] 								-- 控制权限，推荐使用，可以保证数据的安全性
+			基本格式：
+			　　create view <view_name>[(column_list)]
+				as select语句
+				with check option;
+			示例：
+				-- 建表、插入数据
+				CREATE TABLE student (stuno INT ,stuname NVARCHAR(60));											-学生表（学号、姓名）
+				CREATE TABLE stuinfo (stuno INT ,class NVARCHAR(60),city NVARCHAR(60));							-学生信息表（学号、班级、城市）
+				INSERT INTO student VALUES(1,'wanglin'),(2,'gaoli'),(3,'zhanghai');
+				INSERT INTO stuinfo VALUES(1,'wuban','henan'),(2,'liuban','hebei'),(3,'qiban','shandong');
+				
+				-- 创建视图
+				CREATE VIEW stu_class(id,NAME,class) AS SELECT student.`stuno`,student.`stuname`,stuinfo.`class`
+				FROM student,stuinfo WHERE student.`stuno`=stuinfo.`stuno` with check option;
+				
+				-- 查看视图														  
+					方法：
+						方式一：SELECT * FROM stu_class								-- 类似查表的方式
+						方式二：DESCRIBE 或 DESC
+								DESCRIBE stu_class; 或 DESC stu_class;
+						方式三：SHOW TABLE STATUS LIKE
+								SHOW TABLE STATUS LIKE 'stu_class'; 								-- comment项为view表示视图
+								SHOW TABLE STATUS LIKE 'stuinfo';							    	-- 基表
+						方式四：SHOW CREATE VIEW
+								SHOW CREATE VIEW stu_class;
+								SELECT * FROM `information_schema`.`VIEWS`; 						-- 查看MySQL数据库中所有视图的详细信息
+				-- 修改视图
+					含义：通过视图更新的时候都是转到基表进行更新，如果对视图增加或者删除记录，实际上是对基表增加或删除记录
+					语法：
+						# ALTER OR REPLACE [ALGORITHM = {UNDEFINED | MERGE | TEMPTABLE}]
+						# VIEW view_name [(column_list)]
+						# AS select_statement
+						# [WITH [CASCADED | LOCAL] CHECK OPTION]
+						如：
+						DELIMITER $$																-- 分隔符
+
+						CREATE OR REPLACE VIEW `stu_class` AS 										-- 创建或替换
+						SELECT
+						  `student`.`stuno`  AS `id`
+						FROM (`student` JOIN `stuinfo`)
+						WHERE (`student`.`stuno` = `stuinfo`.`stuno`) WITH CHECK OPTION $$
+
+						DELIMITER ;
 						
+						DESC stu_class;																-- 查看
+						SELECT * FROM stu_class;													-- 查看
+					DML操作更新视图[单表]：
+						结论：
+							如：
+							ALTER VIEW stu_class AS SELECT stuno,stuname FROM student;					-- 修改视图
+							
+							UPDATE stu_class SET stuname='xiaofang' WHERE stuno=2; 						-- 修改视图数据
+							SELECT * FROM student; 														-- 原表的数据也改变
+							INSERT INTO stu_class VALUES(6,'haojie');
+							DELETE FROM stu_class WHERE stuno=1;
+						注意：
+							并非所有视图都可以做DML操作，以下情况例外：
+								①select子句中包含distinct
+							　　②select子句中包含组函数
+							　　③select语句中包含group by子句
+							　　④select语句中包含order by子句
+							　　⑤select语句中包含union 、union all等集合运算符
+							　　⑥where子句中包含相关子查询
+							　　⑦from子句中包含多个表
+							　　⑧如果视图中有计算列，则不能更新
+							　　⑨如果基表中有某个具有非空约束的列未出现在视图定义中，则不能做insert操作
+				
+				-- 删除视图
+					# 语法 ：视图本身没有数据，因此对视图进行的DML操作最终都体现在基表中
+					# DROP VIEW [IF EXISTS]
+					# view_name [, view_name] ...
+					# [RESTRICT | CASCADE]
+					如：
+					DROP VIEW IF EXISTS stu_class; 
+					-- SHOW CREATE VIEW stu_class; 														-- Table '[库名].stu_class' doesn't exist
+		
+		Mysql触发器：
+			含义：触发器是与表有关的数据库对象，在满足定义条件时触发，并执行触发器中定义的语句集合。
+			特点：
+				1、有begin end体，begin end之间的语句可以写的简单或者复杂的
+			　　2、什么条件会触发：I、D、U
+			　　3、什么时候触发：在增删改前或者后
+			　　4、触发频率：针对每一行执行
+			　　5、触发器定义在表上，附着在表上
+				也就是由事件来触发某个操作，事件包括INSERT语句，UPDATE语句和DELETE语句；可以协助应用在数据库端确保数据的完整性
+			注意：
+				尽量少使用触发器，不建议使用！
+				触发器是针对每一行的；对增删改非常频繁的表上切记不要使用触发器，因为它会非常消耗资源
+			使用：
+				语法：
+				# CREATE TRIGGER trigger_name trigger_time trigger_event  
+				# ON tbl_name FOR EACH ROW trigger_stmt
+				 
+				参数解释 ：trigger_name 触发器名称; trigger_time 触发时间，值有：BEFORE或AFTER; 
+				           trigger_event 激发事件，值有：INSERT UPDATE DELETE; tbl_name 表名 
+		   	               trigger_stmt 触发程序激活时执行的语句，是BEGIN ... END复合语句结构。
+				名词解释：
+					OLD & NEW ：表示触发器的所在表中，触发了触发器的那一行数据，来引用触发器中发生变化的记录内容[]；
+				
+				
+				-- 单执行[有一个执行语句]触发器
+				CREATE TABLE account(acct_num INT ,amount DECIMAL(10,2));								-- 建表
+				CREATE TRIGGER ins_sum BEFORE INSERT ON account
+				FOR EACH ROW SET @SUM=@SUM+new.amount;
+
+				#DECLARE @num INT
+				#SET @num=0
+				#INSERT INTO account VALUES(1,1.00),(2,2.00)
+				#SELECT @num
+				#select * from account;
+				  
+				  
+		Mysql存储过程：
+			含义：存储过程简称过程，Stored Procedure，是一种用来处理数据（增删改）的方式。简单点，可以将其理解为没有返回值的函数，
+				  一般存储过程并不显示结果，而是把结果返回给你指定的变量。
+
+				
 ----------------------------------------------Linux运维相关知识---------------------------------------------------------------------									
 							
 	方向：运维工程师、嵌入式工程师
