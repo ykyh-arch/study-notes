@@ -1902,7 +1902,7 @@
 					  redisTemplate.opsForHash();//操作hash
 					  redisTemplate.opsForList();//操作list
 					  redisTemplate.opsForSet();//操作set
-					  redisTemplate.opsForZSet();//操作有序set
+					  redisTemplate.opsForZSet();//操作有序Zset
 			
 			Ace-Cache：参考：https://gitee.com/geek_qi/ace-cache
 				基于spring boot上的注解缓存，自带轻量级缓存管理页面。@Cache比spring cache更轻量的缓存，支持单个缓存设置过期时间，可以根据前缀移除缓存。采用fastjson序列化与反序列化，以json串存于缓存之中。
@@ -2801,11 +2801,11 @@
 							   备机日志：Master-Slaver数据同步成功！
 							   查看Master-Slaves复制信息：info replication
 							问题：
-								1）切入点问题？slave1、slave2是从头开始复制还是从切入点开始复制?比如从k4进来，那之前的K123是否也可以复制
+								1）切入点问题？slave1、slave2是从头开始复制还是从切入点开始复制?比如从k4进来，那之前的K123是否也可以复制?全量复制/增量复制
 								2）从机是否可以写W？set可否？
-								3）主机shutdown后情况如何？从机是上位还是原地待命？
+								3）主机shutdown后情况如何？从机是上位还是原地待命？投票选举新的Master
 								4）主机又回来了后，主机新增记录，从机还能否顺利复制？
-								5）其中一台从机down后情况如何？依照原有它能跟上大部队吗？
+								5）其中一台从机down后情况如何？重启后它能跟上大部队吗？可以
 						薪火相传：
 							结论：
 								1）上一个Slave可以是下一个slave的Master，Slave同样可以接收其他slaves的连接和同步请求，
@@ -2814,15 +2814,28 @@
 						反客为主：配置文件中或客户端工具添加一行：SLAVEOF no one					-使当前数据库停止与其他数据库的同步，转成主数据库	
 						
 				原理分析：
-					1）slave启动成功连接到master后会发送一个sync命令；
-					2）Master接到sync命令启动后台的存盘进程，同时收集所有接收到的用于修改数据集命令，在后台进程执行完毕之后，
+					1）slave启动成功连接到master后会发送一个同步[sync]命令；
+					2）Master接到同步[sync]命令启动后台的存盘进程，同时收集所有接收到的用于修改数据集命令，在后台进程执行完毕之后，
 					   master将传送整个数据文件到slave,以完成一次完全同步；
-					3）
-						
-						
-						
-						
-						
+					3）全量复制：而slave服务在接收到数据库文件数据后，将其存盘并加载到内存中
+					4）增量复制：Master继续将新的所有收集到的修改命令依次传给slave，完成同步；但是只要是重新连接master,一次完全同步（全量复制)将被自动执行
+				
+				哨兵模式：
+					含义：反客为主的自动版，能够后台监控主机Master是否故障，如果故障了根据投票数自动将从库Slaver转换为主库；
+					使用：
+						1）[自定义配置文件目录下]/新建文件：sentinel.conf
+						2）配置内容：sentinel monitor 被监控数据库名字[自定义，如：host6379] 127.0.0.1 6379 1 
+									 上面最后一个数字1，表示Master主机挂掉后Salve投票看让谁接替成为主机，得票数多少后成为主机;
+						3）启动哨兵：redis-sentinel [自定义配置文件目录下]/sentinel.conf，在启动一主二从；
+					结论：
+						1）当Master服务宕机后，所有的Slaver进行投票选举推出新的Master
+						2）当主机重启后，只能以Slaver的角色加入队伍当中
+						3）一组sentinel能同时监控多个Master	
+					缺点：
+						由于所有的写操作都是先在Master上操作，然后同步更新到Slave上，所以从Master同步到Slave机器有一定的延迟，
+						当系统很繁忙的时候，延迟问题会更加严重，Slave机器数量的增加也会使这个问题更加严重。
+				
+			Redis对应Java客户端：Jedis、Spring-data-redis			
 						
 ----------------------------------------------Linux运维相关知识---------------------------------------------------------------------									
 							
