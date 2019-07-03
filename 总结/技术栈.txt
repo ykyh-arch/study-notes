@@ -4196,7 +4196,7 @@
 ----------------------------------------------Nginx WEB服务器的使用----------------------------------------------------------------------------------												
 	一、基本介绍：参考：https://www.runoob.com/linux/nginx-install-setup.html
 			含义：Nginx("engine x")是一款是由俄罗斯的程序设计师Igor Sysoev所开发高性能的Web和反向代理服务器，也是一个IMAP/POP3/SMTP邮件代理服务器。
-				  在高连接并发的情况下，Nginx是Apache服务器不错的替代品，目前的版本有：稳定版、开发版和历史稳定版
+				  在高连接并发的情况下，Nginx是Apache服务器不错的替代品，目前的版本有：稳定版、开发版和历史稳定版。业界使用其产品的公司如：腾讯、新浪
 			安装：
 				下载地址: http://nginx.org/download/nginx-1.4.2.tar.gz				  
 				yum install pcre pcre-devel									-nginx依赖于pcre库,要先安装pcre、pcre-devel
@@ -4225,7 +4225,7 @@
 				6）WINCH														-优雅关闭旧的进程(配合USR2来进行升级)
 				具体语法:
 					Kill -信号选项 nginx的PPID（主进程ID），如：Kill -HUP 4873
-					Kill -信号控制 `cat [安装路径下]/logs/nginx.pid`，如：Kil -USR1 `cat [安装路径下]/logs/nginx.pid`					
+					Kill -信号控制 `cat [安装路径下]/logs/nginx.pid`，如：Kill -USR1 `cat [安装路径下]/logs/nginx.pid`					
 		
 		附[总结]：
 		nginx常用指令：
@@ -4233,7 +4233,9 @@
 			停止命令：[安装路径下]/usr/local/nginx/sbin/nginx -s stop 强制关闭
 					  [安装路径下]/usr/local/nginx/sbin/nginx -s quit 安全关闭
 			重启命令：[安装路径下]/usr/local/nginx/sbin/nginx -s reload		  
-			测试配置文件：[安装路径下]/usr/local/nginx/sbin/nginx -t			
+			测试配置文件：[安装路径下]/usr/local/nginx/sbin/nginx -t
+			检测是否出错：[安装路径下]/usr/local/nginx/sbin/nginx -c
+			查看帮助：[安装路径下]/usr/local/nginx/sbin/nginx -h
 			查看进程：ps -ef | grep nginx
 			平滑重启：kill -HUP Nginx主进程号
 		查看端口：
@@ -4248,6 +4250,12 @@
 					#工作的子进程,可以自行修改,但太大无益,因为要争夺CPU,一般设置为 CPU数*核数
 					worker_processes 1; 
 					
+					#是否以守护进程开启
+					daemon：默认on 可选值on/off
+					
+					#是否主进程中开启多个子线程
+					master_process：默认on 可选值on/off
+					
 					#一般配置nginx连接的特性
 					Event {					
 					 #如1个worker能同时允许多少连接，如下指一个子进程最大允许连1024个连接
@@ -4258,11 +4266,21 @@
 					http { 
 						 #日志
 						 #access_log  logs/access.log  main;
+						 #超时时间
+						 keepalive_timeout 75;
+						 #全局设置
+						 location / {
+							deny 192.168.1.2;						//拒绝指定客户端访问
+							allow 192.168.1.3/300;					//允许指定客户端访问[IP段]
+							denyall;
+						 }						 
 						 #虚拟主机段
 						 Server1 {							   
 								#定位,把特殊的路径或文件再次定位，如image目录单独处理；.php单独处理
 								Location {
 								}
+								#解析超时
+								resolver_timeout 30s;
 
 						 }
 						 Server2 {
@@ -4274,14 +4292,15 @@
 						server {
 							#监听端口  
 							listen 80;
-							#监听域名，需要域名映射，在hosts文件中添加映射
+							#监听域名，需要域名映射，在hosts文件中添加映射；支持配置多个域名，使用空格隔开；
 							server_name 1xuepai.com; 
 							#定位,把特殊的路径或文件再次定位
 							#日志
 							#access_log  logs/host.access.log  main;
 							location / {
 									#根目录定位，绝对路径
-									root /var/www/1xuepai.com;  
+									root /var/www/1xuepai.com; 
+									#alias 别名
 									index index.html;
 							}
 						}
@@ -4596,6 +4615,10 @@
 							
 							问题：如何利用proxy_pass指向多台服务器?
 							实现过程：把多台服务器用upstream指定绑定在一起并起个组名,然后proxy_pass指向该组；
+							负载均衡流程：
+																	upstream[指向组名]	     服务器1[组成员]
+								客户端 ----------------> nginx ----------------------------> 服务器2[组成员]
+																					         服务器3[组成员]
 							负载均衡算法IRule：
 								分类：区别于Java后台的SpringBoot技术栈的负载均衡
 									1）轮询，默认的策略，如果server挂掉，能自动剔除
@@ -4612,7 +4635,7 @@
 											server   192.168.99.100:42000; 
 											server   192.168.99.100:42001;  
 										}
-									4）IP_HASH一致性哈希，每个请求会按照访问ip的hash值分配，这样同一客户端连续的Web请求都会被分发到同一server进行处理，可以解决session的问题。如果server挂掉，能自动剔除
+									4）IP_HASH一致性哈希，每个请求会按照访问ip的hash值分配，这样同一客户端连续的Web请求都会被分发到同一server进行处理，可以解决session共享的问题。如果server挂掉，能自动剔除
 										如：
 										upstream  1xuepai.com {   
 											ip_hash;
@@ -4623,6 +4646,7 @@
 							
 							示例：
 								#这里域名要和下面proxy_pass的一样，且不能使用下划线，timeMachine不能写成time_machine
+								#负载均衡池
 								upstream  timeMachine.com {
 									#fail_timeout：当该时间内服务器没响应，则认为服务器失效，默认10s
 									#max_fails：允许连接失败次数，默认为1
@@ -4653,17 +4677,131 @@
 								}
 								
 								结论：等待时间 = proxy_connect_timeout + fail_timeout * max_fails
-
+					
+					Nginx图片服务器：
+						目的：为了缓存web服务器的访问压力，可以单独搭建文件服务器[图片、视频等]
+						使用：
+							在server段添加配置，如：
+							location /images/ {
+								root /var/www/nginx_imgs/	                #图片存放位置
+							}
 							
+	三、nginx与keepalived实现HA，可参考：https://www.jb51.net/article/142443.htm
+			目的：高并发情况下为了考虑Nginx的单点故障，真正做到架构高可用性HA，实现nginx的故障转移，同时做好监控报警。
+			keepalived定义：
+				Keepalived是一个基于VRRP协议[Virtual Router Redundancy Protocol，即 虚拟路由冗余协议，是实现路由器高可用HA的容错协议]来实现的服务高可用方案，可以利用其来避免IP单点故障，
+				类似的工具还有heartbeat、corosync、pacemaker。
+				但是它一般不会单独出现，而是与其它负载均衡技术（如lvs、haproxy、nginx）一起工作来达到集群的高可用。
+			原理流程：			
+						keepalived[充当路由角色]										 服务器1
+				客户端 ----------------------------> nginx[master] --------------------> 服务器2
+						访问公共IP[虚拟IP]			 nginx[backup]						 服务器3
 						
-	
-	
-	
-	
-	
-	
-	
-	
+				注释：nginx[master]和 nginx[backup]都需要与keepalived建立绑定关系，当nginx[master]宕机后，会自动的切换
+					  到nginx[backup]使用；当恢复nginx[master]后又重新切换回nginx[master]使用。			
+			使用：
+				示例：环境准备
+					2台nginx[linux]服务器（如：192.168.1.129与192.168.1.130，nginx端口默认80）都安装好keepalived服务
+					一个虚拟IP[公共IP] 192.168.1.131
+					安装keepalived服务
+						#准备下载好的keepalived安装包文件
+						#解压并进入解压目录
+						tar -zxvf keepalived-1.2.18.tar.gz
+						cd keepalived-1.2.18
+						#指定安装目录并安装
+						./configure --prefix=/opt/keepalived
+						make && make install
+					将keepalived安装成Linux系统服务
+						mkdir /etc/keepalived/
+						cp /opt/keepalived/etc/rc.d/init.d/keepalived /etc/init.d/
+						cp /opt/keepalived/etc/sysconfig/keepalived /etc/sysconfig/
+						ln -s /opt/sbin/keepalived /usr/sbin/
+						ln -s /opt/keepalived/sbin/keepalived /sbin/
+				    设置keepalived服务开机启动
+						chkconfig keepalived on
+					  
+					keepalived目录结构：
+						安装目录下有：
+							bin		-genhash
+							etc		-keepalived
+												 -keepalived.conf[重点]
+												 -samples
+									-rc.d
+												 -init.d
+									-sysconfig
+												 -keepalived
+							sbin
+							share
+					  
+					同时修改安装路径下的keepalived.conf的配置与/etc/keepalived/keepalived.conf的配置[2台服务都要配置]
+					配置信息如下：
+						! Configuration File for keepalived (!、#都是注释)
+					　　global_defs { #全局配置
+					　　notification_email { #通知邮件，接收邮件
+					　　　　acassen@firewall.loc
+					　　　　failover@firewall.loc
+					　　　　sysadmin@firewall.loc
+					　　}
+					　　notification_email_from Alexandre.Cassen@firewall.loc #发送邮件
+					　　smtp_server 192.168.200.1 #发送邮件服务器IP
+					　　smtp_connect_timeout 30 #发送邮件超时时间
+					　　router_id LVS_01 #这个配置要唯一，一般配置成Linux的主机名hostname，可以在/etc/hosts里添加设置
+					　　}　
+
+					　　vrrp_script chk_nginx {
+					　　　　script "/etc/keepalived/nginx_check.sh" ## 检测 nginx 状态的脚本路径
+					　　　　interval 2 ## 检测时间间隔
+					　　　　weight -20 ## 如果条件成立，权重-20
+					　　}　
+
+					　　vrrp_instance VI_1 { #实例 VI_1 名字可以随意 但是不建议修改
+					　　　　state MASTER # 主服务器MASTER 从服务器 BACKUP
+					　　　　interface em1 # em1 网卡，查看网卡：ifconfig 或 ip addr
+					　　　　virtual_router_id 129 #virtual_router_id 主备要不一致，要与当前的机器IP保持一致
+					　　　　mcast_src_ip 192.168.1.129 		#本机IP
+							nopreempt 		#优先级高的异常恢复后抢占问题
+							priority 100 　　# 优先级 数字越大优先级越高 priority 的值 主服务器要大于从服务器
+					　　　　advert_int 1　　#设定MASTER与BACKUP负载均衡器之间同步检查的时间间隔，单位是秒
+					　　　　authentication { # 主从通信验证类型及密码 
+					　　　　　　auth_type PASS　　#设置vrrp验证类型，主要有PASS和AH两种
+					　　　　　　auth_pass 1111　　#设置vrrp验证密码，在同一个vrrp_instance下，MASTER与BACKUP必须使用相同的密码才能正常通信
+					　　　　}　
+
+					　　　　## 将track_script块加入instance配置块
+					　　　　track_script {
+					　　　　　　chk_nginx ## 执行 Nginx 监控的服务
+					　　　　}
+
+							## 虚拟IP[VIP]池
+					　　　　virtual_ipaddress {
+					　　　　192.168.1.131/135 #VRRP HA 虚拟IP地址 如果有多个VIP，继续换行填写
+					　　　　}
+					　　}　
+
+					编写Nginx状态检测脚本：vim /etc/keepalived/nginx_check.sh
+					内容如下：
+						#!/bin/bash
+					　　A=`ps -C nginx –no-header |wc -l`
+					　　if [ $A -eq 0 ];then
+					　　　　/opt/nginx/sbin/nginx				#nginx安装目录
+					　　　　sleep 2
+					　　　　if [ `ps -C nginx --no-header |wc -l` -eq 0 ];then
+
+					　　　　　　killall keepalived
+					　　　　fi
+					　　fi
+					保存后，给脚本赋执行权限：chmod +x/etc/keepalived/nginx_check.sh
+					注意点：Keepalived主从配置文件不同点
+					　　1）router_id不一致
+					　　2）state 主服务器是MASTER，从服务器是BACKUP
+					　　3）priority 主服务器大于从服务器
+					keepalived使用：
+					　　启动： service keepalived start
+					　　停止： service keepalived stop
+					　　重启： service keepalived restart						
+					测试：开启2台服务的nginx和keepalived服务，然后关闭任意一个nginx观察访问的
+						  虚拟IP：192.168.1.131 所使用的的nginx服务是129的？还是130的？
+				
 	
 	
 	
