@@ -3329,11 +3329,127 @@
 				LENGTH()																					--字符长度
 			
 			日期时间函数：
+				SELECT NOW(),CURDATE(),CURRENT_DATE(),CURRENT_TIMESTAMP(),LOCALTIME(),SYSDATE(); 		    --2017-08-07 14:14:49 2017-08-07 2017-08-07 2017-08-07 14:14:49 2017-08-07 14:14:49 2017-08-07 14:14:49
+				SELECT UTC_DATE(),UTC_TIME();																--2019-07-04 02:50:56
+				SELECT MONTHNAME('2013-8-2')；																--获取月份；August
+				SELECT QUARTER('11-04-01'); 																--返回季度 1~4
+				SELECT MINUTE('11-02-03 10:10:06'); 														--分钟
+				SELECT SECOND('10:23:10'); 																	--秒数
+				SELECT DAYNAME('2013-2-3'); 																--返回星期；Sunday 
+				SELECT EXTRACT(YEAR FROM '2013-2-3'); 														--返回年数 2013
+				SELECT TIME_TO_SEC('23:22:00'); 															--转换为秒数；转换公式为：小时*3600+分钟*60+秒  84120
+				SELECT SEC_TO_TIME('84120'); 																--转换为时间；23:22:00
+				DATE_FORMAT()																				--where 表名.字段 = DATE_FORMAT(NOW(),'%Y-%m-%d'); 今日
+				WEEKOFYEAR() 																				--表示一年中的第几周;WHERE WEEKOFYEAR( 表名.时间字段（如：create_time）) = WEEKOFYEAR(NOW());本周内;
+			
+			日期计算：
+				SELECT DATE_ADD('2013-2-3',INTERVAL 1 MONTH); 												--增加日期：2013-03-03 
+				SELECT ADDDATE('2013-2-3',INTERVAL 1 WEEK); 												--增加日期：2013-02-10 
+				SELECT DATE_SUB('2013-2-3',INTERVAL 1 WEEK); 												--减少日期：2013-01-27
+				SELECT SUBDATE('2013-2-3',INTERVAL 1 WEEK); 												--减少日期：2013-01-27
+				SELECT ADDTIME('2013-2-3 01:05:06','10:50:20'); 											--增加时间：2013-02-03 11:55:26
+				SELECT SUBTIME('2013-2-3 01:05:06','10:50:20'); 											--减少时间：2013-02-02 14:14:46
+				SELECT DATEDIFF('2008-12-30','2007-12-29') AS DiffDate；									--时间差,返回天数；367
+				SELECT LAST_DAY('2003-02-05');  															--每月最后一天：2003-02-28
+				SELECT DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s');												--格式化日期：2017-08-07 10:20:11
+				SELECT TIME_FORMAT('100:00:00', '%H %k %h %I %l'); 											--格式化时间 '%H %k %h %I %l' 表示小时
+				SELECT DATE_FORMAT(NOW(),GET_FORMAT(TIMESTAMP,'ISO')); 										--格式化日期 2017-08-07 10:36:35 
 				
+				--今天
+				SELECT DATE_FORMAT(NOW(),'%Y-%m-%d 00:00:00') AS '今天开始';
+				SELECT DATE_FORMAT(NOW(),'%Y-%m-%d 23:59:59') AS '今天结束';
+
+				--昨天
+				SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y-%m-%d 00:00:00') AS '昨天开始';
+				SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y-%m-%d 23:59:59') AS '昨天结束';
+
+				--上周
+				SELECT DATE_FORMAT( DATE_SUB( DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 1 WEEK), '%Y-%m-%d 00:00:00') AS '上周一';
+				SELECT DATE_FORMAT( SUBDATE(CURDATE(), WEEKDAY(CURDATE()) + 1), '%Y-%m-%d 23:59:59') AS '上周末';
+
+				--本周
+				SELECT DATE_FORMAT( SUBDATE(CURDATE(),DATE_FORMAT(CURDATE(),'%w')-1), '%Y-%m-%d 00:00:00') AS '本周一';
+				SELECT DATE_FORMAT( SUBDATE(CURDATE(),DATE_FORMAT(CURDATE(),'%w')-7), '%Y-%m-%d 23:59:59') AS '本周末';
+				--上面的本周算法会有问题,因为mysql是按照周日为一周第一天，如果当前是周日的话,会把时间定为到下一周
+				SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), '%Y-%m-%d 00:00:00') AS '本周一';
+				SELECT DATE_FORMAT( DATE_ADD(SUBDATE(CURDATE(), WEEKDAY(CURDATE())), INTERVAL 6 DAY), '%Y-%m-%d 23:59:59') AS '本周末';
+
+				--上月
+				SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01 00:00:00') AS '上月初';
+				SELECT DATE_FORMAT( LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)), '%Y-%m-%d 23:59:59') AS '上月末';
+
+				--本月
+				SELECT DATE_FORMAT( CURDATE(), '%Y-%m-01 00:00:00') AS '本月初';
+				SELECT DATE_FORMAT( LAST_DAY(CURDATE()), '%Y-%m-%d 23:59:59') AS '本月末';	
 				
+				--示例
+				SELECT * FROM test_user WHERE TO_DAYS(create_time) = TO_DAYS(NOW()); 										--当天数据
+				SELECT * FROM test_user WHERE testuser.create_time LIKE CONCAT('%',DATE_FORMAT(NOW(),'%Y-%m-%d'),'%'); 		--当天数据
+				SELECT * FROM test_user WHERE TO_DAYS(NOW()) - TO_DAYS(create_time) = 1; 									--昨天数据
+				SELECT * FROM test_user WHERE create_time > DATE_SUB(NOW(), INTERVAL 7 DAY) AND create_time <= NOW(); 		--近7天
+				SELECT * FROM test_user WHERE create_time > DATE_SUB(NOW(), INTERVAL 30 DAY) AND create_time <= NOW(); 		--近30天
+				SELECT * FROM test_user WHERE WEEKOFYEAR(create_time) = WEEKOFYEAR(NOW()); 									--当前这周数据(不包括上周日)
+				SELECT * FROM test_user WHERE YEARWEEK(DATE_FORMAT(create_time,'%Y-%m-%d')) = YEARWEEK(NOW()); 				--当前这周数据(包括上周日)
+				SELECT * FROM test_user WHERE YEARWEEK(DATE_FORMAT(create_time,'%Y-%m-%d')) = YEARWEEK(NOW())-1; 			--上一周数据
+				SELECT * FROM test_user WHERE WEEKOFYEAR(create_time) = WEEKOFYEAR(NOW())-1; 								--上一周数据
+				SELECT * FROM test_user WHERE DATE_FORMAT(create_time, '%Y%m') = DATE_FORMAT(CURDATE(), '%Y%m'); 			--本月数据
+				SELECT * FROM test_user WHERE PERIOD_DIFF( DATE_FORMAT(NOW(),'%Y%m'),DATE_FORMAT(create_time,'%Y%m')) =1; 	--上月数据
+				SELECT * FROM test_user WHERE QUARTER(create_time)= QUARTER(NOW()); 										--本季度的数据
+				SELECT * FROM test_user WHERE QUARTER(create_time)= QUARTER(DATE_SUB(NOW(),INTERVAL 1 QUARTER)); 			--上季度的数据
+				SELECT * FROM test_user WHERE QUARTER(create_time)= QUARTER(DATE_ADD(NOW(),INTERVAL 1 QUARTER)); 			--下季度的数据
+				SELECT * FROM test_user WHERE YEAR(create_time)=YEAR(NOW()); 												--今年的数据
+				SELECT * FROM test_user WHERE YEAR(create_time)=YEAR(DATE_SUB(NOW(),INTERVAL 1 YEAR)); 						--去年的数据
+				SELECT * FROM test_user WHERE create_time BETWEEN DATE_SUB(NOW(),INTERVAL 3 MONTH) AND NOW(); 				--距现在3个月的数据
 				
-				
-				
+			条件判断函数：
+				SELECT IF(3>2,2,3); 										--返回2
+				SELECT IFNULL(1,2),IFNULL(NULL,10); 						--假如V1不为NULL，则IFNULL(V1,V2)的返回值为v1；否则其返回值为v2
+			
+				# CASE函数
+				# 语法一：
+				#	SELECT 
+				#	    表字段,
+				#	CASE
+				#	    WHEN （Bollean值）条件1 THEN 结果表达式1
+				#	    WHEN （Bollean值）条件2 THEN 结果表达式2
+				#	    ELSE 结果表达式3 END  
+				#	FROM 表名
+				#
+
+				# 语法二：
+				#	SELECT 
+				#	    表字段1,
+				#	CASE 表字段2
+				#	    WHEN 值1 THEN 结果表达式1
+				#	    WHEN 值2 THEN 结果表达式2
+				#	    ELSE 结果表达式3  END 
+				#	FROM 表名
+			
+			MySQL系统信息函数：
+				SELECT VERSION(),CONNECTION_ID();													--返回MySQL 的版本、链接数（ID）
+				SHOW PROCESSLIST; 																	--查看线程，只显示100个
+				SHOW FULL PROCESSLIST; 																--包括所有线程
+				SELECT DATABASE(),SCHEMA(); 														--当前数据库
+				SELECT USER(),CURRENT_USER(),SYSTEM_USER(),SESSION_USER();							--用户名
+				SELECT CHARSET('abc') ,CHARSET(CONVERT('abc' USING latin1)),CHARSET(VERSION()); 	--字符集
+				SELECT COLLATION(_latin2 'abc'),COLLATION(CONVERT('abc' USING utf8)); 				--字符集排列方式 latin2_general_ci utf8_general_ci
+			 
+			加密函数：
+			SELECT PASSWORD('NEWPWD'); 																--*067906D546600BF74D1435B72BDD12D45421DD17
+			SELECT MD5('123'); 																		--(32位十六进制数字组成)202cb962ac59075b964b07152d234b70			 
+			#加密
+			SELECT ENCODE('uetec','123'); 															--'123'密码 'uetec'加密字符串，结果为：��WJ 加密后乱码			
+			#解密
+			SELECT DECODE(ENCODE('uetec','123'),'123'); 											--uetec
+			
+			SELECT FORMAT(12332.123465,4); 				 											--格式化函数,数字格式化,进行四舍五入，结果为：12,332.1235			
+			SELECT CONV('a',16,2); 																	--进制转换，将十六进制的a转换为二进制表示的数值，结果为：1010 
+			
+			SELECT INET_ATON('192.168.1.200'); 														--3232235976，IP地址与数字相互转换的函数，优化存储空间
+			SELECT INET_NTOA('3232235976'); 														--192.168.1.200
+			SHOW VARIABLES LIKE 'character_set_%';  												--查看当前MySQL使用的字符集
+			SELECT  CAST(100 AS CHAR(2)),CONVERT('2013-8-9 12:12:12',TIME);						    --数据类型的转换
+		
 ----------------------------------------------Linux运维相关知识---------------------------------------------------------------------									
 							
 	方向：运维工程师、嵌入式工程师
