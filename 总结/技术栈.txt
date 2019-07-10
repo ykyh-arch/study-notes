@@ -5032,9 +5032,19 @@
 							1）在安装路径下创建一个input文件夹，mkdir input
 							2）将Hadoop的xml配置文件复制到input，cp ./etc/hadoop/*.xml input
 							3）执行share目录下的MapReduce程序，./bin/hadoop jar
-															   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar grep .input/ output 'dfs[a-z.]+'
-							4）查看输出结果，cat ./output/*							   
-															   
+															   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar grep ./input/ output 'dfs[a-z.]+'
+							4）查看输出结果，cat ./output/*	
+						WordCount案例：
+							1）在安装路径下创建一个wcinput文件夹，mkdir wcinput
+							2）在wcinput文件夹下创建文件wc.iput并输入内容保存， touch wc.input
+								内容如：zhangsan lisi wangwu lisi zhaoliu 
+							3）执行share目录下的MapReduce程序，hadoop jar
+																share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount ./wcinput/ wcoutput
+							4）查看输出结果，cat wcoutput/part-r-00000，即可查看统计内容出现的次数
+				
+				伪分布式运行模式：
+					启动HDFS并运行MapReduce程序：
+						
 	三、Zookeeper
 		简介：
 		
