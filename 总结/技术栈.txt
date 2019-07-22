@@ -5445,7 +5445,17 @@
 													线程一[main线程]；读的是FLAG=true
 				假设主存[堆]一变量FLAG=false	--------------->
 													线程二；写主存中的变量FLAG=true[在主存中进行，实时刷新主存变量值]
-											
+		原子性问题：
+			i++的操作在JVM底层实际上分三步“读-改-写”操作；这样多线程无法保证原子性问题；
+			原子变量：JDK1.5后，java.utils.concurrent.atomic包下提供了常用的原子变量，如：AtomicInteger、AtomicBoolean等
+					  特点：一、保证了内存可见性[volatile];二、CAS（Compare and Swap）算法保证了原子性；
+					  CAS算法：硬件对并发操作共享数据的支持，包含三个操作数：
+							   内存值V
+							   预估值A
+							   更新至B
+							   当且仅当V==A，V=B，否则不进行任何操作；
+				
+			
 	
 	
 	
