@@ -5466,17 +5466,90 @@
 			三种使用方式，分别为：泛型类、泛型接口、泛型方法
 			1）泛型类-泛型类用于类的定义中，被称为泛型类。最典型的就是各种容器类，如：List、Set、Map。
 			   基本语法：				
-				class 类名称 <泛型标识：可以随便写任意标识号，标识指定的泛型的类型>{
-				  private 泛型标识 /*（成员变量类型）*/ var; 
-				  .....
-				 
-				  }
-				}
-				
-			
-	
-	
-	
+					class 类名称 <泛型标识：可以随便写任意标识号，指定泛型类型>{
+						private 泛型标识 /*（成员变量类型）*/ var; 
+						.....				 
+						}
+					}
+				举例：
+					//此处T可以随便写为任意标识，常见的如T、E、K、V等形式的参数常用于表示泛型，在实例化泛型类时，必须指定T的具体类型
+					public class Generic<T>{ 
+						//key这个成员变量的类型为T,T的类型由外部指定  
+						private T key;
+						//泛型构造方法形参key的类型也为T，T的类型由外部指定
+						public Generic(T key) { 
+							this.key = key;
+						}
+						//泛型方法getKey的返回值类型为T，T的类型由外部指定
+						public T getKey(){ 
+							return key;
+						}
+					}
+					
+					调用：
+					//传入的实参类型需与泛型的类型参数类型相同，即为Integer.泛型的类型参数只能是类类型（包括自定义类），不能是简单类型
+					Generic<Integer> genericInteger = new Generic<Integer>(123456);					 					
+					Generic<String> genericString = new Generic<String>("key_vlaue");
+					Log.d("泛型测试","key is " + genericInteger.getKey());
+					Log.d("泛型测试","key is " + genericString.getKey());
+					思考：定义的泛型类，就一定要传入泛型类型实参么？在使用泛型的时候如果传入泛型实参，则会根据传入的泛型实参做相应的限制，此时泛型才会起到限制作用。
+					      如果不传入泛型类型实参的话，在泛型类中使用泛型的方法或成员变量定义的类型可以为任何的类型。如：
+						  Generic generic1 = new Generic("111111");
+						  Generic generic2 = new Generic(4444);
+						  Log.d("泛型测试","key is " + generic1.getKey());
+						  Log.d("泛型测试","key is " + generic2.getKey());
+					结论：泛型的类型参数只能是类类型，不能是简单类型；不能对确切的泛型类型使用instanceof操作，编译时会出错；如：
+						  if(ex_num instanceof Generic<Number>){   
+						  } 
+			2）泛型接口-泛型接口与泛型类的定义及使用基本相同。泛型接口常被用在各种类的生产器中
+					举例：
+					//定义一个泛型接口
+					public interface Generator<T> {
+						public T next();
+					}
+					当实现泛型接口的类，未传入泛型实参时：
+					/**
+					 * 未传入泛型实参时，与泛型类的定义相同，在声明类的时候，需将泛型的声明也一起加到类中
+					 * 即：class FruitGenerator<T> implements Generator<T>{
+					 * 如果不声明泛型，如：class FruitGenerator implements Generator<T>，编译器会报错："Unknown class"
+					 */
+					class FruitGenerator<T> implements Generator<T>{
+						@Override
+						public T next() {
+							return null;
+						}
+					}
+					//当实现泛型接口的类，传入泛型实参时：
+					/**
+					 * 传入泛型实参时：
+					 * 定义一个生产器实现这个接口,虽然我们只创建了一个泛型接口Generator<T>，但是我们可以为T传入无数个实参，形成无数种类型的Generator接口。
+					 * 在实现类实现泛型接口时，如已将泛型类型传入实参类型，则所有使用泛型的地方都要替换成传入的实参类型
+					 * 即：Generator<T>，public T next();中的的T都要替换成传入的String类型
+					 */
+					public class FruitGenerator implements Generator<String> {					 
+						private String[] fruits = new String[]{"Apple", "Banana", "Pear"};					 
+						@Override
+						public String next() {
+							Random rand = new Random();
+							return fruits[rand.nextInt(3)];
+						}
+					}
+			3）泛型的通配符
+					问题的产生？
+					我们知道Ingeter是Number的一个子类，Generic<Ingeter>与Generic<Number>实际上是相同的一种基本类型。
+					那么问题来了，在使用Generic<Number>作为形参的方法中，能否使用Generic<Ingeter>的实例传入呢？
+					在逻辑上类似于Generic<Number>和Generic<Ingeter>是否可以看成具有父子关系的泛型类型呢？
+					举例：
+					public void showKeyValue(Generic<Number> obj){
+						Log.d("泛型测试","key value is " + obj.getKey());
+					}
+					Generic<Integer> gInteger = new Generic<Integer>(123);
+					Generic<Number> gNumber = new Generic<Number>(456);
+					
+					// showKeyValue这个方法编译器会为我们报错：Generic<java.lang.Integer> cannot be applied to Generic<java.lang.Number>
+					showKeyValue(gInteger);
+					结论：不行，同一种泛型可以对应多个版本（因为参数类型是不确定的），不同版本的泛型类实例是不兼容的。由此类型通配符应运而生。
+
 	
 	
 	
