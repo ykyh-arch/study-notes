@@ -5454,7 +5454,15 @@
 							   预估值A
 							   更新至B
 							   当且仅当V==A，V=B，否则不进行任何操作；
-
+		ConcurrentHashMap：
+			JDK1.5版本以前，主要容器类HashMap[是非synchronized，是线程不安全的]与HashTable[是synchronized，是线程安全的，多个线程可以共享一个Hashtable，效率低，串行]
+			JDK1.5版本以后，提供了多种容器类，如：ConcurrentHashMap采用的是“锁分段”机制[concurrentLevel->Segment->链表，并行，是HashTable的替代]
+		CopyOnWriteArrayList/CopyOnWriteArraySet写入并复制，注意：添加操作多时，效率低，因为每次添加后都需要复制，但适用于并发迭代效率高；
+		CountDownLatch：闭锁-在完成某些运算时，只有当其他所有线程的运算全部完成时，当前运算才继续执行；主要方法有：countDown()、wait()
+						
+			
+			
+			
 	三、泛型，参考：https://blog.csdn.net/tyrroo/article/details/80930938
 		含义：
 			泛型，即“参数化类型”。顾名思义，就是将类型由原来的具体的类型参数化，类似于方法中的变量参数，此时类型也定义成参数形式（可以称之为类型形参），然后在使用/调用时传入具体的类型（类型实参）。
