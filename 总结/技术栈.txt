@@ -5418,13 +5418,33 @@
 		简介：
 	
 ----------------------------------------------Java高级运用----------------------------------------------------------------------------------		
-	一、多线程JDK1.5以前版本
+	一、多线程JDK1.5以前版本，参考：https://www.runoob.com/java/java-multithreading.html
+		基本概念：
+			进程：一个进程包括由操作系统分配的内存空间，包含一个或多个线程。线程不能独立的存在，它必须是进程的一部分。一个进程一直运行，直到所有的非守护线程都结束运行后才能结束，多线程-多任务并发执行；
+		作用：多线程能满足高效率的程序来达到充分利用 CPU 的目的
+		生命周期：线程是一个动态执行的过程，它也有一个从产生到死亡的过程
+		
+- ->使用new关键字和Thread类或其子类建立一个线程对象后	                                                                                  ---->执行run()方法					-->运行状态的线程最为复杂，它可以变为阻塞状态、就绪状态和死亡状态			
+		---------------------------------------------->	新建状态 ----------------------------------------------------------->就绪状态 -------------------------------->运行状态 -------------------------------------------------------------------> 死亡状态
+																 -->执行start()方法，就绪队列中，要等待JVM里线程调度器的调度		-->就绪状态的线程成功获取 CPU 资源			-->调用stop()或destory()函数强制终止
+		
+		名词解释：
+			阻塞状态:如果一个线程执行了sleep（睡眠）、suspend（挂起）等方法，失去所占用CPU资源之后，该线程就从运行状态进入阻塞状态。可以分为三种：
+				等待阻塞：运行状态中的线程执行 wait() 方法，使线程进入到等待阻塞状态
+				同步阻塞：线程在获取synchronized同步锁失败(因为同步锁被其他线程占用)
+				其他阻塞：通过调用线程的 sleep() 或 join() 发出了 I/O 请求时，线程就会进入到阻塞状态，当sleep() 状态超时，join() 等待线程终止或超时，或者 I/O 处理完毕，线程重新转入就绪状态
+			死亡状态:一个运行状态的线程完成任务或者其他终止条件发生时，该线程就切换到终止状态
+		
+		优先级：线程的优先级是一个整数，其取值范围是 1 （Thread.MIN_PRIORITY ） - 10 （Thread.MAX_PRIORITY ）
+		创建线程的方法[3种]：
+			通过实现 Runnable 接口，重写Run()方法，新建实例调用它的 start() 方法
+			通过继承 Thread 类本身，重写Run()方法，新建实例调用它的 start() 方法
+			通过 Callable 和 Future 创建线程，实现Callable接口，重写 call() 方法，创建 Callable 实现类的实例，使用 FutureTask 类来包装 Callable 对象，新建Thread实例（传入FutureTask对象）调用它的 start() 方法	
 		关键类：Thread
 		接口：Runable
-		主要方法：run()，sleep()，destory()
-		关键字：synchronized
-		生命周期：创建、启动、运行、休眠、销毁
-		作用：为了提高程序的运行效率，但是要合理分配线程数
+		主要方法：start()，run()，sleep()，destory()，setName()，setPriority()，setDaemon(true)，yield()...
+		关键字：synchronized，同步代码块，同步是一种高开销的操作，因此应该尽量减少同步的内容    
+		
 	二、JUC[java.utils.current]多线程高级JDK1.5以后版本
 		内存可见性：
 			含义：当多个线程共享内存数据时，彼此不可见。
@@ -5455,11 +5475,10 @@
 							   更新至B
 							   当且仅当V==A，V=B，否则不进行任何操作；
 		ConcurrentHashMap：
-			JDK1.5版本以前，主要容器类HashMap[是非synchronized，是线程不安全的]与HashTable[是synchronized，是线程安全的，多个线程可以共享一个Hashtable，效率低，串行]
+			JDK1.5版本以前，主要容器类HashMap[是非synchronized，是线程不安全的]与HashTable[是synchronized，是线程安全的，表锁，多个线程可以共享一个Hashtable，效率低，串行]
 			JDK1.5版本以后，提供了多种容器类，如：ConcurrentHashMap采用的是“锁分段”机制[concurrentLevel->Segment->链表，并行，是HashTable的替代]
 		CopyOnWriteArrayList/CopyOnWriteArraySet写入并复制，注意：添加操作多时，效率低，因为每次添加后都需要复制，但适用于并发迭代效率高；
-		CountDownLatch：闭锁-在完成某些运算时，只有当其他所有线程的运算全部完成时，当前运算才继续执行；主要方法有：countDown()、wait()
-						
+		CountDownLatch[倒时计数思想]：闭锁-在完成某些运算时，只有当其他所有线程的运算全部完成时，当前运算才继续执行；主要方法有：countDown()、wait()						
 			
 			
 			
@@ -5557,15 +5576,225 @@
 					// showKeyValue这个方法编译器会为我们报错：Generic<java.lang.Integer> cannot be applied to Generic<java.lang.Number>
 					showKeyValue(gInteger);
 					结论：不行，同一种泛型可以对应多个版本（因为参数类型是不确定的），不同版本的泛型类实例是不兼容的。由此类型通配符应运而生。
+					改进：
+					public void showKeyValue1(Generic<?> obj){
+						Log.d("泛型测试","key value is " + obj.getKey());
+					}
+					注：此处？是类型实参，而不是类型形参，是一种真实的类型。
+			4）泛型方法
+					泛型类，是在实例化类的时候指明泛型的具体类型；泛型方法，是在调用方法的时候指明泛型的具体类型。
+				基本格式：
+					/**
+					 * @param tClass 传入的泛型实参
+					 * @return T 返回值为T类型
+					 * 说明：
+					 *     1）public 与 返回值中间<T>非常重要，可以理解为声明此方法为泛型方法。
+					 *     2）只有声明了<T>的方法才是泛型方法，泛型类中的使用了泛型的成员方法并不是泛型方法。
+					 *     3）<T>表明该方法将使用泛型类型T，此时才可以在方法中使用泛型类型T。
+					 *     4）与泛型类的定义一样，此处T可以随便写为任意标识，常见的如T、E、K、V等形式的参数常用于表示泛型。
+					 */
+					public <T> T genericMethod(Class<T> tClass)throws InstantiationException,
+					  IllegalAccessException{
+							T instance = tClass.newInstance();
+							return instance;
+					}		
+					使用：Object obj = genericMethod(Class.forName("com.test.test"));
+				基本用法[示例]：
+					public class GenericTest {
+					   //这个类是个泛型类，在上面已经介绍过
+					   public class Generic<T>{     
+							private T key;
+					 
+							public Generic(T key) {
+								this.key = key;
+							}
+					 
+							//我想说的其实是这个，虽然在方法中使用了泛型，但是这并不是一个泛型方法。
+							//这只是类中一个普通的成员方法，只不过他的返回值是在声明泛型类已经声明过的泛型。
+							//所以在这个方法中才可以继续使用 T 这个泛型。
+							public T getKey(){
+								return key;
+							}
+					 
+							/**
+							 * 这个方法显然是有问题的，在编译器会给我们提示这样的错误信息"cannot reslove symbol E"
+							 * 因为在类的声明中并未声明泛型E，所以在使用E做形参和返回值类型时，编译器会无法识别。
+							public E setKey(E key){
+								 this.key = key
+							}
+							*/
+						}
+					 
+						/** 
+						 * 这才是一个真正的泛型方法。
+						 * 首先在public与返回值之间的<T>必不可少，这表明这是一个泛型方法，并且声明了一个泛型T
+						 * 这个T可以出现在这个泛型方法的任意位置.
+						 * 泛型的数量也可以为任意多个 
+						 *    如：public <T,K> K showKeyName(Generic<T> container){
+						 *        ...
+						 *        }
+						 */
+						public <T> T showKeyName(Generic<T> container){
+							System.out.println("container key :" + container.getKey());
+							//当然这个例子举的不太合适，只是为了说明泛型方法的特性。
+							T test = container.getKey();
+							return test;
+						}
+					 
+						//这也不是一个泛型方法，这就是一个普通的方法，只是使用了Generic<Number>这个泛型类做形参而已。
+						public void showKeyValue1(Generic<Number> obj){
+							Log.d("泛型测试","key value is " + obj.getKey());
+						}
+					 
+						//这也不是一个泛型方法，这也是一个普通的方法，只不过使用了泛型通配符?
+						//?是一种类型实参
+						public void showKeyValue2(Generic<?> obj){
+							Log.d("泛型测试","key value is " + obj.getKey());
+						}
+					 
+						 /**
+						 * 这个方法是有问题的，编译器会为我们提示错误信息："UnKnown class 'E' "
+						 * 虽然我们声明了<T>,也表明了这是一个可以处理泛型的类型的泛型方法。
+						 * 但是只声明了泛型类型T，并未声明泛型类型E，因此编译器并不知道该如何处理E这个类型。
+						public <T> T showKeyName(Generic<E> container){
+							...
+						}  
+						*/
+					 
+						/**
+						 * 这个方法也是有问题的，编译器会为我们提示错误信息："UnKnown class 'T' "
+						 * 对于编译器来说T这个类型并未项目中声明过，因此编译也不知道该如何编译这个类。
+						 * 所以这也不是一个正确的泛型方法声明。
+						public void showkey(T genericObj){
+						}
+						*/
+					 
+					}
+				结论：泛型方法可以出现在任何地方和任何场景中使用[示例]。
+					public class GenericDemo {
+						class Fruit{
+							@Override
+							public String toString() {
+								return "fruit";
+							}
+						}
+					 
+						class Apple extends Fruit{
+							@Override
+							public String toString() {
+								return "apple";
+							}
+						}
+					 
+						class Person{
+							@Override
+							public String toString() {
+								return "Person";
+							}
+						}
+					 
+						class GenerateTest<T>{
+							public void show_1(T t){
+								System.out.println(t.toString());
+							}
+					 
+							//在泛型类中声明了一个泛型方法，使用泛型E，这种泛型E可以为任意类型。可以类型与T相同，也可以不同。
+							//由于泛型方法在声明的时候会声明泛型<E>，因此即使在泛型类中并未声明泛型，编译器也能够正确识别泛型方法中识别的泛型。
+							public <E> void show_2(E t){
+								System.out.println(t.toString());
+							}
+					 
+							//在泛型类中声明了一个泛型方法，使用泛型T，注意这个T是一种全新的类型，可以与泛型类中声明的T不是同一种类型。
+							public <T> void show_3(T t){
+								System.out.println(t.toString());
+							}
+						}
+					 
+						public static void main(String[] args) {
+							Apple apple = new Apple();
+							Person person = new Person();
+					 
+							GenerateTest<Fruit> generateTest = new GenerateTest<Fruit>();
+							//apple是Fruit的子类，所以这里可以
+							generateTest.show_1(apple);
+							//编译器会报错，因为泛型类型实参指定的是Fruit，而传入的实参类是Person
+							//generateTest.show_1(person);
+					 
+							//使用这两个方法都可以成功
+							generateTest.show_2(apple);
+							generateTest.show_2(person);
+					 
+							//使用这两个方法也都可以成功
+							generateTest.show_3(apple);
+							generateTest.show_3(person);
+						}
+					}
+				
+				泛型方法与可变参数[示例]
+					public <T> void printMsg(T... args){//T可以同时传入不同类型
+						for(T t : args){
+							Log.d("泛型测试","t is " + t);
+						}
+					}
+					调用：printMsg("111",222,"aaaa","2323.4",55.55);
+				
+				静态方法与泛型[示例]
+					结论：如果静态方法要使用泛型的话，必须将静态方法也定义成泛型方法
+					public class StaticGenerator<T> {
+						/**
+						 * 如果在类中定义使用泛型的静态方法，需要添加额外的泛型声明（将这个方法定义成泛型方法）
+						 * 即使静态方法要使用泛型类中已经声明过的泛型也不可以。
+						 * 如：public static void show(T t){..},此时编译器会提示错误信息："StaticGenerator cannot be refrenced from static context"						  
+						 */
+						public static <T> void show(T t){
+					 
+						}
+					}
+				
+				泛型上下边界[示例]
+					在使用泛型的时候，我们还可以为传入的泛型类型实参进行上下边界的限制，如：类型实参只准传入某种类型的父类或某种类型的子类。
+					泛型上边界：即传入的类型实参必须是指定类型的子类型，如：					
+						普通方法：
+						public void showKeyValue1(Generic<? extends Number> obj){
+							Log.d("泛型测试","key value is " + obj.getKey());
+						}
+						使用：
+						Generic<String> generic1 = new Generic<String>("11111");
+						Generic<Integer> generic2 = new Generic<Integer>(2222);
+						Generic<Float> generic3 = new Generic<Float>(2.4f);
+						Generic<Double> generic4 = new Generic<Double>(2.56);
 
-	
-	
-	
-	
-	
-	
-	
-	
+						//showKeyValue1(generic1);//这一行代码编译器会提示错误，因为String类型并不是Number类型的子类						 
+						showKeyValue1(generic2);
+						showKeyValue1(generic3);
+						showKeyValue1(generic4);
+						类：
+						public class Generic<T extends Number>{
+							private T key;
+						 
+							public Generic(T key) {
+								this.key = key;
+							}
+						 
+							public T getKey(){
+								return key;
+							}
+						}
+						使用：
+						Generic<String> generic1 = new Generic<String>("11111");//这一行代码也会报错，因为String不是Number的子类
+						泛型方法：					
+						//在泛型方法中添加上下边界限制的时候，必须在权限声明与返回值之间的<T>上添加上下边界，即在泛型声明的时候添加
+						//public <T> T showKeyName(Generic<T extends Number> container)，编译器会报错："Unexpected bound"
+						public <T extends Number> T showKeyName(Generic<T> container){
+							T test = container.getKey();
+							return test;
+						}				
+					
+				结论：泛型的上下边界添加，必须与泛型的声明在一起。
+					
+
+				
+				
 	
 	
 	
