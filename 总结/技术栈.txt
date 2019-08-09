@@ -5416,7 +5416,7 @@
 		
 	四、Kafka
 		简介：
-	
+		
 ----------------------------------------------Java高级运用----------------------------------------------------------------------------------		
 	一、多线程JDK1.5以前版本，参考：https://www.runoob.com/java/java-multithreading.html
 		基本概念：
@@ -5437,9 +5437,10 @@
 		
 		优先级：线程的优先级是一个整数，其取值范围是 1 （Thread.MIN_PRIORITY ） - 10 （Thread.MAX_PRIORITY ）
 		创建线程的方法[3种]：
-			通过实现 Runnable 接口，重写Run()方法，新建实例调用它的 start() 方法
 			通过继承 Thread 类本身，重写Run()方法，新建实例调用它的 start() 方法
-			通过 Callable 和 Future 创建线程，实现Callable接口，重写 call() 方法，创建 Callable 实现类的实例，使用 FutureTask 类来包装 Callable 对象，新建Thread实例（传入FutureTask对象）调用它的 start() 方法	
+			通过实现 Runnable 接口，重写Run()方法，新建实例调用它的 start() 方法			
+			通过 Callable 和 Future 创建线程，实现Callable接口，重写 call() 方法，创建 Callable 实现类的实例，使用 FutureTask 类来包装 Callable 对象，新建Thread实例（传入FutureTask对象）调用它的 start() 方法，注意与实现Runable的区别：多了一个接收的结果。
+		
 		关键类：Thread
 		接口：Runable
 		主要方法：start()，run()，sleep()，destory()，setName()，setPriority()，setDaemon(true)，yield()...
@@ -5479,7 +5480,19 @@
 			JDK1.5版本以后，提供了多种容器类，如：ConcurrentHashMap采用的是“锁分段”机制[concurrentLevel->Segment->链表，并行，是HashTable的替代]
 		CopyOnWriteArrayList/CopyOnWriteArraySet写入并复制，注意：添加操作多时，效率低，因为每次添加后都需要复制，但适用于并发迭代效率高；
 		CountDownLatch[倒时计数思想]：闭锁-在完成某些运算时，只有当其他所有线程的运算全部完成时，当前运算才继续执行；主要方法有：countDown()、wait()						
-			
+		Callable与FutureTask结合创建线程的方式：
+			结论：FutureTask也可用于闭锁
+		同步锁Lock:
+			解决线程安全的方法：3种
+				1）同步代码块，使用synchronized关键字，隐式锁
+				2）同步方法，使用synchronized关键字，隐式锁
+				3）JDK1.5以后使用同步锁Lock[ReenTrantLock]，显式锁，使用lock()上锁,unlock()释放锁[为确保这步执行，放在finally块执行]
+		“等待-唤醒”机制：经典的生成者-消费者案例，
+			方式一：使用synchronized关键字实现，（Object）核心方法：this.wait()[注：为避免存在虚假唤醒问题，需要将此方法放在while循环语句内]、this.notifyAll()
+			方式二：使用同步锁Lock利用Condition线程通讯，核心方法：condition.wait()、condition.signalAll()
+		
+		线程按序交替[案例]，技术点：使用的是同步锁Lock利用Condition线程通讯技术
+		ReadWriteLock读写锁：
 			
 			
 	三、泛型，参考：https://blog.csdn.net/tyrroo/article/details/80930938
