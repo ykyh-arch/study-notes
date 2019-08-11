@@ -5436,10 +5436,11 @@
 			死亡状态:一个运行状态的线程完成任务或者其他终止条件发生时，该线程就切换到终止状态
 		
 		优先级：线程的优先级是一个整数，其取值范围是 1 （Thread.MIN_PRIORITY ） - 10 （Thread.MAX_PRIORITY ）
-		创建线程的方法[3种]：
+		创建线程的方法[4种]：
 			通过继承 Thread 类本身，重写Run()方法，新建实例调用它的 start() 方法
 			通过实现 Runnable 接口，重写Run()方法，新建实例调用它的 start() 方法			
 			通过 Callable 和 Future 创建线程，实现Callable接口，重写 call() 方法，创建 Callable 实现类的实例，使用 FutureTask 类来包装 Callable 对象，新建Thread实例（传入FutureTask对象）调用它的 start() 方法，注意与实现Runable的区别：多了一个接收的结果。
+			通过线程池来创建
 		
 		关键类：Thread
 		接口：Runable
@@ -5492,9 +5493,32 @@
 			方式二：使用同步锁Lock利用Condition线程通讯，核心方法：condition.wait()、condition.signalAll()
 		
 		线程按序交替[案例]，技术点：使用的是同步锁Lock利用Condition线程通讯技术
-		ReadWriteLock读写锁：
+		ReadWriteLock[ReenTrantReadWriteLock]读写锁[相对JDK1.5以前的独占锁]：
+			读写/写写：互斥，一个线程操作
+			读读：不互斥，多个线程共享并发操作
+			核心方法：reenTrantReadWriteLock.readLock()、reenTrantReadWriteLock.writeLock()
+		线程八锁：
+			核心：非静态方法的锁默认为this，静态方法的锁为对应的Class实例
+				  某一时刻内，只能拥有一个线程持有锁，无论几个方法
+		线程池：
+			目的：为了避免频繁的创建和销毁线程是比较耗资源的[对比数据库连接池]，它提供了一个线程队列，队列中保留着所有等待状态中的线程。
+			体系结构：
+				java.utils.concurrent.Executor：负责线程的使用与调度的根接口
+					|-- ExecutorService 子接口：线程池的主要接口
+						|-- ThreadPoolExecutor：线程池的实现类
+						|-- ScheduledExecutorService：负责线程的调度 子接口
+							|-- ScheduledThreadPoolExecutor：继承了ThreadPoolExecutor，实现了ScheduledExecutorService
+			工具类：Executors
+				ExecutorService newFixedThreadPool()：创建固定大小的线程池
+				ExecutorService newCachedThreadPool()：缓存线程池，线程池的数量不固定，可以根据需求自动更改数量。
+				ExecutorService newSingleThreadExecutor()：创建单个线程池。线程池中只有一个线程
+				ScheduledExecutorService newScheduledThreadPool()：创建固定大小的线程池，也可以延迟或定时执行任务。
+			使用：1、创建线程池；2、为线程池中的线程分配任务；3、关闭线程池
 			
-			
+		ForkJoinPool分支/合并框架[工作窃取]：JDK1.7出现的
+			思想：将一个大任务，拆分[fork]成若干个不可再拆分的小任务，这些小任务由线程队列并发的去执行[采用工作窃取模式]，最终将执行的结果进行汇总[join]
+			JDK1.8新特性对ForkJoinPool框架进行了改进
+		
 	三、泛型，参考：https://blog.csdn.net/tyrroo/article/details/80930938
 		含义：
 			泛型，即“参数化类型”。顾名思义，就是将类型由原来的具体的类型参数化，类似于方法中的变量参数，此时类型也定义成参数形式（可以称之为类型形参），然后在使用/调用时传入具体的类型（类型实参）。
