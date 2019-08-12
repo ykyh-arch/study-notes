@@ -4936,26 +4936,26 @@
 				高容错：
 				
 		运用场景：
-			物流仓储[如京东]、零售[分析用户行为]、旅游、商品的广告推荐、金融、保险、房产、人工智能...
+			物流仓储[如京东]、零售[分析用户行为]、旅游、商品的广告推荐、金融、保险、房产、人工智能AI...
 		发展前景：
 			政策支持、人才缺口、工资高
 		大数据部门的业务流程：
 			产品经理[人员]提要求[统计指标]	-------------->数据部门搭建数据平台、分析数据 ----------->数据可视化[JavaEE]
 		大数据部门的组织结构[适用于大中型企业]：
-			平台组：[技术] 															--平台搭建[hadoop、Flume、Spark、Kafka、Hbase]、集群监控、集群调优
-			数据仓库组：[业务]													    --ETL工程师[抽取、转化、加载]：数据清洗；Hive工程师：数据分析、数据仓库建模
+			平台组：[技术] 															--平台搭建[hadoop、Flume[日志收集]、Spark[数据挖掘、分析]、Kafka[消息队列]、Hbase[数据存储]]、集群监控、集群调优
+			数据仓库组：[业务]													    --ETL工程师[抽取、转化、加载]：数据清洗；Hive[数据查询]工程师：数据分析、数据仓库建模
 			数据挖掘组：														    --算法、推荐系统、用户头像工程师
 			报表开发组：JavaEE
 		大数据技术生态圈体系
 			数据来源层：结构化数据[数据库]、半结构化数据[文件日志]、非结构化数据[音视频]
 			数据传输层[DTL]：Sqoop数据传递、Flume日志收集
-				Sqoop是一款开源的工具，主要用于在Hadoop、Hive与传统的数据库(MySql)间进行数据的传递，可以将一个关系型数据库中的数据导进到Hadoop的HDFS中，也可以将HDFS的数据导进到关系型数据库中
+				Sqoop是一款开源的工具，主要用于在Hadoop、Hive(数据查询)与传统的数据库(MySql)间进行数据的传递，可以将一个关系型数据库中的数据导进到Hadoop的HDFS中，也可以将HDFS的数据导进到关系型数据库中
 				Flume是Cloudera提供的一个高可用的，高可靠的，分布式的海量日志采集、聚合和传输的系统，Flume支持在日志系统中定制各类数据发送方，用于收集数据；同时，Flume提供对数据进行简单处理，并写到各种数据接受方（可定制）的能力
 			数据存储层：HDFS文件存储、HBase非关系型数据库、Kafka消息队列
 				Kafka是一种高吞吐量的分布式发布订阅消息系统，有如下特性：
 				（1）通过O(1)的磁盘数据结构提供消息的持久化，这种结构对于即使数以TB的消息存储也能够保持长时间的稳定性能。
 				（2）高吞吐量：即使是非常普通的硬件Kafka也可以支持每秒数百万的消息。
-				（3）支持通过Kafka服务器和消费机集群来分区消息。
+				（3）支持通过Kafka服务器和消费集群来分区消息。
 				（4）支持Hadoop并行数据加载。
 				HBase是一个分布式的、面向列的开源数据库。HBase不同于一般的关系数据库，它是一个适合于非结构化数据存储的数据库
 			资源管理层：Yarn资源管理
@@ -5001,7 +5001,7 @@
 					Hadoop1.x：MapReduce（计算+资源调度）、HDFS（数据存储）、Common（辅助工具）
 					Hadoop2.x：MapReduce（计/运算）Yarn（资源调度）、HDFS（数据存储）、Common（辅助工具）
 				HDFS：是一个高可靠、高吞吐量的分布式文件系统。构成：
-					NameNOde[目录]：存储文件的元数据，如：文件名、文件目录名、文件属性...
+					NameNode[目录]：存储文件的元数据，如：文件名、文件目录名、文件属性...
 					DataNode[资源]：数据
 					Secondary NameNode：监控HDFS后台服务
 				Yarn：
@@ -5049,10 +5049,10 @@
 							启动、测试集群增、删、查、执行wordcount案例
 						步骤：
 							1）配置集群
-								配置：hadoop-env.sh 修改JAVA_HOME 路径
+								配置：hadoop-env.sh <!-- 修改JAVA_HOME 路径 -->
 										Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
 										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
-								      core-site.xml Hadoop公用配置
+								      core-site.xml <!--Hadoop公用配置-->
 										<!-- 指定HDFS中NameNode的地址 -->
 										<property>
 											<name>fs.defaultFS</name>
@@ -5105,7 +5105,7 @@
 								配置：yarn-env.sh 修改JAVA_HOME 路径
 										Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
 										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
-									  yarn-site.xml yarn自定义配置
+									  yarn-site.xml <!-- yarn自定义配置 -->
 										<!-- Reducer获取数据的方式 -->
 										<property>
 												<name>yarn.nodemanager.aux-services</name>
@@ -5119,7 +5119,7 @@
 									  mapred-env.sh 修改JAVA_HOME 路径
 									    Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
 										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
-									  mapred-site.xml mapreduce自定义配置
+									  mapred-site.xml <!-- mapreduce自定义配置 -->
 										重命名：mv mapred-site.xml.template mapred-site.xml 
 										<!-- 指定MR运行在YARN上 -->
 										<property>
@@ -5138,7 +5138,7 @@
 									查看运行结果：bin/hdfs dfs -cat /user/atguigu/output/*
 					
 					配置历史服务器MR：为了查看程序的历史运行情况，需要配置一下历史服务器
-						配置：mapred-site.xml mapreduce自定义配置
+						配置：mapred-site.xml <!-- mapreduce自定义配置-->
 							<!-- 历史服务器端地址 -->
 							<property>
 								<name>mapreduce.jobhistory.address</name>
@@ -5418,6 +5418,11 @@
 		简介：
 		
 ----------------------------------------------Java高级运用----------------------------------------------------------------------------------		
+	java特性：
+		封装性：为了数据的安全，避免用户直接接触到数据，增加程序的安全性。封装隐藏类的内部属性，并且对用户隐藏了数据的访问方式，这样可以保护类的内部状态。封装可以防止类中的方法访问属性，防止对象间的交互，提高Java程序的安全性。
+		继承性：继承可以减少代码量，方法重写。
+		多态性：三个必要条件是存在继承、重写、父类对象引用子类对象，如：Animal animal = new Cat()。
+	
 	一、多线程JDK1.5以前版本，参考：https://www.runoob.com/java/java-multithreading.html
 		基本概念：
 			进程：一个进程包括由操作系统分配的内存空间，包含一个或多个线程。线程不能独立的存在，它必须是进程的一部分。一个进程一直运行，直到所有的非守护线程都结束运行后才能结束，多线程-多任务并发执行；
@@ -5467,6 +5472,37 @@
 													线程一[main线程]；读的是FLAG=true
 				假设主存[堆]一变量FLAG=false	--------------->
 													线程二；写主存中的变量FLAG=true[在主存中进行，实时刷新主存变量值]
+													
+				如：public class TestVolatile {	
+						public static void main(String[] args) {
+							ThreadDemo td = new ThreadDemo();
+							new Thread(td).start();							
+							while(true){//JVM底层支持
+								if(td.isFlag()){
+									System.out.println("------------------");
+									break;
+								}
+							}							
+						}
+					}
+					class ThreadDemo implements Runnable {
+						private volatile boolean flag = false;
+						@Override
+						public void run() {							
+							try {
+								Thread.sleep(200);
+							} catch (InterruptedException e) {
+							}
+							flag = true;							
+							System.out.println("flag=" + isFlag());
+						}
+						public boolean isFlag() {
+							return flag;
+						}
+						public void setFlag(boolean flag) {
+							this.flag = flag;
+						}
+					}
 		原子性问题：
 			i++的操作在JVM底层实际上分三步“读-改-写”操作；这样多线程无法保证原子性问题；
 			原子变量：JDK1.5后，java.utils.concurrent.atomic包下提供了常用的原子变量，如：AtomicInteger、AtomicBoolean等
@@ -5476,32 +5512,470 @@
 							   预估值A
 							   更新至B
 							   当且仅当V==A，V=B，否则不进行任何操作；
+			如：public class TestAtomicDemo {
+					public static void main(String[] args) {
+						AtomicDemo ad = new AtomicDemo();						
+						for (int i = 0; i < 10; i++) {
+							new Thread(ad).start();
+						}
+					}					
+				}
+				class AtomicDemo implements Runnable{					
+				//	private volatile int serialNumber = 0;					
+					private AtomicInteger serialNumber = new AtomicInteger(0);
+					@Override
+					public void run() {						
+						try {
+							Thread.sleep(200);
+						} catch (InterruptedException e) {
+						}						
+						System.out.println(getSerialNumber());
+					}					
+					public int getSerialNumber(){
+						return serialNumber.getAndIncrement();
+					}										
+				}
 		ConcurrentHashMap：
 			JDK1.5版本以前，主要容器类HashMap[是非synchronized，是线程不安全的]与HashTable[是synchronized，是线程安全的，表锁，多个线程可以共享一个Hashtable，效率低，串行]
-			JDK1.5版本以后，提供了多种容器类，如：ConcurrentHashMap采用的是“锁分段”机制[concurrentLevel->Segment->链表，并行，是HashTable的替代]
-		CopyOnWriteArrayList/CopyOnWriteArraySet写入并复制，注意：添加操作多时，效率低，因为每次添加后都需要复制，但适用于并发迭代效率高；
-		CountDownLatch[倒时计数思想]：闭锁-在完成某些运算时，只有当其他所有线程的运算全部完成时，当前运算才继续执行；主要方法有：countDown()、wait()						
+			JDK1.5版本以后，提供了多种容器类，如：ConcurrentHashMap采用的是“锁分段”机制[concurrentLevel->Segment->链表，并行，是HashTable的替代]			
+		CopyOnWriteArrayList/CopyOnWriteArraySet写入并复制，注意：添加操作多时，效率低，因为每次添加后都需要复制Copy，但适用于并发迭代效率高；
+			如：public class TestCopyOnWriteArrayList {
+					public static void main(String[] args) {
+						HelloThread ht = new HelloThread();						
+						for (int i = 0; i < 10; i++) {
+							new Thread(ht).start();
+						}
+					}					
+				}
+				class HelloThread implements Runnable{					
+				//	private static List<String> list = Collections.synchronizedList(new ArrayList<String>());					
+					private static CopyOnWriteArrayList<String> list = new CopyOnWriteArrayList<>();					
+					static{
+						list.add("AA");
+						list.add("BB");
+						list.add("CC");
+					}
+					@Override
+					public void run() {						
+						Iterator<String> it = list.iterator();						
+						while(it.hasNext()){
+							System.out.println(it.next());							
+							list.add("AA");
+						}						
+					}					
+				}
+		CountDownLatch[倒时计数思想]：闭锁-在完成某些运算时，只有当其他所有线程的运算全部完成时，当前运算才继续执行；主要方法有：countDown()、wait()
+			如：public class TestCountDownLatch {
+					public static void main(String[] args) {
+						final CountDownLatch latch = new CountDownLatch(50);
+						LatchDemo ld = new LatchDemo(latch);
+						long start = System.currentTimeMillis();
+						for (int i = 0; i < 50; i++) {
+							new Thread(ld).start();
+						}
+						try {
+							latch.await();
+						} catch (InterruptedException e) {
+						}
+						long end = System.currentTimeMillis();
+						System.out.println("耗费时间为：" + (end - start));
+					}
+				}
+				class LatchDemo implements Runnable {
+					private CountDownLatch latch;
+					public LatchDemo(CountDownLatch latch) {
+						this.latch = latch;
+					}
+					@Override
+					public void run() {
+						try {
+							for (int i = 0; i < 50000; i++) {
+								if (i % 2 == 0) {
+									System.out.println(i);
+								}
+							}
+						} finally {
+							latch.countDown();
+						}
+					}
+				}
 		Callable与FutureTask结合创建线程的方式：
 			结论：FutureTask也可用于闭锁
+			如：public class TestCallable {
+					public static void main(String[] args) {
+						ThreadDemo td = new ThreadDemo();		
+						//1.执行 Callable 方式，需要 FutureTask 实现类的支持，用于接收运算结果。
+						FutureTask<Integer> result = new FutureTask<>(td);		
+						new Thread(result).start();		
+						//2.接收线程运算后的结果
+						try {
+							Integer sum = result.get();  //FutureTask 可用于 闭锁
+							System.out.println(sum);
+							System.out.println("------------------------------------");
+						} catch (InterruptedException | ExecutionException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				class ThreadDemo implements Callable<Integer>{
+					@Override
+					public Integer call() throws Exception {
+						int sum = 0;		
+						for (int i = 0; i <= 100000; i++) {
+							sum += i;
+						}		
+						return sum;
+					}	
+				}			
 		同步锁Lock:
 			解决线程安全的方法：3种
 				1）同步代码块，使用synchronized关键字，隐式锁
 				2）同步方法，使用synchronized关键字，隐式锁
 				3）JDK1.5以后使用同步锁Lock[ReenTrantLock]，显式锁，使用lock()上锁,unlock()释放锁[为确保这步执行，放在finally块执行]
+			如：public class TestLock {
+					public static void main(String[] args) {
+						Ticket ticket = new Ticket();		
+						new Thread(ticket, "1号窗口").start();
+						new Thread(ticket, "2号窗口").start();
+						new Thread(ticket, "3号窗口").start();
+					}
+				}
+				class Ticket implements Runnable{	
+					private int tick = 100;	
+					private Lock lock = new ReentrantLock();
+					@Override
+					public void run() {
+						while(true){
+							
+							lock.lock(); //上锁
+							
+							try{
+								if(tick > 0){
+									try {
+										Thread.sleep(200);
+									} catch (InterruptedException e) {
+									}
+									
+									System.out.println(Thread.currentThread().getName() + " 完成售票，余票为：" + --tick);
+								}
+							}finally{
+								lock.unlock(); //释放锁
+							}
+						}
+					}
+					
+				}
 		“等待-唤醒”机制：经典的生成者-消费者案例，
 			方式一：使用synchronized关键字实现，（Object）核心方法：this.wait()[注：为避免存在虚假唤醒问题，需要将此方法放在while循环语句内]、this.notifyAll()
-			方式二：使用同步锁Lock利用Condition线程通讯，核心方法：condition.wait()、condition.signalAll()
-		
-		线程按序交替[案例]，技术点：使用的是同步锁Lock利用Condition线程通讯技术
+			如：public class TestProductorAndConsumer {
+					public static void main(String[] args) {
+						Clerk clerk = new Clerk();						
+						Productor pro = new Productor(clerk);
+						Consumer cus = new Consumer(clerk);						
+						new Thread(pro, "生产者 A").start();
+						new Thread(cus, "消费者 B").start();						
+						new Thread(pro, "生产者 C").start();
+						new Thread(cus, "消费者 D").start();
+					}					
+				}
+				//店员
+				class Clerk{
+					private int product = 0;					
+					//进货
+					public synchronized void get(){//循环次数：0
+						while(product >= 1){//为了避免虚假唤醒问题，应该总是使用在循环中
+							System.out.println("产品已满！");							
+							try {
+								this.wait();
+							} catch (InterruptedException e) {
+							}							
+						}						
+						System.out.println(Thread.currentThread().getName() + " : " + ++product);
+						this.notifyAll();
+					}					
+					//卖货
+					public synchronized void sale(){//product = 0; 循环次数：0
+						while(product <= 0){
+							System.out.println("缺货！");							
+							try {
+								this.wait();
+							} catch (InterruptedException e) {
+							}
+						}						
+						System.out.println(Thread.currentThread().getName() + " : " + --product);
+						this.notifyAll();
+					}
+				}
+				//生产者
+				class Productor implements Runnable{
+					private Clerk clerk;
+					public Productor(Clerk clerk) {
+						this.clerk = clerk;
+					}
+					@Override
+					public void run() {
+						for (int i = 0; i < 20; i++) {
+							try {
+								Thread.sleep(200);
+							} catch (InterruptedException e) {
+							}						
+							clerk.get();
+						}
+					}
+				}
+
+				//消费者
+				class Consumer implements Runnable{
+					private Clerk clerk;
+
+					public Consumer(Clerk clerk) {
+						this.clerk = clerk;
+					}
+					@Override
+					public void run() {
+						for (int i = 0; i < 20; i++) {
+							clerk.sale();
+						}
+					}
+				}
+			方式二：使用同步锁Lock利用Condition线程通讯，核心方法：condition.await()、condition.signalAll()
+				如：public class TestProductorAndConsumerForLock {
+						public static void main(String[] args) {
+							Clerk clerk = new Clerk();
+							Productor pro = new Productor(clerk);
+							Consumer con = new Consumer(clerk);
+							new Thread(pro, "生产者 A").start();
+							new Thread(con, "消费者 B").start();
+					//		 new Thread(pro, "生产者 C").start();
+					//		 new Thread(con, "消费者 D").start();
+						}
+					}
+					class Clerk {
+						private int product = 0;
+						private Lock lock = new ReentrantLock();
+						private Condition condition = lock.newCondition();
+						// 进货
+						public void get() {
+							lock.lock();
+							try {
+								if (product >= 1) { // 为了避免虚假唤醒，应该总是使用在循环中。
+									System.out.println("产品已满！");
+									try {
+										condition.await();
+									} catch (InterruptedException e) {
+									}
+								}
+								System.out.println(Thread.currentThread().getName() + " : "
+										+ ++product);
+								condition.signalAll();
+							} finally {
+								lock.unlock();
+							}
+						}
+						// 卖货
+						public void sale() {
+							lock.lock();
+							try {
+								if (product <= 0) {
+									System.out.println("缺货！");
+									try {
+										condition.await();
+									} catch (InterruptedException e) {
+									}
+								}
+								System.out.println(Thread.currentThread().getName() + " : "
+										+ --product);
+								condition.signalAll();
+							} finally {
+								lock.unlock();
+							}
+						}
+					}
+					// 生产者
+					class Productor implements Runnable {
+						private Clerk clerk;
+						public Productor(Clerk clerk) {
+							this.clerk = clerk;
+						}
+						@Override
+						public void run() {
+							for (int i = 0; i < 20; i++) {
+								try {
+									Thread.sleep(200);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
+								clerk.get();
+							}
+						}
+					}
+					// 消费者
+					class Consumer implements Runnable {
+						private Clerk clerk;
+						public Consumer(Clerk clerk) {
+							this.clerk = clerk;
+						}
+						@Override
+						public void run() {
+							for (int i = 0; i < 20; i++) {
+								clerk.sale();
+							}
+						}
+
+					}
+		线程按序交替[案例]，技术点：使用的是同步锁Lock利用Condition线程通讯技术，
+			需求：编写一个程序，开启 3 个线程，这三个线程的 ID 分别为 A、B、C，每个线程将自己的 ID 在屏幕上打印 10 遍，要求输出的结果必须按顺序显示。如：ABCABCABC…… 依次递归
+			public class TestABCAlternate {				
+				public static void main(String[] args) {
+					AlternateDemo ad = new AlternateDemo();					
+					new Thread(new Runnable() {
+						@Override
+						public void run() {						
+							for (int i = 1; i <= 20; i++) {
+								ad.loopA(i);
+							}							
+						}
+					}, "A").start();					
+					new Thread(new Runnable() {
+						@Override
+						public void run() {							
+							for (int i = 1; i <= 20; i++) {
+								ad.loopB(i);
+							}							
+						}
+					}, "B").start();					
+					new Thread(new Runnable() {
+						@Override
+						public void run() {							
+							for (int i = 1; i <= 20; i++) {
+								ad.loopC(i);								
+								System.out.println("-----------------------------------");
+							}							
+						}
+					}, "C").start();
+				}
+			}
+			class AlternateDemo{				
+				private int number = 1; //当前正在执行线程的标记				
+				private Lock lock = new ReentrantLock();
+				private Condition condition1 = lock.newCondition();
+				private Condition condition2 = lock.newCondition();
+				private Condition condition3 = lock.newCondition();				
+				/**
+				 * @param totalLoop : 循环第几轮
+				 */
+				public void loopA(int totalLoop){
+					lock.lock();					
+					try {
+						//1. 判断
+						if(number != 1){
+							condition1.await();
+						}						
+						//2. 打印
+						for (int i = 1; i <= 1; i++) {
+							System.out.println(Thread.currentThread().getName() + "\t" + i + "\t" + totalLoop);
+						}						
+						//3. 唤醒
+						number = 2;
+						condition2.signal();
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						lock.unlock();
+					}
+				}				
+				public void loopB(int totalLoop){
+					lock.lock();					
+					try {
+						//1. 判断
+						if(number != 2){
+							condition2.await();
+						}						
+						//2. 打印
+						for (int i = 1; i <= 1; i++) {
+							System.out.println(Thread.currentThread().getName() + "\t" + i + "\t" + totalLoop);
+						}						
+						//3. 唤醒
+						number = 3;
+						condition3.signal();
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						lock.unlock();
+					}
+				}				
+				public void loopC(int totalLoop){
+					lock.lock();					
+					try {
+						//1. 判断
+						if(number != 3){
+							condition3.await();
+						}						
+						//2. 打印
+						for (int i = 1; i <= 1; i++) {
+							System.out.println(Thread.currentThread().getName() + "\t" + i + "\t" + totalLoop);
+						}						
+						//3. 唤醒
+						number = 1;
+						condition1.signal();
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						lock.unlock();
+					}
+				}				
+			}
 		ReadWriteLock[ReenTrantReadWriteLock]读写锁[相对JDK1.5以前的独占锁]：
 			读写/写写：互斥，一个线程操作
 			读读：不互斥，多个线程共享并发操作
 			核心方法：reenTrantReadWriteLock.readLock()、reenTrantReadWriteLock.writeLock()
+			如：public class TestReadWriteLock {
+					public static void main(String[] args) {
+						ReadWriteLockDemo rw = new ReadWriteLockDemo();						
+						new Thread(new Runnable() {							
+							@Override
+							public void run() {
+								rw.set((int)(Math.random() * 101));
+							}
+						}, "Write:").start();												
+						for (int i = 0; i < 100; i++) {
+							new Thread(new Runnable() {								
+								@Override
+								public void run() {
+									rw.get();
+								}
+							}).start();
+						}
+					}					
+				}
+				class ReadWriteLockDemo{					
+					private int number = 0;					
+					private ReadWriteLock lock = new ReentrantReadWriteLock();					
+					//读
+					public void get(){
+						lock.readLock().lock(); //上锁						
+						try{
+							System.out.println(Thread.currentThread().getName() + " : " + number);
+						}finally{
+							lock.readLock().unlock(); //释放锁
+						}
+					}					
+					//写
+					public void set(int number){
+						lock.writeLock().lock();						
+						try{
+							System.out.println(Thread.currentThread().getName());
+							this.number = number;
+						}finally{
+							lock.writeLock().unlock();
+						}
+					}
+				}
 		线程八锁：
 			核心：非静态方法的锁默认为this，静态方法的锁为对应的Class实例
 				  某一时刻内，只能拥有一个线程持有锁，无论几个方法
 		线程池：
-			目的：为了避免频繁的创建和销毁线程是比较耗资源的[对比数据库连接池]，它提供了一个线程队列，队列中保留着所有等待状态中的线程。
+			目的：为了避免频繁的创建和销毁线程是比较耗CPU资源的[参考数据库连接池]，提高了响应的速度。它提供了一个线程队列，队列中保留着所有等待[wait]状态中的线程。
 			体系结构：
 				java.utils.concurrent.Executor：负责线程的使用与调度的根接口
 					|-- ExecutorService 子接口：线程池的主要接口
@@ -5514,10 +5988,129 @@
 				ExecutorService newSingleThreadExecutor()：创建单个线程池。线程池中只有一个线程
 				ScheduledExecutorService newScheduledThreadPool()：创建固定大小的线程池，也可以延迟或定时执行任务。
 			使用：1、创建线程池；2、为线程池中的线程分配任务；3、关闭线程池
-			
+			如：public class TestThreadPool {				
+					public static void main(String[] args) throws Exception {
+						//1. 创建线程池
+						ExecutorService pool = Executors.newFixedThreadPool(5);						
+						List<Future<Integer>> list = new ArrayList<>();						
+						for (int i = 0; i < 10; i++) {
+							Future<Integer> future = pool.submit(new Callable<Integer>(){
+								@Override
+								public Integer call() throws Exception {
+									int sum = 0;									
+									for (int i = 0; i <= 100; i++) {
+										sum += i;
+									}									
+									return sum;
+								}								
+							});
+							list.add(future);
+						}						
+						pool.shutdown();						
+						for (Future<Integer> future : list) {
+							System.out.println(future.get());
+						}																		
+						/*ThreadPoolDemo tpd = new ThreadPoolDemo();						
+						//2. 为线程池中的线程分配任务
+						for (int i = 0; i < 10; i++) {
+							pool.submit(tpd);
+						}						
+						//3. 关闭线程池
+						pool.shutdown();*/
+					}					
+				//	new Thread(tpd).start();
+				//	new Thread(tpd).start();
+				}
+				class ThreadPoolDemo implements Runnable{
+					private int i = 0;					
+					@Override
+					public void run() {
+						while(i <= 100){
+							System.out.println(Thread.currentThread().getName() + " : " + i++);
+						}
+					}					
+				}	
+				public class TestScheduledThreadPool {
+					public static void main(String[] args) throws Exception {
+						ScheduledExecutorService pool = Executors.newScheduledThreadPool(5);						
+						for (int i = 0; i < 5; i++) {
+							Future<Integer> result = pool.schedule(new Callable<Integer>(){
+								@Override
+								public Integer call() throws Exception {
+									int num = new Random().nextInt(100);//生成随机数
+									System.out.println(Thread.currentThread().getName() + " : " + num);
+									return num;
+								}								
+							}, 1, TimeUnit.SECONDS);							
+							System.out.println(result.get());
+						}						
+						pool.shutdown();
+					}					
+				}
 		ForkJoinPool分支/合并框架[工作窃取]：JDK1.7出现的
 			思想：将一个大任务，拆分[fork]成若干个不可再拆分的小任务，这些小任务由线程队列并发的去执行[采用工作窃取模式]，最终将执行的结果进行汇总[join]
-			JDK1.8新特性对ForkJoinPool框架进行了改进
+			JDK1.8新特性对ForkJoinPool框架进行了改进!
+			如：public class TestForkJoinPool {					
+					public static void main(String[] args) {
+						Instant start = Instant.now();						
+						ForkJoinPool pool = new ForkJoinPool();						
+						ForkJoinTask<Long> task = new ForkJoinSumCalculate(0L, 50000000000L);						
+						Long sum = pool.invoke(task);						
+						System.out.println(sum);						
+						Instant end = Instant.now();						
+						System.out.println("耗费时间为：" + Duration.between(start, end).toMillis());//166-1996-10590
+					}					
+					@Test
+					public void test1(){
+						Instant start = Instant.now();						
+						long sum = 0L;						
+						for (long i = 0L; i <= 50000000000L; i++) {
+							sum += i;
+						}						
+						System.out.println(sum);						
+						Instant end = Instant.now();						
+						System.out.println("耗费时间为：" + Duration.between(start, end).toMillis());//35-3142-15704
+					}					
+					//java8 新特性
+					@Test
+					public void test2(){
+						Instant start = Instant.now();						
+						Long sum = LongStream.rangeClosed(0L, 50000000000L)
+											 .parallel()
+											 .reduce(0L, Long::sum);						
+						System.out.println(sum);						
+						Instant end = Instant.now();						
+						System.out.println("耗费时间为：" + Duration.between(start, end).toMillis());//1536-8118
+					}
+				}
+				class ForkJoinSumCalculate extends RecursiveTask<Long>{
+					private static final long serialVersionUID = -259195479995561737L;					
+					private long start;
+					private long end;					
+					private static final long THURSHOLD = 10000L;  //临界值					
+					public ForkJoinSumCalculate(long start, long end) {
+						this.start = start;
+						this.end = end;
+					}
+					@Override
+					protected Long compute() {
+						long length = end - start;						
+						if(length <= THURSHOLD){
+							long sum = 0L;							
+							for (long i = start; i <= end; i++) {
+								sum += i;
+							}							
+							return sum;
+						}else{
+							long middle = (start + end) / 2;							
+							ForkJoinSumCalculate left = new ForkJoinSumCalculate(start, middle); 
+							left.fork(); //进行拆分，同时压入线程队列							
+							ForkJoinSumCalculate right = new ForkJoinSumCalculate(middle+1, end);
+							right.fork(); //							
+							return left.join() + right.join();
+						}
+					}					
+				}
 		
 	三、泛型，参考：https://blog.csdn.net/tyrroo/article/details/80930938
 		含义：
