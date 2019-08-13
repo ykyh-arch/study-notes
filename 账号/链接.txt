@@ -12,3 +12,5 @@ https://gitee.com/loolly/hutool --HutoolJava常用的工具包
 https://github.com/fengyuanchen/viewerjs --图片查看器
 http://bbs.jeecms.com/ --JEECMS官方论坛，源CMS系统JEECMSv9.3版源码包：http://download.jeecms.com/jeecms/201803/jeecmsv9.3-src.zip，JEECMS后台VUE源码包：http://download.jeecms.com/jeecms/201803/jeecmsv9.3-adminVue.zip     
 https://javawind.net/tools/native2ascii.jsp?action=transform --unicode与中文字符在线转换
+https://www.bjsxt.com/javashipin.html --北京尚学堂
+http://imgbase64.duoshitong.com/ --图片转换Base64

@@ -5129,7 +5129,7 @@
 							2）启动集群
 									启动前必须保证NameNode和DataNode已经启动[HDFS服务启动]
 								    启动ResourceManager：sbin/yarn-daemon.sh start resourcemanager
-									启动NodeManage：sbin/yarn-daemon.sh start nodemanager
+									启动NodeManager：sbin/yarn-daemon.sh start nodemanager
 							3）集群操作
 									YARN的浏览器页面查看：http://hadoop101:8088/cluster
 									删除文件系统上的output文件：bin/hdfs dfs -rm -R /user/atguigu/output
@@ -5265,7 +5265,7 @@
 									  hadoop104 配置 SecondaryNameNode
 								这三点分别配置在不同的客户机上
 						配置集群[先配置好一台服务器，如：hadoop102，再集群分发同步过去]：
-							1）配置core-site.xml 公共配置
+							1）配置core-site.xml <!-- 公共配置 -->
 								<!-- 指定HDFS中NameNode的地址，namenode常用的端口：9000、50070、8088、50090、19888 -->
 								<property>
 										<name>fs.defaultFS</name>
@@ -5278,7 +5278,7 @@
 								</property>
 							2）配置HDFS配置文件
 							   配置hadoop-env.sh  export JAVA_HOME=/opt/module/jdk1.8.0_144
-							   配置hdfs-site.xml  hdfs的配置
+							   配置hdfs-site.xml <!-- hdfs的配置 -->
 							   <property>
 										<name>dfs.replication</name>
 										<value>3</value>
@@ -5290,7 +5290,7 @@
 								</property>
 							3）配置YARN配置文件
 							   配置yarn-env.sh export JAVA_HOME=/opt/module/jdk1.8.0_144
-							   配置yarn-site.xml yarn的配置
+							   配置yarn-site.xml <!-- yarn的配置 -->
 							   !-- Reducer获取数据的方式 -->
 								<property>
 										<name>yarn.nodemanager.aux-services</name>
@@ -5303,7 +5303,7 @@
 								</property>
 							4）MapReduce配置文件
 							   配置mapred-env.sh export JAVA_HOME=/opt/module/jdk1.8.0_144
-							   配置mapred-site.xml mr的配置
+							   配置mapred-site.xml <!-- mr的配置 -->
 							   重命名：cp mapred-site.xml.template mapred-site.xml
 							   <!-- 指定MR运行在Yarn上 -->
 								<property>
