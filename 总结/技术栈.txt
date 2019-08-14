@@ -6432,11 +6432,141 @@
 				在软件中的运用：面向对象(oo)->功能模块[设计模式+算法/数据结构]->框架[多种设计模式]->架构[服务器集群]
 		Java设计模式：23种、七大原则
 			目的：为了让软件具有更好的代码重用性[相同的功能，不需要重复编写]、可读性[规范性]、可扩展性[增加新功能非常方便，可维护性]、可靠性[新功能对就功能不会产生影响]，->高内聚、降低耦合性。
-			七大原则：
-				单一职责原则-一个类只负责一项职责
-				
-				接口隔离原则
-				依赖倒转原则
+			七大原则：是设计模式的基础
+				单一职责原则-一个类只负责一项职责，降低类的负责度，提高可读性、可维护性，降低风险。当类方法很少，可以在方法级别实现单一职责原则。				
+					//方案一
+					public class SingleResponsibility1 {
+						public static void main(String[] args) {
+							RoadVehicle roadVehicle = new RoadVehicle();
+							roadVehicle.run("摩托车");
+							roadVehicle.run("汽车");
+							
+							AirVehicle airVehicle = new AirVehicle();						
+							airVehicle.run("飞机");
+						}
+					}
+					//1. 遵守单一职责原则
+					//2. 但是这样做的改动很大，即将类分解，同时修改客户端
+					//3. 改进：直接修改Vehicle 类，改动的代码会比较少=>方案2
+					class RoadVehicle {
+						public void run(String vehicle) {
+							System.out.println(vehicle + "公路运行");
+						}
+					}
+					class AirVehicle {
+						public void run(String vehicle) {
+							System.out.println(vehicle + "天空运行");
+						}
+					}
+					class WaterVehicle {
+						public void run(String vehicle) {
+							System.out.println(vehicle + "水中运行");
+						}
+					}
+					//方案二
+					public class SingleResponsibility2 {
+							public static void main(String[] args) {
+								Vehicle2 vehicle2  = new Vehicle2();
+								vehicle2.run("汽车");
+								vehicle2.runWater("轮船");
+								vehicle2.runAir("飞机");
+							}
+
+						}
+						//1. 这种修改方法没有对原来的类做大的修改，只是增加方法
+						//2. 这里虽然没有在类这个级别上遵守单一职责原则，但是在方法级别上，仍然是遵守单一职责
+						class Vehicle2 {
+							public void run(String vehicle) {								
+								System.out.println(vehicle + " 在公路上运行....");								
+							}						
+							public void runAir(String vehicle) {
+								System.out.println(vehicle + " 在天空上运行....");
+							}							
+							public void runWater(String vehicle) {
+								System.out.println(vehicle + " 在水中行....");
+							}							
+						}
+				接口隔离原则-一个类对另一个类的依赖应建立在最小接口上。
+					UML类图：
+							 依赖										实现
+						A类	------->接口[最小接口，接口拆分多个接口]<------- B类
+							 依赖           							实现 
+						C类	------->接口[最小接口，接口拆分多个接口]<------- D类
+					如：public class Segregation1 {
+							public static void main(String[] args) {
+								A a = new A();
+								a.depend1(new B()); // A类通过接口去依赖B类
+								a.depend2(new B());
+								a.depend3(new B());
+
+								C c = new C();
+								c.depend1(new D()); // C类通过接口去依赖(使用)D类
+								c.depend4(new D());
+								c.depend5(new D());
+							}
+						}
+						// 接口1
+						interface Interface1 {
+							void operation1();
+
+						}
+						// 接口2
+						interface Interface2 {
+							void operation2();
+							void operation3();
+						}
+						// 接口3
+						interface Interface3 {
+							void operation4();
+							void operation5();
+						}
+						class B implements Interface1, Interface2 {
+							public void operation1() {
+								System.out.println("B 实现了 operation1");
+							}
+							public void operation2() {
+								System.out.println("B 实现了 operation2");
+							}
+							public void operation3() {
+								System.out.println("B 实现了 operation3");
+							}
+
+						}
+						class D implements Interface1, Interface3 {
+							public void operation1() {
+								System.out.println("D 实现了 operation1");
+							}
+							public void operation4() {
+								System.out.println("D 实现了 operation4");
+							}
+							public void operation5() {
+								System.out.println("D 实现了 operation5");
+							}
+						}
+						class A { // A 类通过接口Interface1,Interface2 依赖(使用) B类，但是只会用到1,2,3方法
+							public void depend1(Interface1 i) {
+								i.operation1();
+							}
+							public void depend2(Interface2 i) {
+								i.operation2();
+							}
+							public void depend3(Interface2 i) {
+								i.operation3();
+							}
+						}
+						class C { // C 类通过接口Interface1,Interface3 依赖(使用) D类，但是只会用到1,4,5方法
+							public void depend1(Interface1 i) {
+								i.operation1();
+							}
+							public void depend4(Interface3 i) {
+								i.operation4();
+							}
+							public void depend5(Interface3 i) {
+								i.operation5();
+							}
+						}												
+				依赖倒转原则-
+					
 				里氏替换原则
 				开闭原则
 				迪米特法则
