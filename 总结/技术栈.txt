@@ -6881,7 +6881,7 @@
 				单例模式：
 					含义：某个类只存在一个对象实例；通过一个静态方法来获取这个对象实例；
 					方式：8种
-						饿汉式（静态变量）、饿汉式（静态代码块）-2种
+						饿汉式（静态变量）、饿汉式（静态代码块）-2种[核心思想是在类加载的时候创建类的实例]
 						懒汉式（线程不安全）、懒汉式（线程安全，同步方法）、懒汉式（线程安全，同步代码块）-3种
 						双重检查
 						静态内部类
@@ -6938,14 +6938,72 @@
 						}
 					优点缺点：同饿汉式（静态变量）；
 					3、懒汉式（线程不安全）：
+					如：public class SingletonTest03 {
+							public static void main(String[] args) {
+								System.out.println("懒汉式1 ， 线程不安全~");
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());
+							}
+						}
+						class Singleton {
+							private static Singleton instance;							
+							private Singleton() {}							
+							//提供一个静态的公有方法，当使用到该方法时，才去创建 instance，即懒汉式
+							public static Singleton getInstance() {
+								if(instance == null) {
+									instance = new Singleton();
+								}
+								return instance;
+							}
+						}
+					优点缺点：单线程下起到lazy loading的效果，多线程下线程不安全，不推荐使用；
+					3、懒汉式（线程安全，同步方法）：
+					如：public class SingletonTest04 {
+							public static void main(String[] args) {
+								System.out.println("懒汉式2 ， 线程安全~");
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());
+							}
+						}
+
+						// 懒汉式(线程安全，同步方法)
+						class Singleton {
+							private static Singleton instance;							
+							private Singleton() {}							
+							//提供一个静态的公有方法，加入同步处理的代码，解决线程安全问题
+							public static synchronized Singleton getInstance() {
+								if(instance == null) {
+									instance = new Singleton();
+								}
+								return instance;
+							}
+						}
+					优点缺点：解决线程安全问题，但synchronized关键字的使用效率太低，不推荐使用；
+					4、懒汉式（线程安全，同步代码块）：
+					如：
+					// 懒汉式(线程安全，同步代码块)
+						class Singleton {
+							private static Singleton instance;							
+							private Singleton() {}							
+							//提供一个静态的公有方法，加入同步处理的代码，解决线程安全问题
+							public static Singleton getInstance() {
+								if(instance == null) {
+									synchronized(Singleton.class){
+										instance = new Singleton();
+									}
+								}
+								return instance;
+							}
+						}
+					优点缺点：不能解决线程安全问题，可能会出现多个实例，不推荐使用；
+					5、双重检查：[推荐使用]
 					
-	
-	
-	
-	
-	
-	
-	
 	
 	
 	
