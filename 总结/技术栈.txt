@@ -6575,7 +6575,7 @@
 							}
 						}												
 				依赖倒转[倒置]原则-核心思想是面向接口编程，使程序有一个缓冲层，抽象不依赖细节，细节依赖抽象，接口或抽象类制定规范，细节交给实现类
-					坚持3种传递方式：利用接口、构造器、setter进行依赖传递！注意细节：1，低层模块尽量是接口或抽象类；2，变量的使用尽量是接口或抽象类；3，继承了里氏替换原则
+					坚持3种传递方式：利用接口、构造器、setter进行依赖传递！注意细节：1，低层模块尽量是接口或抽象类；2，变量尽量使用是接口或抽象类；3，继承了里氏替换原则
 					如：public class DependecyInversion {
 							public static void main(String[] args) {
 								//客户端无需改变
@@ -6600,11 +6600,11 @@
 							}
 						}
 						class Person {							
-							public void receive(IReceiver receiver ) {//这里我们是对接口的依赖
+							public void receive(IReceiver receiver) {//这里我们是对接口的依赖
 								System.out.println(receiver.getInfo());
 							}
 						}
-					原则：
+					传递方式：
 						public class DependencyPass {
 							public static void main(String[] args) {
 								//通过接口进行依赖传递
@@ -6679,7 +6679,7 @@
 								System.out.println("长虹电视机，打开");
 							}							 
 						}
-				里氏替换原则-正确使用继承[将父类与子类去继承更基础的类,原有的继承关系被打断]，继承会使耦合性增强，尽量不要去修改父类的方法；在适当的时候可以使用聚合、组合、依赖来解决这一问题
+				里氏替换原则-正确使用继承[将父类与子类去继承更基础的类,原有的继承关系被打断]，继承会使耦合性增强，尽量不要去修改父类的方法；在适当的时候可以使用聚合、组合、依赖来解决这一问题！
 					如：public class Liskov {
 							public static void main(String[] args) {
 								A a = new A();
@@ -6738,6 +6738,7 @@
 							int m_type;							
 							public abstract void draw();//抽象方法
 						}
+						//扩展方
 						class Rectangle extends Shape {
 							Rectangle() {
 								super.m_type = 1;
@@ -6777,11 +6778,11 @@
 							}
 						}					
 				迪米特法则-最少知道原则，只与直接朋友通讯。
-					耦合关系：组合、关联、聚合、依赖。直接朋友：a类与b类直接朋友，若a类成员变量、方法参数、方法返回值是b类，两者是直接朋友；而出现在局部变量里的
-						b类则称为陌生的类；
+					耦合关系：组合、关联、聚合、依赖、泛化、实现。
+					直接朋友：a类与b类直接朋友，若a类成员变量、方法参数、方法返回值是b类，两者是直接朋友；而出现在局部变量里的b类则称为陌生的类；						
 						如：public class Demeter1 {
 								public static void main(String[] args) {
-									System.out.println("~~~使用迪米特法则的改进~~~");
+									System.out.println("~~~使用迪米特法则~~");
 									//创建了一个 SchoolManager 对象
 									SchoolManager schoolManager = new SchoolManager();
 									//输出学院的员工id 和  学校总部的员工信息
@@ -6845,7 +6846,7 @@
 								//该方法完成输出学校总部和学院员工信息(id)
 								void printAllEmployee(CollegeManager sub) {									
 									//分析问题
-									//1. 将输出学院的员工方法，封装到CollegeManager
+									//1. 将输出学院的员工方法，封装到CollegeManager，符合最少知道原则
 									sub.printEmployee();								
 									//获取到学校总部员工
 									List<Employee> list2 = this.getAllEmployee();
@@ -6867,14 +6868,14 @@
 					依赖：一个类使用到了其他的类，就存在依赖；
 					泛化（继承）:继承关系，依赖关系的特例；
 					实现：实现关系，依赖关系的特例；
-					关联：关联关系，依赖关系的特例；一对一，一对多[多对一]，多对多关系；具有导航型[单向/双向]
+					关联：关联关系，依赖关系的特例；一对一，一对多[多对一]，多对多关系；具有导航性[单向/双向]
 					聚合：表示整体与部分之间的关系，整体与部分可以分开，关联关系的特例；代码中体现：setter方法
 					组合：表示整体与部分之间的关系，整体与部分可以不可分开[同生共死]，关联关系的特例；代码中体现：new 关键字；
 				
 			设计模式：
 				解决某类问题通用的解决方案
 				类型：23种
-					创建型模式：[对象的创建]，单例、抽象工厂、原型模式、建造者模式、工厂模式
+					创建型模式：[对象的创建]，单例模式、抽象工厂模式、原型模式、建造者模式、工厂模式
 					结构型模式：[软件结构]，适配器模式、桥接模式、装饰模式、组合模式、外观模式、享元模式、代理模式
 					行为型模式：[方法]，模板方法模式、命令模式、访问者模式、迭代器模式、观察者模式、中介者模式、备忘录模式、解析器模式、状态模式、策略模式、职责链模式（责任链模式）
 				
@@ -6991,8 +6992,9 @@
 						class Singleton {
 							private static Singleton instance;							
 							private Singleton() {}							
-							//提供一个静态的公有方法，加入同步处理的代码，解决线程安全问题
+							//提供一个静态的公有方法
 							public static Singleton getInstance() {
+								//加入同步代码块
 								if(instance == null) {
 									synchronized(Singleton.class){
 										instance = new Singleton();
