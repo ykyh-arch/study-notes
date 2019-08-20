@@ -6961,7 +6961,7 @@
 							}
 						}
 					优点缺点：单线程下起到lazy loading的效果，多线程下线程不安全，不推荐使用；
-					3、懒汉式（线程安全，同步方法）：
+					4、懒汉式（线程安全，同步方法）：
 					如：public class SingletonTest04 {
 							public static void main(String[] args) {
 								System.out.println("懒汉式2 ， 线程安全~");
@@ -6972,7 +6972,6 @@
 								System.out.println("instance2.hashCode=" + instance2.hashCode());
 							}
 						}
-
 						// 懒汉式(线程安全，同步方法)
 						class Singleton {
 							private static Singleton instance;							
@@ -6986,7 +6985,7 @@
 							}
 						}
 					优点缺点：解决线程安全问题，但synchronized关键字的使用效率太低，不推荐使用；
-					4、懒汉式（线程安全，同步代码块）：
+					5、懒汉式（线程安全，同步代码块）：
 					如：
 					// 懒汉式(线程安全，同步代码块)
 						class Singleton {
@@ -7004,12 +7003,85 @@
 							}
 						}
 					优点缺点：不能解决线程安全问题，可能会出现多个实例，不推荐使用；
-					5、双重检查：[推荐使用]
+					6、双重检查：[推荐使用]
+					如：public class SingletonTest06 {
+							public static void main(String[] args) {
+								System.out.println("双重检查");
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());								
+							}
+						}
+						class Singleton {
+							private static volatile Singleton instance;//变量可以立即刷新到主存						
+							private Singleton() {}						
+							//提供一个静态的公有方法，加入双重检查代码							
+							public static synchronized Singleton getInstance() {
+								if(instance == null) {
+									synchronized (Singleton.class) {
+										if(instance == null) {
+											instance = new Singleton();
+										}
+									}									
+								}
+								return instance;
+							}
+						}
+					优点缺点：解决线程安全问题, 同时解决懒加载问题；同时保证了效率, 推荐使用；
+					7、静态内部类：[推荐使用]
+					如：public class SingletonTest07 {
+							public static void main(String[] args) {
+								System.out.println("使用静态内部类完成单例模式");
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());								
+								}
+							}
+							// 静态内部类完成， 推荐使用
+							class Singleton {
+							//构造器私有化
+							private Singleton() {}
+							//写一个静态内部类,该类中有一个静态属性 Singleton
+							private static class SingletonInstance {
+							//final在JVM底层可以得到优化
+								private static final Singleton INSTANCE = new Singleton(); 
+							}
+							//提供一个静态的公有方法，直接返回SingletonInstance.INSTANCE
+							public static synchronized Singleton getInstance() {//调用时才会类装载SingletonInstance，保证线程安全问题，此时别的线程无法进入；								
+								return SingletonInstance.INSTANCE;
+								}
+							}
+					优点缺点：采用类加载机制保证线程安全问题, 同时解决懒加载[延迟加载]问题；同时保证了效率, 推荐使用；
+					8、枚举：[推荐使用]
+					如：public class SingletonTest08 {
+							public static void main(String[] args) {
+								Singleton instance1 = Singleton.INSTANCE;
+								Singleton instance2 = Singleton.INSTANCE;
+								System.out.println(instance1 == instance2);								
+								System.out.println(instance1.hashCode());
+								System.out.println(instance2.hashCode());							
+								instance.sayOK();
+							}
+						}
+						//使用枚举，可以实现单例, 推荐
+						enum Singleton {
+							INSTANCE; //属性
+							public void sayOK() {
+								System.out.println("ok~");
+							}
+						}
+					优点缺点：保证线程安全, 同时防止反序列化创建对象，推荐使用；
+					JDK1.5运用：java.lang.Runtime类使用单例模式[饿汉式]；
+					注意事项：
+						保证系统内存只有一个对象，节约资源；通过静态方法获取对象；使用场景：频繁创建销毁的对象，重量级对象[消耗资源过多]，
+						工具类、文件类、数据库类对象[session工厂、数据源]等；
+				
+				工厂模式：
 					
-	
-	
-	
-	
 	
 	
 	
