@@ -7361,18 +7361,209 @@
 					2、工厂方法模式：
 					   含义：定义创建对象的抽象方法[抽象类]，由子类决定要实例化的类，将对象的实例化推迟到了子类。
 					   如：披萨订购示例[添加了地区的概念]：
-					   
+					   //基础类
+					   public abstract class Pizza {
+							protected String name; //名字
+							//准备原材料, 不同的披萨不一样，因此，我们做成抽象方法
+							public abstract void prepare();							
+							public void bake() {
+								System.out.println(name + " baking;");
+							}
+							public void cut() {
+								System.out.println(name + " cutting;");
+							}
+							//打包
+							public void box() {
+								System.out.println(name + " boxing;");
+							}
+							public void setName(String name) {
+								this.name = name;
+							}
+						}
+					   public class BJCheesePizza extends Pizza {
+							@Override
+							public void prepare() {
+								setName("北京的奶酪pizza");
+								System.out.println(" 北京的奶酪pizza 准备原材料");
+							}
+						}
+					   public class BJPepperPizza extends Pizza {
+							@Override
+							public void prepare() {
+								setName("北京的胡椒pizza");
+								System.out.println(" 北京的胡椒pizza 准备原材料");
+							}
+						}
+					   public class LDCheesePizza extends Pizza{
+							@Override
+							public void prepare() {
+								setName("伦敦的奶酪pizza");
+								System.out.println(" 伦敦的奶酪pizza 准备原材料");
+							}
+						}
+					   public class LDPepperPizza extends Pizza{
+							@Override
+							public void prepare() {
+								setName("伦敦的胡椒pizza");
+								System.out.println(" 伦敦的胡椒pizza 准备原材料");
+							}
+						}
+					   //使用者
+					   public abstract class OrderPizza {
+							//定义一个抽象方法，createPizza , 让各个工厂子类自己实现
+							abstract Pizza createPizza(String orderType);							
+							// 构造器
+							public OrderPizza() {
+								Pizza pizza = null;
+								String orderType; // 订购披萨的类型
+								do {
+									orderType = getType();
+									pizza = createPizza(orderType); //抽象方法，由工厂子类完成
+									//输出pizza 制作过程
+									pizza.prepare();
+									pizza.bake();
+									pizza.cut();
+									pizza.box();
+									
+								} while (true);
+							}							
+							// 写一个方法，可以获取客户希望订购的披萨种类
+							private String getType() {
+								try {
+									BufferedReader strin = new BufferedReader(new InputStreamReader(System.in));
+									System.out.println("input pizza 种类:");
+									String str = strin.readLine();
+									return str;
+								} catch (IOException e) {
+									e.printStackTrace();
+									return "";
+								}
+							}
+						}
+					   public class BJOrderPizza extends OrderPizza {//对象的实例化推迟到了子类来实现							
+							@Override
+							Pizza createPizza(String orderType) {							
+								Pizza pizza = null;
+								if(orderType.equals("cheese")) {
+									pizza = new BJCheesePizza();
+								} else if (orderType.equals("pepper")) {
+									pizza = new BJPepperPizza();
+								}
+								return pizza;
+							}
+						}
+					   public class LDOrderPizza extends OrderPizza {							
+							@Override
+							Pizza createPizza(String orderType) {							
+								Pizza pizza = null;
+								if(orderType.equals("cheese")) {
+									pizza = new LDCheesePizza();
+								} else if (orderType.equals("pepper")) {
+									pizza = new LDPepperPizza();
+								}
+								return pizza;
+							}
+						}
+					   //客户端使用
+					   public class PizzaStore {
+							public static void main(String[] args) {
+								String loc = "bj";
+								if (loc.equals("bj")) {
+									//创建北京口味的各种Pizza
+									new BJOrderPizza();
+								} else {
+									//创建伦敦口味的各种Pizza
+									new LDOrderPizza();
+								}
+							}
+						}					   
 					3、抽象工厂模式：
 					   含义：是简单工厂模式与工厂方法模式的整合，对简单工厂模式的进一步抽象，将工厂分为两层：抽象工厂[是一个接口]和实现的子类工厂[工厂族]。
-					   如：
-					   
+					   如：披萨订购示例[添加了地区的概念]：
+					   //基础类，同工厂方法的基础类
+					   //使用者
+					    public interface AbsFactory {//一个抽象工厂模式的抽象层(接口)
+							//让下面的工厂子类来 具体实现
+							public Pizza createPizza(String orderType);
+						}
+						public class BJFactory implements AbsFactory {//工厂子类
+							@Override
+							public Pizza createPizza(String orderType) {
+								System.out.println("~使用的是抽象工厂模式~");
+								Pizza pizza = null;
+								if(orderType.equals("cheese")) {
+									pizza = new BJCheesePizza();
+								} else if (orderType.equals("pepper")){
+									pizza = new BJPepperPizza();
+								}
+								return pizza;
+							}
+						}
+						public class LDFactory implements AbsFactory {
+							@Override
+							public Pizza createPizza(String orderType) {
+								System.out.println("~使用的是抽象工厂模式~");
+								Pizza pizza = null;
+								if (orderType.equals("cheese")) {
+									pizza = new LDCheesePizza();
+								} else if (orderType.equals("pepper")) {
+									pizza = new LDPepperPizza();
+								}
+								return pizza;
+							}
+						}
+						public class OrderPizza {//使用者，使用UML类图的聚合关系
+							AbsFactory factory;
+							// 构造器
+							public OrderPizza(AbsFactory factory) {
+								setFactory(factory);
+							}
+							private void setFactory(AbsFactory factory) {
+								Pizza pizza = null;
+								String orderType = ""; // 用户输入
+								this.factory = factory;
+								do {
+									orderType = getType();
+									// factory 可能是北京的工厂子类，也可能是伦敦的工厂子类
+									pizza = factory.createPizza(orderType);
+									if (pizza != null) { // 订购ok
+										pizza.prepare();
+										pizza.bake();
+										pizza.cut();
+										pizza.box();
+									} else {
+										System.out.println("订购失败");
+										break;
+									}
+								} while (true);
+							}
+							// 写一个方法，可以获取客户希望订购的披萨种类
+							private String getType() {
+								try {
+									BufferedReader strin = new BufferedReader(new InputStreamReader(System.in));
+									System.out.println("input pizza 种类:");
+									String str = strin.readLine();
+									return str;
+								} catch (IOException e) {
+									e.printStackTrace();
+									return "";
+								}
+							}
+						}
+					    //客户端
+						public class PizzaStore {
+							public static void main(String[] args) {
+								//new OrderPizza(new BJFactory());
+								new OrderPizza(new LDFactory());
+							}
+						}
 					源码分析：
 					JDK中Calendar类使用到了简单工厂模式
-					小结：将实例化对象的代码抽取出来，放在一个类中统一维护与管理，以达到与主项目的解耦，增加扩展性；
+					小结：将实例化对象的代码抽取出来，放在一个类[工厂类]中统一维护与管理，以达到与主项目的解耦，增加扩展性；
 						  设计模式的依赖抽象原则；创建对象实例的时候，new的动作放在工厂类的方法中；继承抽象类或实现接口；不要覆盖基类已经实现的方法；
 				
 				原型模式：
-					
+					含义：
 	
 	
 	
