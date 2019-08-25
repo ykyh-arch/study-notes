@@ -6967,7 +6967,8 @@
 					创建型模式：[对象的创建]，单例模式、抽象工厂模式、原型模式、建造者模式、工厂模式
 					结构型模式：[软件结构]，适配器模式、桥接模式、装饰模式、组合模式、外观模式、享元模式、代理模式
 					行为型模式：[方法]，模板方法模式、命令模式、访问者模式、迭代器模式、观察者模式、中介者模式、备忘录模式、解析器模式、状态模式、策略模式、职责链模式（责任链模式）
-				
+			
+			创建型模式：	
 				单例模式：
 					含义：某个类只存在一个对象实例；通过一个静态方法来获取这个对象实例；
 					方式：8种
@@ -7562,18 +7563,353 @@
 					小结：将实例化对象的代码抽取出来，放在一个类[工厂类]中统一维护与管理，以达到与主项目的解耦，增加扩展性；
 						  设计模式的依赖抽象原则；创建对象实例的时候，new的动作放在工厂类的方法中；继承抽象类或实现接口；不要覆盖基类已经实现的方法；
 				
-				原型模式：
+				原型模式：[Prototype模式]
+					含义：用原型实例指定创建对象，通过拷贝原型来创建新的对象。核心：对象.clone()；
+					UML类图解析：
+						Prototype：原型类，声明克隆接口
+						ConcretePrototype：具体的原型类，实现克隆操作
+						Client：原型类，让原型克隆自己，从而创建新的对象（属性一样）
+					如[克隆羊问题]：public class Sheep implements Cloneable {
+									private String name;
+									private int age;
+									private String color;
+									private String address = "蒙古羊";//默认属性
+									public Sheep friend; //是对象, 克隆是会如何处理
+									public Sheep(String name, int age, String color) {
+										super();
+										this.name = name;
+										this.age = age;
+										this.color = color;
+									}
+									public String getName() {
+										return name;
+									}
+									public void setName(String name) {
+										this.name = name;
+									}
+									public int getAge() {
+										return age;
+									}
+									public void setAge(int age) {
+										this.age = age;
+									}
+									public String getColor() {
+										return color;
+									}
+									public void setColor(String color) {
+										this.color = color;
+									}																											
+									@Override
+									public String toString() {
+										return "Sheep [name=" + name + ", age=" + age + ", color=" + color + ", address=" + address + "]";
+									}
+									//克隆该实例，使用默认的clone方法来完成
+									@Override
+									protected Object clone()  {										
+										Sheep sheep = null;
+										try {
+											sheep = (Sheep)super.clone();
+										} catch (Exception e) {
+											System.out.println(e.getMessage());
+										}
+										return sheep;
+									}																		
+								}
+							public class Client {
+								public static void main(String[] args) {
+									System.out.println("原型模式完成对象的创建");
+									Sheep sheep1 = new Sheep("tom", 1, "白色");
+									sheep1.friend = new Sheep("jack", 2, "黑色");
+									Sheep sheep2 = (Sheep)sheep1.clone(); //克隆
+									Sheep sheep3 = (Sheep)sheep1.clone(); //克隆
+									Sheep sheep4 = (Sheep)sheep1.clone(); //克隆
+									Sheep sheep5 = (Sheep)sheep1.clone(); //克隆									
+									System.out.println("sheep2 =" + sheep2 + "sheep2.friend=" + sheep2.friend.hashCode());//结果hashCode值一样，是浅拷贝！
+									System.out.println("sheep3 =" + sheep3 + "sheep3.friend=" + sheep3.friend.hashCode());
+									System.out.println("sheep4 =" + sheep4 + "sheep4.friend=" + sheep4.friend.hashCode());
+									System.out.println("sheep5 =" + sheep5 + "sheep5.friend=" + sheep5.friend.hashCode());
+								}
+							}
+					源码分析：Spring源码中Bean对象的创建；在beans.xml中，<bean id="" class="com.**.bean.Monster" scope="prototype"/>
+					浅拷贝与深拷贝[默认是浅拷贝]：
+						浅拷贝：成员变量数据类型是基本数据类型，拷贝进行值传递；成员变量数据类型是引用数据类型，拷贝进行址传递[内存地址]；
+						深拷贝：整个对象进行拷贝；方式：2种，一种是利用clone()方法，另一种是利用对象序列化的方式；
+						如：[深拷贝]
+						//基础类
+						public class DeepCloneableTarget implements Serializable, Cloneable {					
+							private static final long serialVersionUID = 1L;
+							private String cloneName;//属性名
+							private String cloneClass;
+							//构造器
+							public DeepCloneableTarget(String cloneName, String cloneClass) {
+								this.cloneName = cloneName;
+								this.cloneClass = cloneClass;
+							}
+							//因为该类的属性，都是String , 因此我们这里使用默认的clone完成即可
+							@Override
+							protected Object clone() throws CloneNotSupportedException {
+								return super.clone();
+							}
+						}
+						public class DeepProtoType implements Serializable, Cloneable{							
+							public String name; //String 属性
+							public DeepCloneableTarget deepCloneableTarget;//引用类型，对象
+							public DeepProtoType() {
+								super();
+							}														
+							//深拷贝 - 方式 1 使用clone 方法
+							@Override
+							protected Object clone() throws CloneNotSupportedException {								
+								Object deep = null;
+								//这里完成对基本数据类型(属性)和String的克隆
+								deep = super.clone(); 
+								//对引用类型的属性，进行单独处理
+								DeepProtoType deepProtoType = (DeepProtoType)deep;
+								deepProtoType.deepCloneableTarget  = (DeepCloneableTarget)deepCloneableTarget.clone();								
+								return deepProtoType;
+							}							
+							//深拷贝 - 方式2 通过对象的序列化实现 (推荐)							
+							public Object deepClone() {								
+								//创建流对象
+								ByteArrayOutputStream bos = null;
+								ObjectOutputStream oos = null;
+								ByteArrayInputStream bis = null;
+								ObjectInputStream ois = null;								
+								try {									
+									//序列化
+									bos = new ByteArrayOutputStream();
+									oos = new ObjectOutputStream(bos);//将字节数组输出流转化为对象输出流
+									oos.writeObject(this); //当前这个对象以对象流的方式输出									
+									//反序列化，出->入
+									bis = new ByteArrayInputStream(bos.toByteArray());
+									ois = new ObjectInputStream(bis);
+									DeepProtoType copyObj = (DeepProtoType)ois.readObject();									
+									return copyObj;									
+								} catch (Exception e1) {
+									e.printStackTrace(e1.getMessage());
+									return null;
+								} finally {
+									//关闭流
+									try {
+										bos.close();
+										oos.close();
+										bis.close();
+										ois.close();
+									} catch (Exception e2) {
+										System.out.println(e2.getMessage());
+									}
+								}								
+							}							
+						}
+						//客户端
+						public class Client {
+							public static void main(String[] args) throws Exception {
+								DeepProtoType p1 = new DeepProtoType();
+								p1.name = "宋江";
+								p1.deepCloneableTarget = new DeepCloneableTarget("大牛", "小牛");							
+								//方式1 完成深拷贝								
+						//		DeepProtoType p2 = (DeepProtoType) p1.clone();	
+						//		System.out.println("p1.name=" + p1.name + "p1.deepCloneableTarget=" + p1.deepCloneableTarget.hashCode());//结果，属性值相同，hashCode值不同
+						//		System.out.println("p2.name=" + p2.name + "p2.deepCloneableTarget=" + p2.deepCloneableTarget.hashCode());							
+								//方式2 完成深拷贝
+								DeepProtoType p2 = (DeepProtoType) p.deepClone();								
+								System.out.println("p1.name=" + p1.name + "p1.deepCloneableTarget=" + p1.deepCloneableTarget.hashCode());
+								System.out.println("p2.name=" + p2.name + "p2.deepCloneableTarget=" + p2.deepCloneableTarget.hashCode());							
+							}
+						}
+					小结：简化对象的创建过程，提高效率；动态的获取对象的运行状态；缺点:每一个类必须配备一个克隆方法；
+				建造者模式[生产器模式]：
+					含义：将产品与产品的建造过程解耦->建造者模式！角色：Product:产品，Builder:抽象建造者，往往是接口或抽象类，展现建造流程，组合Product；ConcreteBuilder：具体建造者，实现接口，具体实现建造流程，
+					      Director：指挥者，聚合Builder，隔离客户与产品对象生产流程，负责控制产品的生产过程；
+					如：[盖房子案例]
+					//产品->Product
+					public class House {
+						private String baise;//属性，地基
+						private String wall;//墙面
+						private String roofed;//屋顶
+						public String getBaise() {
+							return baise;
+						}
+						public void setBaise(String baise) {
+							this.baise = baise;
+						}
+						public String getWall() {
+							return wall;
+						}
+						public void setWall(String wall) {
+							this.wall = wall;
+						}
+						public String getRoofed() {
+							return roofed;
+						}
+						public void setRoofed(String roofed) {
+							this.roofed = roofed;
+						}						
+					}
+					// 抽象的建造者->Builder
+					public abstract class HouseBuilder {
+						protected House house = new House();//使用UML类图的组合关系					
+						//将建造的流程写好, 抽象的方法，流程与产品解耦分离
+						public abstract void buildBasic();
+						public abstract void buildWalls();
+						public abstract void roofed();						
+						//建造房子好，将产品(房子) 返回
+						public House buildHouse() {
+							return house;
+						}						
+					}
+					//子类继承[泛化过程]，普通房子->ConcreteBuilder
+					public class CommonHouse extends HouseBuilder {
+						@Override
+						public void buildBasic() {
+							System.out.println("普通房子打地基5米");
+						}
+						@Override
+						public void buildWalls() {
+							System.out.println("普通房子砌墙10cm");
+						}
+						@Override
+						public void roofed() {
+							System.out.println("普通房子屋顶");
+						}
+					}
+					//子类继承[泛化过程]，高楼->ConcreteBuilder
+					public class HighBuilding extends HouseBuilder {
+						@Override
+						public void buildBasic() {
+							System.out.println("高楼的打地基100米");
+						}
+						@Override
+						public void buildWalls() {
+							System.out.println("高楼的砌墙20cm");
+						}
+						@Override
+						public void roofed() {
+							System.out.println("高楼的透明屋顶");
+						}
+					}
+					//指挥者->Dirctor，这里去指定制作流程，返回产品
+					public class HouseDirector {						
+						HouseBuilder houseBuilder = null;//采用UML类图的聚合关系
+						//构造器传入houseBuilder
+						public HouseDirector(HouseBuilder houseBuilder) {
+							this.houseBuilder = houseBuilder;
+						}
+						//通过setter 传入 houseBuilder
+						public void setHouseBuilder(HouseBuilder houseBuilder) {
+							this.houseBuilder = houseBuilder;
+						}						
+						//如何处理建造房子的流程，交给指挥者
+						public House constructHouse() {
+							houseBuilder.buildBasic();
+							houseBuilder.buildWalls();
+							houseBuilder.roofed();
+							return houseBuilder.buildHouse();
+						}		
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {							
+							//盖普通房子
+							CommonHouse commonHouse = new CommonHouse();
+							//准备创建房子的指挥者
+							HouseDirector houseDirector = new HouseDirector(commonHouse);							
+							//完成盖房子，返回产品(普通房子)
+							House house = houseDirector.constructHouse();														
+							System.out.println("--------------------------");
+							//盖高楼
+							HighBuilding highBuilding = new HighBuilding();
+							//重置抽象建造者
+							houseDirector.setHouseBuilder(highBuilding);
+							//完成盖房子，返回产品(高楼)
+							houseDirector.constructHouse();																					
+						}
+					}
+					源码分析：JDK中java.lang.StringBuilder中使用到了建造者模式！
+				    小结：产品与产品创建过程解耦；每一种具体的建造者相互独立；可以更加细腻的控制产品的建造过程[指挥者]；符合OCP原则；
+						  与抽象工厂模式区别：前者强调的是产品组装流程，后者强调的是生产出产品；
+			
+			结构型模式：		
+				适配器模式：
+				含义：将某类的接口转化成客户端期待的另一种接口表示，目的做兼容。目标[Target/dst] <-- 适配器[Adapter] <-- 被适配者[Source/src]
+				分类：类适配器模式、对象适配器模式、接口适配器模式
+				类适配器模式：
+					如：[充电器案例]
+					//被适配的类，Source
+					public class Voltage220V {
+						//输出220V的电压
+						public int output220V() {
+							int src = 220;
+							System.out.println("电压=" + src + "伏");
+							return src;
+						}
+					}
+					//适配接口
+					public interface IVoltage5V {
+						public int output5V();
+					}
+					//适配器类，Adapter
+					public class VoltageAdapter extends Voltage220V implements IVoltage5V {
+						@Override
+						public int output5V() {
+							//获取到220V电压
+							int srcV = output220V();
+							int dstV = srcV / 44 ; //转成 5v
+							return dstV;//Target
+						}
+					}
+					public class Phone {
+						//充电，依赖关系
+						public void charging(IVoltage5V iVoltage5V) {
+							if(iVoltage5V.output5V() == 5) {
+								System.out.println("电压为5V, 可以充电~~");
+							} else if (iVoltage5V.output5V() > 5) {
+								System.out.println("电压大于5V, 不能充电~~");
+							}
+						}
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {
+							System.out.println(" === 类适配器模式 ====");
+							Phone phone = new Phone();
+							phone.charging(new VoltageAdapter());
+						}
+					}
+				优点缺点：adapter继承了src，增加了耦合，暴露了src的方法，增加成本，但同时可以根据需求重写，使灵活性增强。	
+				对象配器模式[常用]：
+					含义：对类适配器的改进，adapter不在继承了src，而是聚合，使用关联关系来代替，符合"合成复用"原则，使得成本降低。
+					优化部分：
+					//适配器类
+					public class VoltageAdapter  implements IVoltage5V {//不在使用继承关系
+						private Voltage220V voltage220V; // 关联关系-聚合关系												
+						//通过构造器，传入一个 Voltage220V 实例
+						public VoltageAdapter(Voltage220V voltage220v) {							
+							this.voltage220V = voltage220v;
+						}
+						@Override
+						public int output5V() {							
+							int dst = 0;
+							if(null != voltage220V) {
+								int src = this.voltage220V.output220V();//获取220V 电压
+								System.out.println("使用对象适配器，进行适配~~");
+								dst = src / 44;
+								System.out.println("适配完成，输出的电压为=" + dst);
+							}							
+							return dst;						
+						}
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {
+							System.out.println(" === 对象适配器模式 ====");
+							Phone phone = new Phone();
+							phone.charging(new VoltageAdapter(new Voltage220V()));
+						}
+					}
+				接口适配器：
 					含义：
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+					
 	
 	
 	
