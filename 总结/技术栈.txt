@@ -7908,9 +7908,44 @@
 						}
 					}
 				接口适配器：
-					含义：
+					含义：又称适配器模式或缺省适配器模式，设计一个抽象类实现接口里面的所有方法[默认实现，空方法]，然后该抽象类子类[匿名内部类]有选择性的覆盖某些方法来实现
+					如：
+					//接口，被适配者->src
+					public interface Interface {
+						public void m1();
+						public void m2();
+						public void m3();
+						public void m4();
+					}
+					//抽象类，适配器
+					public abstract class AbsAdapter implements Interface {
+						//默认实现
+						public void m1() {
+						}
+						public void m2() {
+						}
+						public void m3() {
+						}
+						public void m4() {
+						}
+					}
+					//客户端使用
+					public class Client {
+						public static void main(String[] args) {	
+							AbsAdapter absAdapter = new AbsAdapter() {
+								//只需要去覆盖需要使用接口方法
+								@Override
+								public void m1() {
+									System.out.println("使用了m1的方法");
+								}
+							};							
+							absAdapter.m1();
+						}
+					}
+					源码分析：在SpringMVC框架中运用到了适配器模式，如：HandleAdapter类；
+					小结：三种适配器根据src以怎样的形式传给Adapter；目的是做接口的兼容；
+				桥接模式：
 					
-	
 	
 	
 	
