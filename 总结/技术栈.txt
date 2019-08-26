@@ -7568,8 +7568,8 @@
 					UML类图解析：
 						Prototype：原型类，声明克隆接口
 						ConcretePrototype：具体的原型类，实现克隆操作
-						Client：原型类，让原型克隆自己，从而创建新的对象（属性一样）
-					如[克隆羊问题]：public class Sheep implements Cloneable {
+						Client：原型类，让原型对象实例克隆自己，从而创建新的对象（属性一样）
+					如[克隆羊问题]：public class Sheep implements Cloneable {//实现Cloneable接口
 									private String name;
 									private int age;
 									private String color;
@@ -7636,7 +7636,7 @@
 						深拷贝：整个对象进行拷贝；方式：2种，一种是利用clone()方法，另一种是利用对象序列化的方式；
 						如：[深拷贝]
 						//基础类
-						public class DeepCloneableTarget implements Serializable, Cloneable {					
+						public class DeepCloneableTarget implements Serializable, Cloneable {//实现Serializable,Cloneable接口					
 							private static final long serialVersionUID = 1L;
 							private String cloneName;//属性名
 							private String cloneClass;
@@ -7680,7 +7680,7 @@
 									bos = new ByteArrayOutputStream();
 									oos = new ObjectOutputStream(bos);//将字节数组输出流转化为对象输出流
 									oos.writeObject(this); //当前这个对象以对象流的方式输出									
-									//反序列化，出->入
+									//反序列化，出[写]->入[读]
 									bis = new ByteArrayInputStream(bos.toByteArray());
 									ois = new ObjectInputStream(bis);
 									DeepProtoType copyObj = (DeepProtoType)ois.readObject();									
@@ -7719,7 +7719,7 @@
 						}
 					小结：简化对象的创建过程，提高效率；动态的获取对象的运行状态；缺点:每一个类必须配备一个克隆方法；
 				建造者模式[生产器模式]：
-					含义：将产品与产品的建造过程解耦->建造者模式！角色：Product:产品，Builder:抽象建造者，往往是接口或抽象类，展现建造流程，组合Product；ConcreteBuilder：具体建造者，实现接口，具体实现建造流程，
+					含义：将产品与产品的建造过程解耦->建造者模式！角色：Product:产品，Builder:抽象建造者，往往是接口或抽象类，展现建造流程，组合Product；ConcreteBuilder：具体建造者，实现接口或继承抽象类，具体实现建造流程，
 					      Director：指挥者，聚合Builder，隔离客户与产品对象生产流程，负责控制产品的生产过程；
 					如：[盖房子案例]
 					//产品->Product
@@ -7788,7 +7788,7 @@
 							System.out.println("高楼的透明屋顶");
 						}
 					}
-					//指挥者->Dirctor，这里去指定制作流程，返回产品
+					//指挥者->Dirctor，这里去指挥制作流程，返回产品
 					public class HouseDirector {						
 						HouseBuilder houseBuilder = null;//采用UML类图的聚合关系
 						//构造器传入houseBuilder
@@ -7827,7 +7827,7 @@
 					}
 					源码分析：JDK中java.lang.StringBuilder中使用到了建造者模式！
 				    小结：产品与产品创建过程解耦；每一种具体的建造者相互独立；可以更加细腻的控制产品的建造过程[指挥者]；符合OCP原则；
-						  与抽象工厂模式区别：前者强调的是产品组装流程，后者强调的是生产出产品；
+						  与抽象工厂模式区别：前者强调的是产品组装建造流程，后者强调的是生产出产品；
 			
 			结构型模式：		
 				适配器模式：
@@ -7878,7 +7878,7 @@
 					}
 				优点缺点：adapter继承了src，增加了耦合，暴露了src的方法，增加成本，但同时可以根据需求重写，使灵活性增强。	
 				对象配器模式[常用]：
-					含义：对类适配器的改进，adapter不在继承了src，而是聚合，使用关联关系来代替，符合"合成复用"原则，使得成本降低。
+					含义：对类适配器的改进，adapter不在继承了src，而是聚合，使用UML类图的关联关系来代替，符合"合成复用"原则，使得成本降低。
 					优化部分：
 					//适配器类
 					public class VoltageAdapter  implements IVoltage5V {//不在使用继承关系
