@@ -7829,7 +7829,7 @@
 				    小结：产品与产品创建过程解耦；每一种具体的建造者相互独立；可以更加细腻的控制产品的建造过程[指挥者]；符合OCP原则；
 						  与抽象工厂模式区别：前者强调的是产品组装建造流程，后者强调的是生产出产品；
 			
-			结构型模式：		
+			结构型模式[软件结构]：		
 				适配器模式：
 				含义：将某类的接口转化成客户端期待的另一种接口表示，目的做兼容。目标[Target/dst] <-- 适配器[Adapter] <-- 被适配者[Source/src]
 				分类：类适配器模式、对象适配器模式、接口适配器模式
@@ -7943,6 +7943,85 @@
 						}
 					}
 					源码分析：在SpringMVC框架中运用到了适配器模式，如：HandleAdapter类；
+					//核心思想->src					  
+					public interface Controller {//多种Controller实现
+					}
+					class HttpController implements Controller {
+						public void doHttpHandler() {
+							System.out.println("http...");
+						}
+					}
+					class SimpleController implements Controller {
+						public void doSimplerHandler() {
+							System.out.println("simple...");
+						}
+					}
+					class AnnotationController implements Controller {
+						public void doAnnotationHandler() {
+							System.out.println("annotation...");
+						}
+					}
+					//适配器接口->src	
+					public interface HandlerAdapter {
+						public boolean supports(Object handler);
+						public void handle(Object handler);
+					}
+					//多种适配器类
+					class SimpleHandlerAdapter implements HandlerAdapter {
+						public void handle(Object handler) {
+							((SimpleController) handler).doSimplerHandler();
+						}
+						public boolean supports(Object handler) {
+							return (handler instanceof SimpleController);
+						}
+					}
+					class HttpHandlerAdapter implements HandlerAdapter {
+						public void handle(Object handler) {
+							((HttpController) handler).doHttpHandler();
+						}
+						public boolean supports(Object handler) {
+							return (handler instanceof HttpController);
+						}
+					}
+					class AnnotationHandlerAdapter implements HandlerAdapter {
+						public void handle(Object handler) {
+							((AnnotationController) handler).doAnnotationHandler();
+						}
+						public boolean supports(Object handler) {
+							return (handler instanceof AnnotationController);
+						}
+					}
+					//使用者
+					public class DispatchServlet {
+						public static List<HandlerAdapter> handlerAdapters = new ArrayList<HandlerAdapter>();//依赖组合关系
+						public DispatchServlet() {
+							handlerAdapters.add(new AnnotationHandlerAdapter());
+							handlerAdapters.add(new HttpHandlerAdapter());
+							handlerAdapters.add(new SimpleHandlerAdapter());
+						}
+						public void doDispatch() {
+							// 此处模拟SpringMVC从request取handler的对象，适配器可以获取到希望的Controller
+							   HttpController controller = new HttpController();
+							// AnnotationController controller = new AnnotationController();
+							// SimpleController controller = new SimpleController();
+							// 得到对应适配器
+							HandlerAdapter adapter = getHandler(controller);
+							// 通过适配器执行对应的controller对应方法
+							adapter.handle(controller);
+						}
+						public HandlerAdapter getHandler(Controller controller) {
+							//遍历：根据得到的controller(handler), 返回对应适配器
+							for (HandlerAdapter adapter : this.handlerAdapters) {
+								if (adapter.supports(controller)) {
+									return adapter;
+								}
+							}
+							return null;
+						}
+						public static void main(String[] args) {
+							new DispatchServlet().doDispatch(); // http...
+						}
+					}
 					小结：三种适配器根据src以怎样的形式传给Adapter；目的是做接口的兼容；
 				桥接模式：
 					
