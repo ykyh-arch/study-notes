@@ -8024,9 +8024,137 @@
 					}
 					小结：三种适配器根据src以怎样的形式传给Adapter；目的是做接口的兼容；
 				桥接模式：
+					含义：将抽象与实现放在不同的层次中，它是基于类最小设计原则，防止类爆炸；
+					原理：
+						Client类：调用者，客户端；
+						Abstraction抽象类：维护了Implementor/以及实现类；聚合了接口，是调用者与被调用者关系；
+						RefinedAbstraction：是Abstraction抽象类子类；
+						Implementor：实现类接口；
+						ConcreteImplementorA/B：具体实现类；
+					如：[手机操作案例]
+					//接口
+					public interface Brand {//品牌
+						void open();
+						void close();
+						void call();
+					}
+					//实现子类
+					public class Vivo implements Brand {
+						@Override
+						public void open() {
+							System.out.println("Vivo手机开机");
+						}
+						@Override
+						public void close() {
+							System.out.println("Vivo手机关机");
+						}
+						@Override
+						public void call() {
+							System.out.println("Vivo手机打电话");
+						}
+					}
+					public class XiaoMi implements Brand {
+						@Override
+						public void open() {
+							System.out.println("小米手机开机");
+						}
+						@Override
+						public void close() {
+							System.out.println("小米手机关机");
+						}
+						@Override
+						public void call() {
+							System.out.println("小米手机打电话");
+						}
+					}
+					//抽象类
+					public abstract class Phone {						
+						//利用聚合关系，组合品牌
+						private Brand brand;
+						//构造器
+						public Phone(Brand brand) {
+							super();
+							this.brand = brand;
+						}					
+						protected void open() {
+							this.brand.open();
+						}
+						protected void close() {
+							brand.close();
+						}
+						protected void call() {
+							brand.call();
+						}						
+					}
+					//折叠式手机类，继承抽象类Phone
+					public class FoldedPhone extends Phone {
+						//构造器
+						public FoldedPhone(Brand brand) {
+							super(brand);
+						}						
+						public void open() {
+							super.open();
+							System.out.println("折叠样式手机");
+						}						
+						public void close() {
+							super.close();
+							System.out.println("折叠样式手机");
+						}						
+						public void call() {
+							super.call();
+							System.out.println("折叠样式手机");
+						}
+					}
+					public class UpRightPhone extends Phone {					
+						//构造器
+						public UpRightPhone(Brand brand) {
+							super(brand);
+						}						
+						public void open() {
+							super.open();
+							System.out.println("直立样式手机");
+						}						
+						public void close() {
+							super.close();
+							System.out.println("直立样式手机");
+						}						
+						public void call() {
+							super.call();
+							System.out.println("直立样式手机");
+						}
+					}
+					//客户端，依赖Phone与Brand
+					public class Client {
+						public static void main(String[] args) {							
+							//获取折叠式手机 (样式 + 品牌 )						
+							Phone phone1 = new FoldedPhone(new XiaoMi());							
+							phone1.open();
+							phone1.call();
+							phone1.close();							
+							System.out.println("=======================");							
+							Phone phone2 = new FoldedPhone(new Vivo());							
+							phone2.open();
+							phone2.call();
+							phone2.close();							
+							System.out.println("==============");							
+							UpRightPhone phone3 = new UpRightPhone(new XiaoMi());							
+							phone3.open();
+							phone3.call();
+							phone3.close();							
+							System.out.println("==============");							
+							UpRightPhone phone4 = new UpRightPhone(new Vivo());							
+							phone4.open();
+							phone4.call();
+							phone4.close();
+						}
+					}
+					源码分析：JDBC源码中使用到了桥接模式：
+						其中DriverManger充当的是抽象类的角色，而Connection接口充当的是实现角色[子类/子接口有MysqlConnection、OracleConnection等具体实现子类]；
+						客户端直接依赖DriverManger；
+					小结：实现了抽象与实现的分离；替代了多层继承问题，增加系统的灵活性；替代了继承，节约成本；缺点：对系统的设计与理解[维度]难度较大；
+					应用场景：JDBC驱动，银行转账系统；消息管理等				
+				装饰者模式：
 					
-	
-	
 	
 	
 	
