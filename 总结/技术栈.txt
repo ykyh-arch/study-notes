@@ -8024,7 +8024,7 @@
 					}
 					小结：三种适配器根据src以怎样的形式传给Adapter；目的是做接口的兼容；
 				桥接模式：
-					含义：将抽象与实现放在不同的层次中，它是基于类最小设计原则，防止类爆炸；
+					含义：将抽象[抽象类]与实现[接口和实现类]放在不同的层次中，它是基于类最小设计原则，防止类爆炸；
 					原理：
 						Client类：调用者，客户端；
 						Abstraction抽象类：维护了Implementor/以及实现类；聚合了接口，是调用者与被调用者关系；
@@ -8034,9 +8034,9 @@
 					如：[手机操作案例]
 					//接口
 					public interface Brand {//品牌
-						void open();
-						void close();
-						void call();
+						void open();//开机
+						void close();//关机
+						void call();//打电话
 					}
 					//实现子类
 					public class Vivo implements Brand {
@@ -8069,7 +8069,7 @@
 					}
 					//抽象类
 					public abstract class Phone {						
-						//利用聚合关系，组合品牌
+						//利用UML类图聚合关系，组合品牌
 						private Brand brand;
 						//构造器
 						public Phone(Brand brand) {
@@ -8105,6 +8105,7 @@
 							System.out.println("折叠样式手机");
 						}
 					}
+					//直立式手机类，继承抽象类Phone
 					public class UpRightPhone extends Phone {					
 						//构造器
 						public UpRightPhone(Brand brand) {
@@ -8123,7 +8124,7 @@
 							System.out.println("直立样式手机");
 						}
 					}
-					//客户端，依赖Phone与Brand
+					//客户端，依赖Phone与Brand，抽象与实现
 					public class Client {
 						public static void main(String[] args) {							
 							//获取折叠式手机 (样式 + 品牌 )						
@@ -8136,7 +8137,8 @@
 							phone2.open();
 							phone2.call();
 							phone2.close();							
-							System.out.println("==============");							
+							System.out.println("==============");
+							//直立式手机 (样式 + 品牌 )	
 							UpRightPhone phone3 = new UpRightPhone(new XiaoMi());							
 							phone3.open();
 							phone3.call();
