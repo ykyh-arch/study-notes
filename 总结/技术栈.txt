@@ -4936,7 +4936,7 @@
 			客户端得到的形如这种格式fild_id：group1/M00/02/44/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
 			文件解析：
 				group1:组名
-				M00：虚拟磁盘路径，磁盘选项中store_path*对应，如果配置了store_path0则是M00，如果配置了store_path1则是M01
+				M00：虚拟磁盘路径，磁盘选项中store_path*对应，如果配置了store_path0则是M00，如果配置了store_path1则是M01；内部其实是通过软连接实现的；
 				02/44：数据两级目录
 				wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png：文件名，文件名包含：源存储服务器IP地址、文件创建时间戳、文件大小、随机数和文件拓展名等信息。
 		文件下载流程：
@@ -4962,24 +4962,27 @@
 						./make.sh
 						./make.sh install --安装成功将安装目录下的conf下的文件拷贝到目录/etc/fdfs/下，
 					修改配置：进入/etc/fdfs/目录，执行：cp tracker.conf.sample tracker.conf，修改配置：vim tracker.conf，base_path=/home/yuqing/FastDFS 改为base_path=/home/FastDFS
-					启动：/usr/bin/fdfs_trackerd/etc/fdfs/tracker.conf restart
-					设置开机自动启动：vim /etc/rc.d/rc.local，添加一行：/usr/bin/fdfs_trackerd/etc/fdfs/tracker.conf restart
+					启动：/usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart
+						  或/etc/init.d/fdfs_trackered restart
+					设置开机自动启动：vim /etc/rc.d/rc.local，添加一行：/usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart或/etc/init.d/fdfs_trackered restart
 				storage
 					编译安装：同tracker，
 					修改配置：进入/etc/fdfs/目录，执行：cp storage.conf.sample storage.conf，修改配置：vim storage.conf，
 							  group_name=group1，base_path=/home/yuqing/FastDFS改为：base_path=/home/FastDFS，store_path0=/home/yuqing/FastDFS改为：store_path0=/home/FastDFS/fdfs_storage--->对应M00
-							  tracker_server=192.168.101.3:22122 #配置tracker服务器的IP
-					启动：/usr/bin/fdfs_storaged /etc/fdfs/storage.confrestart
-					设置开机自动启动：vim /etc/rc.d/rc.local，添加一行：/usr/bin/fdfs_storaged/etc/fdfs/storage.conf restart
+							  tracker_server=192.168.101.3:22122 #配置tracker服务器的IP，默认端口为22122
+							  http_server_port=8888 #配置http服务端口
+					启动：/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart，格式:操作类型指令+配置文件+使用指令
+						  或/etc/init.d/fdfs_storaged restart
+					设置开机自动启动：vim /etc/rc.d/rc.local，添加一行：/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart或/etc/init.d/fdfs_storaged restart
 				上传测试：
 					修改配置：进入/etc/fdfs/目录，执行：cp client.conf.sample client.conf，修改配置：vim client.conf，base_path=/home/yuqing/FastDFS 改为base_path=/home/FastDFS
 							  tracker_server=192.168.101.3:22122 #配置tracker服务器的IP
 					测试：将/home下的图片1.png上传到FastDFS中，
-						  执行指令：/usr/bin/fdfs_test/etc/fdfs/client.conf upload /home/1.png -->执行结果：192.168.101.3/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+						  执行指令：/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/1.png -->执行结果：192.168.101.3/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
 									对应服务器位置：/home/fastdfs/fdfs_storage/data/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
 									
 		java Client API：略
-		FastDFS和nginx整合
+		FastDFS和nginx整合[主要是存储服务器上]
 			在tracker上安装nginx：目的是负载均衡及实现高可用，如果只有一台tracker服务器可以不配置nginx。
 			在Storage上安装nginx：[规划安装目录：/usr/local/]
 				主要步骤：
@@ -5011,15 +5014,18 @@
 					 4）编译安装nginx：make; make install 
 					 5）nginx添加服务端：
 						server {
-					        listen       80;
+					        listen       8888; #对应storage.conf中配置的服务地址
 					        server_name  192.168.101.3;					 
-					        location /group1/M00/{
+					        location /group1/M00/{ #也可以使用正则，~/group[0-9]/M00
 					                #root /home/FastDFS/fdfs_storage/data;
 					                ngx_fastdfs_module;
 					        }
 						}
 					 6）访问测试：http://192.168.101.3/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
-					 
+				
+		FastDFS集群环境搭建:
+			
+			
 ----------------------------------------------大数据定制技术----------------------------------------------------------------------------------	
 	一、大数据：
 		概念：Big Data，指的是一段时间范围内内无法使用常规的工具[JavaEE]处理数据集合，需要新的处理模式来处理海量、高增长率、多样化的信息。主要解决的是海量的数据存储与海量的数据分析计算问题。
@@ -8156,9 +8162,294 @@
 					小结：实现了抽象与实现的分离；替代了多层继承问题，增加系统的灵活性；替代了继承，节约成本；缺点：对系统的设计与理解[维度]难度较大；
 					应用场景：JDBC驱动，银行转账系统；消息管理等				
 				装饰者模式：
-					
-	
-	
+					含义：动态的将新功能附加到对象上，比继承更有弹性，符合开闭原则[OCP原则]，防止类爆炸，生活中的物流包裹就是一个典型的生活案列；
+					原理：
+						  Component ：抽象类
+						  ConcreteComponent：子类，继承Component，具体的主体；中间可以适当添加缓冲层；
+						  Decorator：装饰者[装饰类]，继承Component，组合Component
+					如：[星巴克咖啡订单案例，单品+种类]
+						//抽象类，饮料
+						public abstract class Drink {
+							public String des; // 描述
+							private float price = 0.0f;
+							public String getDes() {
+								return des;
+							}
+							public void setDes(String des) {
+								this.des = des;
+							}
+							public float getPrice() {
+								return price;
+							}
+							public void setPrice(float price) {
+								this.price = price;
+							}							
+							//计算费用的抽象方法，子类来实现
+							public abstract float cost();							
+						}
+						//缓冲层
+						public class Coffee  extends Drink {
+							@Override
+							public float cost() {
+								return super.getPrice();
+							}							
+						}
+						//实现子类
+						public class Espresso extends Coffee {							
+							public Espresso() {
+								setDes("意大利咖啡");
+								setPrice(6.0f);
+							}
+						}
+						public class LongBlack extends Coffee {
+							public LongBlack() {
+								setDes("longblack");
+								setPrice(5.0f);
+							}
+						}
+						public class ShortBlack extends Coffee{						
+							public ShortBlack() {
+								setDes("shortblack");
+								setPrice(4.0f);
+							}
+						}
+						public class DeCaf extends Coffee {
+							public DeCaf() {
+								setDes("无因咖啡");
+								setPrice(1.0f);
+							}
+						}
+						//装饰类，继承+聚合
+						public class Decorator extends Drink {
+							private Drink obj;							
+							public Decorator(Drink obj) { //聚合
+								this.obj = obj;
+							}							
+							@Override
+							public float cost() {
+								// getPrice 自己价格
+								return super.getPrice() + obj.cost();
+							}							
+							@Override
+							public String getDes() {
+								// obj.getDes() 输出被装饰者的信息
+								return des + " " + getPrice() + " && " + obj.getDes();
+							}														
+						}
+						//子类
+						public class Chocolate extends Decorator {
+							public Chocolate(Drink obj) {
+								super(obj);
+								setDes("巧克力");
+								setPrice(3.0f); // 调味品的价格
+							}
+						}
+						public class Milk extends Decorator {
+							public Milk(Drink obj) {
+								super(obj);
+								setDes("牛奶");
+								setPrice(2.0f); 
+							}
+						}
+						public class Soy extends Decorator{
+							public Soy(Drink obj) {
+								super(obj);
+								setDes("豆浆");
+								setPrice(1.5f);
+							}
+						}
+						//客户端
+						public class CoffeeBar {
+							public static void main(String[] args) {
+								// 装饰者模式下的订单：2份巧克力+一份牛奶的LongBlack
+								// 1. 点一份 LongBlack
+								Drink order1 = new LongBlack();
+								System.out.println("费用=" + order1cost());
+								System.out.println("描述=" + order1.getDes());
+								// 2. order 加入一份牛奶，装饰迭代
+								order1 = new Milk(order1);
+								System.out.println("order1 加入一份牛奶 费用 =" + order1.cost());
+								System.out.println("order1 加入一份牛奶 描述 =" + order1.getDes());
+								// 3. order 加入一份巧克力，装饰迭代
+								order1 = new Chocolate(order1);
+								System.out.println("order1 加入一份牛奶 加入一份巧克力 费用 =" + order1.cost());
+								System.out.println("order1 加入一份牛奶 加入一份巧克力 描述 =" + order1.getDes());
+								// 3. order 加入一份巧克力，装饰迭代
+								order1 = new Chocolate(order1);
+								System.out.println("order1 加入一份牛奶 加入2份巧克力 费用 =" + order1.cost());
+								System.out.println("order1 加入一份牛奶 加入2份巧克力 描述 =" + order1.getDes());							
+								System.out.println("===========================");								
+								Drink order2 = new DeCaf();								
+								System.out.println("order2 无因咖啡 费用 =" + order2.cost());
+								System.out.println("order2 无因咖啡 描述 =" + order2.getDes());								
+								order2 = new Milk(order2);								
+								System.out.println("order2 无因咖啡 加入一份牛奶 费用 =" + order2.cost());
+								System.out.println("order2 无因咖啡 加入一份牛奶 描述 =" + order2.getDes());							
+							}
+						}
+					源码分析：
+						JDK中IO结构，FilterInputStream就是一个装饰者而InputStream就是一个被装饰者[抽象类]；FileInputStream是被装饰者的一个子类，DataInputStream是装饰者的一个子类；						
+				组合模式：
+					含义：部分与整体模式，用树型结构来表示对象与对象组的关系
+					原理：
+						Component：抽象层，可是接口或抽象类，实现所有类共有的接口默认行为[添加、删除、修改等]，用于访问管理Component的子部件；
+						Leaf：叶子节点，下面没有子节点；
+						Composite：组合Component，非叶子节点，用于存储子部件，实现Component接口的相关操作，比如：添加、删除等；
+					适用场景：组织结构[树形结构]
+					如：[学校院系展示案例]
+						//抽象层，抽象类
+						public abstract class OrganizationComponent {
+							private String name; //名字
+							private String des; //说明							
+							protected  void add(OrganizationComponent organizationComponent) {
+								//默认实现
+								throw new UnsupportedOperationException();
+							}							
+							protected  void remove(OrganizationComponent organizationComponent) {
+								//默认实现
+								throw new UnsupportedOperationException();
+							}
+							//构造器
+							public OrganizationComponent(String name, String des) {
+								super();
+								this.name = name;
+								this.des = des;
+							}
+							public String getName() {
+								return name;
+							}
+							public void setName(String name) {
+								this.name = name;
+							}
+							public String getDes() {
+								return des;
+							}
+							public void setDes(String des) {
+								this.des = des;
+							}						
+							//方法print，做成抽象的，子类都需要实现
+							protected abstract void print();														
+						}
+						//University就是Composite，可以管理College，即大学管理学院
+						public class University extends OrganizationComponent {
+							List<OrganizationComponent> organizationComponents = new ArrayList<OrganizationComponent>();//组合OrganizationComponent
+							// 构造器
+							public University(String name, String des) {
+								super(name, des);
+							}
+							// 重写add
+							@Override
+							protected void add(OrganizationComponent organizationComponent) {
+								organizationComponents.add(organizationComponent);
+							}
+							// 重写remove
+							@Override
+							protected void remove(OrganizationComponent organizationComponent) {
+								organizationComponents.remove(organizationComponent);
+							}
+							@Override
+							public String getName() {
+								return super.getName();
+							}
+
+							@Override
+							public String getDes() {
+								return super.getDes();
+							}
+							// print方法，就是输出University包含的学院
+							@Override
+							protected void print() {
+								System.out.println("--------------" + getName() + "--------------");
+								//遍历organizationComponents 
+								for (OrganizationComponent organizationComponent : organizationComponents) {
+									organizationComponent.print();
+								}
+							}
+						}
+						//学院，管理系[专业]
+						public class College extends OrganizationComponent {
+							//List中存放的Department
+							List<OrganizationComponent> organizationComponents = new ArrayList<OrganizationComponent>();
+							// 构造器
+							public College(String name, String des) {
+								super(name, des);
+							}
+							// 重写add
+							@Override
+							protected void add(OrganizationComponent organizationComponent) {
+								//将来实际业务中，Colleage的add 和University的add不一定完全一样
+								organizationComponents.add(organizationComponent);
+							}
+							// 重写remove
+							@Override
+							protected void remove(OrganizationComponent organizationComponent) {
+								organizationComponents.remove(organizationComponent);
+							}
+							@Override
+							public String getName() {
+								return super.getName();
+							}
+							@Override
+							public String getDes() {
+								return super.getDes();
+							}
+							// print方法，就是输出College包含的系
+							@Override
+							protected void print() {
+								System.out.println("--------------" + getName() + "--------------");
+								//遍历 organizationComponents 
+								for (OrganizationComponent organizationComponent : organizationComponents) {
+									organizationComponent.print();
+								}
+							}
+						}
+						//系或专业，子节点->Leaf
+						public class Department extends OrganizationComponent {
+							//没有集合						
+							public Department(String name, String des) {
+								super(name, des);
+							}						
+							//add,remove 就不用写了，因为是叶子节点，没有子节点							
+							@Override
+							public String getName() {
+								return super.getName();
+							}							
+							@Override
+							public String getDes() {
+								return super.getDes();
+							}							
+							@Override
+							protected void print() {
+								System.out.println(getName());
+							}
+						}
+						//客户端
+						public class Client {
+							public static void main(String[] args) {								
+								//从大到小创建对象，创建学校
+								OrganizationComponent university = new University("清华大学", "中国顶级大学");								
+								//创建学院
+								OrganizationComponent computerCollege = new College("计算机学院", "计算机学院");
+								OrganizationComponent infoEngineercollege = new College("信息工程学院", "信息工程学院");																
+								//创建各个学院下面的系(专业)
+								computerCollege.add(new Department("软件工程", "软件工程不错"));
+								computerCollege.add(new Department("网络工程", "网络工程不错"));
+								computerCollege.add(new Department("计算机科学与技术", "计算机科学与技术是老牌的专业"));								
+								infoEngineercollege.add(new Department("通信工程", " 通信工程不好学 "));
+								infoEngineercollege.add(new Department("信息工程", " 信息工程好学 "));							
+								//将学院加入到学校
+								university.add(computerCollege);
+								university.add(infoEngineercollege);								
+								//university.print();//大学下所有树形结构
+								infoEngineercollege.print();//信息工程学院下树形结构
+							}
+						}
+					源码分析：
+						JDK集合类源码分析：Java的集合类-HashMap就适用了组合模式；Map：抽象层，接口[角色:Component]，定义了put/putAll方法，
+							HashMap：具体的实现，非叶子节点[角色:Composite]，重写或继承了put/putAll方法，Node: 叶子节点，是HashMap静态内部类，角色Leaf;
+					小结：适用于具有明确的组织结构或树形结构的场景，且叶子节点与非叶子节点属性没有明显的差异性；优点：简化客户端操作，有利于扩展；
+				外观模式：	
+						
 	
 	
 	
