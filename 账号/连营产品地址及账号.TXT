@@ -95,6 +95,7 @@ cas:教研平台 在线备课 微课导学 资源平台
 其他都是独立服务
 
 办公oa:http://oa.uetec.cn:7005/uetec-oa
+禅道：http://192.168.1.2:81/zentao/bug-browse.html
 逸学派(.128)：http://1xuepai.cn 账户：18225529115 密码：123456
 智慧班牌（旧版）：http://class.cetcht.com  账户：zadmin 密码：123456
 智慧校园（改版）：http://120.27.149.128:8085/uetecBasicPlatform/center/index 账户：xladmin 密码：123456
