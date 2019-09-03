@@ -4937,7 +4937,7 @@
 			文件解析：
 				group1:组名
 				M00：虚拟磁盘路径，磁盘选项中store_path*对应，如果配置了store_path0则是M00，如果配置了store_path1则是M01；内部其实是通过软连接实现的；
-				02/44：数据两级目录
+				02/44：数据两级目录，256*256个目录
 				wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png：文件名，文件名包含：源存储服务器IP地址、文件创建时间戳、文件大小、随机数和文件拓展名等信息。
 		文件下载流程：
 			状态收集------>客户端下载链接请求------>tracker查询可用的storage（检测同步状态）------>返回信息(storage的IP与端口)给客户端------>客户端传入file_id（组名，路径，文件名）------>storage查找文件
@@ -5030,6 +5030,29 @@
 				1）、公共部分操作，安装gcc依赖环境、安装libfastcommon公共依赖包、安装FastDFS；
 				2）、配置173、174tracker追踪服务器；
 					 在/etc/fdfs/目录下，[cp tracker.conf.sample tracker.conf]修改配置文件：vim tracker.conf，修改内容:base_path=/home/FastDFS，在配置文件中可以设置store_lookup=0[设置负载均衡策略]
+					 启动服务器：/etc/init.d/fdfs_trackered restart
+			    3）、配置175、176、177、178storage存储服务器；
+					 175、176为group1
+					 177、178为group2				 
+					 在/etc/fdfs/目录下，[cp storage.conf.sample storage.conf]修改配置文件：vim storage.conf，修改内容:
+					 核心内容：group_name=group1 #175、176为group1，177、178为group2
+							   tracker_server=192.168.1.173：22122
+							   tracker_server=192.168.1.174：22122
+					 启动服务器：/etc/init.d/fdfs_storaged restart
+					 观察结论：追踪服务器集群采用的是选举算法，选择Leader来连接，符合主从规则；
+					 监控集群指令：/usr/bin/fdfs_monitor /etc/fdfs/storage.conf
+				4）、客户端测试上传数据
+					 在/etc/fdfs/目录，执行：cp client.conf.sample client.conf，修改配置：vim client.conf，base_path=/home/yuqing/FastDFS 改为base_path=/home/FastDFS
+							   tracker_server=192.168.1.173:22122 #配置tracker服务器的IP
+							   tracker_server=192.168.1.174:22122
+					 测试：	/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/1.png	 或 /usr/bin/fdfs_unload_file /etc/fdfs/client.conf /home/1.png
+					 结果：文件存储按上面追踪服务器指定的策略[参数：store_lookup]来存储，且同组下的数据同步；
+				
+				5）、整合nginx模块[存储服务器上]
+					 前提准备：在175、176、177、178四个物理节点上都安装nginx模块，同单机版；
+					 配置文件：vim /etc/fdfs/mod_FastDFS.conf，主要修改内容：同单机版，此外有group_name=group1/2，group_count=2；
+					 nginx配置同单机版；
+					 访问测试：http://192.168.11.175/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
 					 
 					 
 ----------------------------------------------大数据定制技术----------------------------------------------------------------------------------	
