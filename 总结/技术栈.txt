@@ -4936,7 +4936,7 @@
 			客户端得到的形如这种格式fild_id：group1/M00/02/44/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
 			文件解析：
 				group1:组名
-				M00：虚拟磁盘路径，磁盘选项中store_path*对应，如果配置了store_path0则是M00，如果配置了store_path1则是M01；内部其实是通过软连接实现的；
+				M00：虚拟磁盘路径，磁盘选项中store_path*[存储服务器]对应，如果配置了store_path0则是M00，如果配置了store_path1则是M01；内部其实是通过软连接实现的；
 				02/44：数据两级目录，256*256个目录
 				wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png：文件名，文件名包含：源存储服务器IP地址、文件创建时间戳、文件大小、随机数和文件拓展名等信息。
 		文件下载流程：
@@ -4971,7 +4971,7 @@
 							  group_name=group1，base_path=/home/yuqing/FastDFS改为：base_path=/home/FastDFS，store_path0=/home/yuqing/FastDFS改为：store_path0=/home/FastDFS/fdfs_storage--->对应M00
 							  tracker_server=192.168.101.3:22122 #配置tracker服务器的IP，默认端口为22122
 							  http_server_port=8888 #配置http服务端口
-					启动：/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart，格式:操作类型指令+配置文件+使用指令
+					启动：/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart，格式:客户端指令+配置文件+操作指令
 						  或/etc/init.d/fdfs_storaged restart
 					设置开机自动启动：vim /etc/rc.d/rc.local，添加一行：/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart或/etc/init.d/fdfs_storaged restart
 				上传测试：
@@ -4979,12 +4979,12 @@
 							  tracker_server=192.168.101.3:22122 #配置tracker服务器的IP
 					测试：将/home下的图片1.png上传到FastDFS中，
 						  执行指令：/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/1.png -->执行结果：192.168.101.3/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
-									对应服务器位置：/home/fastdfs/fdfs_storage/data/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+									对应服务器位置：/home/fastdfs/fdfs_storage/data/group1/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
 									
 		java Client API：略
 		FastDFS和nginx整合[主要是存储服务器上]
-			在tracker上安装nginx：目的是负载均衡及实现高可用，如果只有一台tracker服务器可以不配置nginx。
-			在Storage上安装nginx：[规划安装目录：/usr/local/]
+			在tracker上安装nginx：目的是实现高可用，如果只有一台tracker服务器可以不配置nginx。
+			在Storage上安装nginx：[规划安装目录：/usr/local/]，目的是实现负载均衡
 				主要步骤：
 					 1）cd /usr/local
 						tar -zxvf FastDFS-nginx-module_v1.16.tar.gz
@@ -5029,7 +5029,7 @@
 			步骤：
 				1）、公共部分操作，安装gcc依赖环境、安装libfastcommon公共依赖包、安装FastDFS；
 				2）、配置173、174tracker追踪服务器；
-					 在/etc/fdfs/目录下，[cp tracker.conf.sample tracker.conf]修改配置文件：vim tracker.conf，修改内容:base_path=/home/FastDFS，在配置文件中可以设置store_lookup=0[设置负载均衡策略]
+					 在/etc/fdfs/目录下，[cp tracker.conf.sample tracker.conf]修改配置文件：vim tracker.conf，修改内容:base_path=/home/FastDFS，在配置文件中可以设置store_lookup=0[设置负载均衡策略，可选值：0、1、2]
 					 启动服务器：/etc/init.d/fdfs_trackered restart
 			    3）、配置175、176、177、178storage存储服务器；
 					 175、176为group1
