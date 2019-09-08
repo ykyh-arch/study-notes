@@ -8482,8 +8482,190 @@
 						JDK集合类源码分析：Java的集合类-HashMap就适用了组合模式；Map：抽象层，接口[角色:Component]，定义了put/putAll方法，
 							HashMap：具体的实现，非叶子节点[角色:Composite]，重写或继承了put/putAll方法，Node: 叶子节点，是HashMap静态内部类，角色Leaf;
 					小结：适用于具有明确的组织结构或树形结构的场景，且叶子节点与非叶子节点属性没有明显的差异性；优点：简化客户端操作，有利于扩展；
-				外观模式：	
-						
+				外观模式/过程模式：
+					含义：定义一个一致性接口（界面类/高层接口），用于屏蔽内部子系统的细节，使调用端只跟这个接口发生调用，不需要关系子系统内部的细节；
+					原理/角色：
+						外观类[Facade]：为调用者提供统一的接口，聚合/组合子系统集合，代理处理请求；
+						调用者：外观接口的调用者；
+						子系统集合：模块或子系统，处理Facade对象的任务，它是实际功能的提供者；
+				    如：[家庭影院案例]
+					//子系统集合之DVD播放器
+					public class DVDPlayer {					
+						//使用单例模式, 使用饿汉式
+						private static DVDPlayer instance = new DVDPlayer();					
+						public static DVDPlayer getInstanc() {
+							return instance;
+						}
+						//开机
+						public void on() {
+							System.out.println(" dvd on ");
+						}
+						//关机
+						public void off() {
+							System.out.println(" dvd off ");
+						}
+						//正在播放
+						public void play() {
+							System.out.println(" dvd is playing ");
+						}					
+						//暂停播放
+						public void pause() {
+							System.out.println(" dvd pause ..");
+						}
+					}
+					//子系统集合之爆米花机
+					public class Popcorn {						
+						private static Popcorn instance = new Popcorn();						
+						public static Popcorn getInstance() {
+							return instance;
+						}
+						//开机
+						public void on() {
+							System.out.println(" popcorn on ");
+						}
+						//关机
+						public void off() {
+							System.out.println(" popcorn ff ");
+						}
+						//出爆米花
+						public void pop() {
+							System.out.println(" popcorn is poping  ");
+						}
+					}
+					//子系统集合之投影仪
+					public class Projector {
+						private static Projector instance = new Projector();						
+						public static Projector getInstance() {
+							return instance;
+						}
+						//开机
+						public void on() {
+							System.out.println(" Projector on ");
+						}
+						//关机
+						public void off() {
+							System.out.println(" Projector ff ");
+						}
+						//聚焦
+						public void focus() {
+							System.out.println(" Projector is Projector  ");
+						}
+					}
+					//子系统集合之大屏
+					public class Screen {
+						private static Screen instance = new Screen();						
+						public static Screen getInstance() {
+							return instance;
+						}																		
+						//大屏上升
+						public void up() {
+							System.out.println(" Screen up ");
+						}
+						//大屏降下
+						public void down() {
+							System.out.println(" Screen down ");
+						}						
+					}
+					//子系统集合之立体声
+					public class Stereo {
+						private static Stereo instance = new Stereo();						
+						public static Stereo getInstance() {
+							return instance;
+						}
+						//打开声音
+						public void on() {
+							System.out.println(" Stereo on ");
+						}
+						//关闭声音
+						public void off() {
+							System.out.println(" Screen off ");
+						}
+						//声音调高
+						public void up() {
+							System.out.println(" Screen up.. ");
+						}
+					}
+					//子系统集合之灯光
+					public class TheaterLight {
+						private static TheaterLight instance = new TheaterLight();
+						public static TheaterLight getInstance() {
+							return instance;
+						}
+						//打开灯光
+						public void on() {
+							System.out.println(" TheaterLight on ");
+						}
+						//关闭灯光
+						public void off() {
+							System.out.println(" TheaterLight off ");
+						}
+						//调暗
+						public void dim() {
+							System.out.println(" TheaterLight dim.. ");
+						}
+						//调亮
+						public void bright() {
+							System.out.println(" TheaterLight bright.. ");
+						}
+					}
+					//高层接口或界面类、外观类
+					public class HomeTheaterFacade {						
+						//定义各个子系统对象
+						private TheaterLight theaterLight;
+						private Popcorn popcorn;
+						private Stereo stereo;
+						private Projector projector;
+						private Screen screen;
+						private DVDPlayer dVDPlayer;												
+						//构造器
+						public HomeTheaterFacade() {
+							super();
+							this.theaterLight = TheaterLight.getInstance();
+							this.popcorn = Popcorn.getInstance();
+							this.stereo = Stereo.getInstance();
+							this.projector = Projector.getInstance();
+							this.screen = Screen.getInstance();
+							this.dVDPlayer = DVDPlayer.getInstanc();
+						}
+						//操作分成4步，准备						
+						public void ready() {
+							popcorn.on();
+							popcorn.pop();
+							screen.down();
+							projector.on();
+							stereo.on();
+							dVDPlayer.on();
+							theaterLight.dim();
+						}
+						//开启
+						public void play() {
+							dVDPlayer.play();
+						}
+						//暂停
+						public void pause() {
+							dVDPlayer.pause();
+						}
+						//关闭
+						public void end() {
+							popcorn.off();
+							theaterLight.bright();
+							screen.up();
+							projector.off();
+							stereo.off();
+							dVDPlayer.off();
+						}
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {
+							HomeTheaterFacade homeTheaterFacade = new HomeTheaterFacade();
+							homeTheaterFacade.ready();
+							homeTheaterFacade.play();														
+							homeTheaterFacade.end();
+						}
+					}
+				源码分析：
+					
 ----------------------------------------------网络编程--------------------------------------------------------------------------------------------------------	
 	
 	
