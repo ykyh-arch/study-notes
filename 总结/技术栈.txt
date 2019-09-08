@@ -4983,8 +4983,8 @@
 									
 		java Client API：略
 		FastDFS和nginx整合[主要是存储服务器上]
-			在tracker上安装nginx：目的是实现高可用，如果只有一台tracker服务器可以不配置nginx。
-			在Storage上安装nginx：[规划安装目录：/usr/local/]，目的是实现负载均衡
+			在tracker上安装nginx：目的是实现反向代理、负载均衡。
+			在Storage上安装nginx：[规划安装目录：/usr/local/]，目的是实现Http方式的上传于下载。
 				主要步骤：
 					 1）cd /usr/local
 						tar -zxvf FastDFS-nginx-module_v1.16.tar.gz
@@ -5021,7 +5021,7 @@
 					                ngx_fastdfs_module;
 					        }
 						}
-					 6）访问测试：http://192.168.101.3/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+					 6）访问测试：http://192.168.101.3:8888/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
 				
 		FastDFS集群环境搭建:
 			前提准备：准备6台服务器[物理节点]，如：192.168.1.173-178
@@ -5048,12 +5048,17 @@
 					 测试：	/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/1.png	 或 /usr/bin/fdfs_unload_file /etc/fdfs/client.conf /home/1.png
 					 结果：文件存储按上面追踪服务器指定的策略[参数：store_lookup]来存储，且同组下的数据同步；
 				
-				5）、整合nginx模块[存储服务器上]
+				5）、整合nginx模块[存储服务器上]，便于http方式访问
 					 前提准备：在175、176、177、178四个物理节点上都安装nginx模块，同单机版；
 					 配置文件：vim /etc/fdfs/mod_FastDFS.conf，主要修改内容：同单机版，此外有group_name=group1/2，group_count=2；
 					 nginx配置同单机版；
-					 访问测试：http://192.168.11.175/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
-					 
+					 访问测试：http://192.168.11.175:8888/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+				6）、整合nginx缓存模块[追踪服务器上]，作反向代理负载均衡，利用缓存，代理存储服务器
+					 在173、174上，解压安装ngx_cache_purge-2.3模块，安装nginx[安装相关Lib依赖和缓存模块./configure --add-module=../ngx_cache_purge-2.3]
+					 安装完成后，修改nginx.conf文件信息，主要修改：缓存配置以及负载均衡的配置信息	
+					 上传测试；http://192.168.11.173:8000/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png或http://192.168.11.174:8000/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+				7）、整合keepalived，提供一个VIP实现整体的访问流程；
+					
 					 
 ----------------------------------------------大数据定制技术----------------------------------------------------------------------------------	
 	一、大数据：
