@@ -21,6 +21,7 @@ https://msdn.itellyou.cn/ --msdn，我告诉你（操作系统镜像下载）
 http://www.pansoso.com --盘搜搜
 https://max.book118.com/ --原创力文档
 https://tool.book118.com/ --在线转换
+https://www.jsdaima.com/ --JS代码网
 
 #网站参考
 http://www.hanergymobileenergy.com/ --汉能太阳能
