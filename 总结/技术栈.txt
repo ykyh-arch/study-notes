@@ -83,7 +83,7 @@
 					$ sudo docker tag [ImageId] registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]
 					$ sudo docker push registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]  
 					
-----------------------------------------------文档数据结构MongoDB的使用-------------------------------------------------------					  
+----------------------------------------------文档数据结构MongoDB技术篇-------------------------------------------------------					  
 一、npm（Node Package Manager 包管理器）工具的使用
 	- 通过npm可以对node中的包进行上传、下载、搜索等操作
 		- npm会在安装完node以后，自动安装
@@ -318,790 +318,7 @@
 			db.students.find({user_name:{$regex:/^孙尚香/i,$nin:['孙尚香II']}});
 			db.students.find({user_name:{$regex:/香/,$options:"si"}});
 	
-			
-----------------------------------------------SpringCloud技术栈的使用---------------------------------------------------------						  
-	基础概念：
-	    微服务：强调的是服务的大小，它关注的是某一个点，是具体解决某一个问题/提供落地对应服务的一个服务应用
-		-最早提出：马丁福勒
-				微服务化的核心是将传统的一站式应用，根据业务拆分成一个一个的服务，彻底
-		地去耦合,每一个微服务提供单个业务功能的服务，一个服务做一件事，
-		从技术角度看就是一种小而独立的处理过程，类似进程概念，能够自行单独启动
-		或销毁，拥有自己独立的数据库。
-		微服务架构：架构模式，微服务之间互相协调、互相配合，每个服务运行在其独立的进程中，
-			服务与服务间采用轻量级的通信机制互相协作（通常是基于HTTP协议的RESTful API），包括一些环境，有机构成的整体。
-		优点缺点：
-		-优点：内聚小，松耦合，拥有独立的进程，开发简单；
-			   易于与第三方集成，如：与持续自动化构建部署（Jenkins, Hudson）
-			   微服务只是业务逻辑的代码，不会和HTML,CSS 或其他界面组件混合（前后端分离思想）。
-		-缺点：开发人员要处理分布式系统的复杂性
-			   多服务运维难度，随着服务的增加，运维的压力也在增大
-			   系统部署依赖
-			   服务间通信成本、数据一致性、系统集成测试、性能监控……
-		微服务技术栈：
-			微服务条目			落地技术											备注			               
-			
-			服务开发			Springboot、Spring、SpringMVC
-			服务配置与管理		Netflix公司的Archaius、阿里Diamond等
-			服务注册与发现		Eureka、Consul、Zookeeper、AliBabaNacos等
-			服务调用			Rest、RPC、gRPC
-			服务熔断器			Hystrix、Envoy等
-			负载均衡			Ribbon、Feign Nginx等
-			服务接口调用(客户端调用服务的简化工具)
-								Feign等
-			消息队列			Kafka、RabbitMQ、ActiveMQ等
-			服务配置中心管理  	SpringCloudConfig、Chef等
-			服务路由（API网关） Zuul、Spring Cloud Gateway等
-			服务监控			Zabbix、Nagios、Metrics、Spectator等
-			全链路追踪			Zipkin，Brave、Dapper、Sleuth等
-			服务部署			Docker、OpenStack、Kubernetes等
-			数据流操作开发包	SpringCloud Stream（封装与Redis,Rabbit、Kafka等发送接收消息）
-			事件消息总线    	Spring Cloud Bus
-			......
-    SpringCloud入门介绍：
-		含义：SpringCloud=分布式微服务架构下的一站式解决方案，是各个微服务架构落地技术的集合体，俗称微服务全家桶
-		与springboot之间关系：SpringBoot可以离开SpringCloud独立使用开发项目，
-							  但是SpringCloud离不开SpringBoot，属于依赖的关系.
-							  SpringBoot专注于快速、方便的开发单个微服务个体，SpringCloud关注全局的服务治理框架。
-		与Dubbo的比较： 最大区别：SpringCloud抛弃了Dubbo的RPC通信，采用的是基于HTTP的REST方式。
-						REST相比RPC更为灵活，服务提供方和调用方的依赖只依靠一纸契约，这在强调快速演化的微服务环境下，显得更加合适。
-						品牌机与组装机的区别
-						Spring Cloud的功能比DUBBO更加强大，涵盖面更广，而且作为Spring的拳头项目，它也能够与Spring Framework、Spring Boot、Spring Data、Spring Batch等其他Spring项目完美融合，这些对于微服务而言是至关重要的。
-						使用Dubbo构建的微服务架构就像组装电脑，各环节我们的选择自由度很高；
-						而Spring Cloud就像品牌机，在Spring Source的整合下，做了大量的兼容性测试，保证了机器拥有更高的稳定性。
-						社区支持与更新力度
-						最为重要的是，DUBBO停止了5年左右的更新，虽然2017.7重启了(刘军)。对于技术发展的新需求，需要由开发者自行拓展升级（比如当当网弄出了DubboX），这对于很多想要采用微服务架构的中小软件组织，显然是不太合适的，中小公司没有这么强大的技术能力去修改Dubbo源码+周边的一整套解决方案，并不是每一个公司都有阿里的大牛+真实的线上生产环境测试过。
-	简单服务调用：
-			-RestTemplate + API 使用方式： 
-			 RestTemplate提供了多种便捷访问远程Http服务的方法，是一种简单便捷的访问restful服务模板类，是Spring提供的用于访问Rest服务的客户端模板工具集 
-			使用步骤：
-			1，注入Bean：
-			如：@Configuration
-				public class ConfigBean
-				{
-				 @Bean
-				public RestTemplate getRestTemplate()
-					{
-				return new RestTemplate();
-					}
-				}
-			2，声明使用：
-			@Autowired
-			private RestTemplate restTemplate;
-			
-			方法中：
-			restTemplate.postForObject(REST_URL_PREFIX+"/dept/add", dept, Boolean.class); - 参数：REST请求地址、请求参数、HTTP响应转换被转换成的对象类型
-
-	服务注册与发现：
-			-Eureka(C/S)：
-				简介：Netflix公司的子模块，是一个基于REST的服务，用于定位服务，以实现云端中间层服务发现和故障转移。Netflix在设计Eureka时遵守的就是AP原则
-				CAP原则：CAP原则又称CAP定理，指的是在一个分布式系统中，Consistency（一致性）、 Availability（可用性）、Partition tolerance（分区容错性），三者不可兼得
-				三大角色：1、Eureka Server 提供服务注册和发现；2、Service Provider服务提供方将自身服务注册到Eureka，从而使服务消费方能够找到；3、Service Consumer服务消费方从Eureka获取注册服务列表，从而能够消费服务
-			使用注册：
-				服务端：
-				1,引用模块：POM.XML
-					<dependency>
-					<groupId>org.springframework.cloud<groupId>
-					<artifactId>spring-cloud-starter-eureka-server<artifactId>
-					</dependency>
-				2,配置参数：application.properties或YML文件的配置
-				格式：eureka.instance.hostname=localhost
-					  #不要向注册中心注册自己
-					  eureka.client.register-with-eureka=false
-					  #禁止检索服务
-					  eureka.client.fetch-registry=false
-					  eureka.client.service-url.defaultZone=http://${eureka.instance.hostname}:${server.port}/eureka	
-				3,申明使用：程序main入口，添加@EnableEurekaServer注解，来开启服务注册中心
-				客户端：
-				1,引用模块：POM.XML
-					 <dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-eureka</artifactId>
-					</dependency>
-				2,配置参数：application.properties或YML文件的配置
-				格式：
-					#设置服务名
-					spring:
-					  application:
-						name: 服务名
-					eureka:
-						  client: #客户端注册进eureka服务列表内
-							service-url: 
-							  defaultZone: http://localhost:7001/eureka
-							  instance:
-								instance-id: 服务实例名（设置后可以隐藏主机名）
-							  prefer-ip-address: true #访问路径可以显示IP地址
-							  #点击显示
-							  info:
-								  app.name: 服务程序名
-								  company.name: 公司名
-								  build.artifactId: $project.artifactId$
-								  build.version: $project.version$
-							  
-				3,申明使用：主类上添加@EnableEurekaClient注解以实现Eureka中的DiscoveryClient实现，可以使用@EnableDiscoveryClient代替
-			使用发现：
-				申明使用，主启动类添加@EnableDiscoveryClient
-			    使用时注入， @Autowired
-							 private DiscoveryClient client;即可使用，注：DiscoveryClient是spring clould 对治理体系的一个抽象
-			自我保护机制：某时刻某一个微服务不可用了，eureka不会立刻清理，依旧会对该微服务的信息进行保存
-			集群处理：
-				在Eureka服务器中添加配置：
-				eureka: 
-					instance:
-						hostname: eureka1.com #eureka服务端的实例名称
-					client: 
-						register-with-eureka: false #false表示不向注册中心注册自己。
-						fetch-registry: false #false表示自己端就是注册中心，我的职责就是维护服务实例，并不需要去检索服务
-					service-url: 
-					#单机 defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/       #设置与Eureka Server交互的地址查询服务和注册服务都需要依赖这个地址（单机）。
-					defaultZone: http://eureka1.com:7002/eureka/,http://eureka3.com:7003/eureka/
-			与Dubbo的Zookeeper的比较：
-				著名的CAP理论指出，一个分布式系统不可能同时满足C(一致性)、A(可用性)和P(分区容错性)。由于分区容错性P在是分布式系统中必须要保证的，因此我们只能在A和C之间进行权衡。
-				因此,Zookeeper保证的是CP,Eureka则是AP。因此，Eureka可以很好的应对因网络故障导致部分节点失去联系的情况，而不会像zookeeper那样使整个注册服务瘫痪。
-
-			-Consul：
-				简介：Spring Cloud Consul是分布式的、高可用、横向扩展(AP原则)，它包含多个组件，但是作为一个整体，在微服务架构中为我们的基础设施提供服务发现和服务配置的工具。它包含了下面几个特性：
-					  服务发现（service discovery）
-					  健康检查（health checking）
-					  Key/Value存储（一个用来存储动态配置的系统）
-					  多数据中心（multi-datacenter）
-				使用-客户端：
-				1,引用模块：POM.XML
-					<dependency>
-					  <groupId>org.springframework.cloud</groupId>
-					  <artifactId>spring-cloud-starter-consul-discovery</artifactId>
-					</dependency>
-				2,配置参数：application.properties或YML文件的配置
-				格式：
-					  spring.cloud.consul.host=localhost #域名
-					  spring.cloud.consul.port=8500 #端口
-	
-				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理
-				注意：consul不需要创建类似eureka-server的服务端吗？由于Consul自身提供了服务端，所以我们不需要像之前实现Eureka的时候创建服务注册中心，直接通过下载consul的服务端程序就可以使用。
-				启动consul服务：$consul agent -dev
-				
-			-Nocas：
-				参考Spring Cloud Alibaba 技术站的Nocas相关内容；
-				
-				详情参考：https://blog.csdn.net/qq_38765404/article/details/89521124
-
-	负载均衡：
-			-Ribbon（结合Eureka使用）：
-			 简介：基于Netflix实现的一套客户端负载均衡的工具，主要功能是提供客户端的软件负载均衡算法。
-			 负载均衡：将用户的请求基于某种规则平摊的分配到多个服务上，从而达到系统的HA，常见的负载均衡有软件Nginx，LVS，硬件F5等
-				分类：集中式LB-即在服务的消费方和提供方之间使用独立的LB设施(可以是硬件，如F5, 也可以是软件，如nginx), 由该设施负责把访问请求通过某种策略转发至服务的提供方；
-					  进程内LB-将LB逻辑集成到消费方，消费方从服务注册中心获知有哪些地址可用，然后自己再从这些地址中选择出一个合适的服务器。Ribbon就属于进程内LB。
-			 使用：
-				1,引用模块：POM.XML
-					 <dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-ribbon</artifactId>
-					</dependency>
-					<dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-eureka</artifactId>
-					</dependency>
-				2,配置参数：application.properties或YML文件的配置
-				格式：（eureka配置）
-					server:
-						port: 80
-						eureka:
-							client:
-							register-with-eureka: false
-							service-url: 
-							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
-	
-				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；2、在配置文件ConfigBean 中添加@LoadBalanced注解
-				  -》结论：Ribbon和Eureka整合后服务消费方可以直接调用服务而不用再关心地址和端口号
-			    4,策略IRule：简单轮询负载均衡RoundRobinRule，区别于RetryRule，随机负载均衡，加权响应时间负载均衡 ，区域感知轮询负载均衡
-			 自定义Ribbon：	
-				主启动类添加@RibbonClient注解，格式：@RibbonClient(name="MICROSERVICECLOUD",configuration=MySelfRule.class)，注意：这个自定义配置类不能放在@ComponentScan所扫描的当前包下以及子包下，
-					否则我们自定义的这个配置类就会被所有的Ribbon客户端所共享，也就是说我们达不到特殊化定制的目的了。
-				在配置文件ConfigBean中添加@LoadBalanced注解
-			
-			-Feign（声明式服务调用，WebService客户端）：它的使用方法是定义一个接口，然后在上面添加注解，同时也支持JAX-RS（Java API for RESTful Web Services）标准的注解。
-			 特性：
-				可插拔式的注解支持，包括Feign注解和JAX-RS注解;
-				支持可插拔的HTTP编码器和解码器;
-				支持Hystrix和它的Fallback;
-				支持Ribbon的负载均衡;
-				支持HTTP请求和响应的压缩
-			 使用：
-				1,引用模块：POM.XML
-					 <dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-feign</artifactId>
-					</dependency>
-					　<dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-eureka</artifactId>
-						<version>1.3.5.RELEASE</version>
-					</dependency>
-				2,配置参数：application.properties或YML文件的配置
-				格式：（整合eureka配置）
-					server:
-						port: 80
-						eureka:
-							client:
-							register-with-eureka: false
-							service-url: 
-							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
-	
-				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；同时添加@EnableFeignClients 来开启feign
-			                2, 定义接口：
-							   格式：value=“服务名称”,configuration = xxx.class 这个类配置Hystrix的一些精确属性
-			                   @FeignClient(value = "serviceName",fallback = FeignFallBack.class)
-							    public interface FeignService {
-									@RequestMapping(value = "/ml", method= RequestMethod.GET)
-									String method1(@RequestParam("name") String name) ;
-								}
-								@Component
-								public class FeignFallBack implements FeignService{
-							　　//实现的方法是服务调用的降级方法
-								@Override
-								public String method1() {
-									return "error";
-								}
-								
-	服务熔断器（断路器）：		 
-			-Hystrix：
-			 概念来源：服务雪崩：
-				服务扇出：多个微服务之间调用的时候，假设微服务A调用微服务B和微服务C，微服务B和微服务C又调用其它的微服务，这就是所谓的“扇出”效应。
-				解决方案：熔断模式（容错处理机制）、隔离模式（容错处理机制）、限流模式（预防模式）
-			 简介：Hystrix是一个用于处理分布式系统的延迟和容错的开源库，在分布式系统（SOA面向服务架构）里，许多依赖不可避免的会调用失败，比如超时、异常等，Hystrix能够保证在一个依赖出问题的情况下，不会导致整体服务失败，避免级联故障，以提高分布式系统的弹性。
-				   “断路器”本身是一种开关装置，当某个服务单元发生故障之后，通过断路器的故障监控（类似熔断保险丝），
-				   向调用方返回一个符合预期的、可处理的备选响应（FallBack），而不是长时间的等待或者抛出调用方无法处理的异常，这样就保证了服务调用方的线程不会被长时间、不必要地占用，从而避免了故障在分布式系统中的蔓延，乃至雪崩。
-			 服务熔断
-				使用：
-					概念：当扇出链路的某个微服务不可用或者响应时间太长时，会进行服务的降级，进而熔断该节点微服务的调用，快速返回"错误"的响应信息。 
-						  SpringCloud框架里熔断机制通过Hystrix实现。Hystrix会监控微服务间调用的状况，当失败的调用到一定阈值，缺省是5秒内20次调用失败就会启动熔断机制。熔断机制的注解是@HystrixCommand。
-					1,引用模块：POM.XML
-						 <dependency>
-							<groupId>org.springframework.cloud</groupId>
-							<artifactId>spring-cloud-starter-hystrix</artifactId>
-						</dependency>
-					2,配置参数：application.properties或YML文件的配置
-					格式：（配合eureka配置）
-						server:
-							port: 80
-							eureka:
-								client:
-								register-with-eureka: false
-								service-url: 
-								defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
-		
-					3,申明使用：1、程序main入口，添加@EnableCircuitBreaker注解，开启熔断支持；
-								2、在控制层申明使用
-									格式示例：fallbackMethod 快速应急的处理方法，进行服务降级处理
-									@RequestMapping(value="/dept/get/{id}",method=RequestMethod.GET)
-									@HystrixCommand(fallbackMethod = "processHystrix_Get")
-									public Dept get(@PathVariable("id") Long id){
-									    Dept dept =  this.service.get(id);
-										if(null == dept){
-										throw new RuntimeException("该ID："+id+"没有没有对应的信息");
-									    }
-										return dept;	
-									}
-									public Dept processHystrix_Get(@PathVariable("id") Long id){ 
-										return new Dept().setDeptno(id)
-											   .setDname("该ID："+id+"没有没有对应的信息,null--@HystrixCommand")
-											   .setDb_source("no this database in MySQL");
-									}
-			 
-			 服务降级Fallback
-				使用： 
-					概念：整体资源快不够了，忍痛将某些服务先关掉，待渡过难关，再开启回来。
-						  服务降级处理是在客户端实现完成的，与服务端没有关系。
-				    申明使用（与Feign结合使用）：	
-						格式示例：
-						@FeignClient(value = "MICROSERVICECLOUD",fallbackFactory=DeptClientServiceFallbackFactory.class)
-						public interface DeptClientService{
-							@RequestMapping(value = "/dept/get/{id}",method = RequestMethod.GET)
-							public Dept get(@PathVariable("id") long id);
-			            }
-						
-						@Component
-						public class DeptClientServiceFallbackFactory implements FallbackFactory{
-						
-							@Override
-							public Dept get(@PathVariable("id") long id){
-								...
-							}  
-						}
-						
-						注意：在application.properties或YML文件的配置添加一行配置
-						      feign: 
-								hystrix: 
-									enabled: true //开启   
-			 
-			 服务监控HystrixDashboard
-			    使用：
-				    概念：Hystrix还提供了准实时的监控（Hystrix Dashboard），Spring Cloud也提供了Hystrix Dashboard的整合，对监控内容转化成可视化界面。
-					1,引用模块：POM.XML
-						 <dependency>
-							<groupId>org.springframework.cloud</groupId>
-							<artifactId>spring-cloud-starter-hystrix</artifactId>
-						</dependency>
-						<dependency>
-							<groupId>org.springframework.cloud</groupId>
-							<artifactId>spring-boot-starter-actuator</artifactId>
-						</dependency>
-						
-						在服务的监控一方添加如下配置
-						<dependency>
-							<groupId>org.springframework.cloud</groupId>
-							<artifactId>spring-cloud-starter-hystrix-dashboard</artifactId>
-						</dependency>
-					2,配置参数：application.properties或YML文件的配置
-					格式：
-						server:
-							port: 9901
-		
-					3,申明使用：1、程序main入口，添加@EnableHystrixDashboard注解，开启熔断监控的支持；
-	
-	路由网关：
-			-Zuul：
-			 概念：代理+路由+过滤三大功能，可以与Eureka整合并注册到注册中心里面
-			 使用：
-				1,引用模块：POM.XML
-					<dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-eureka</artifactId>
-					</dependency>
-					<dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-zuul</artifactId>
-					</dependency>
-				2,配置参数：application.properties或YML文件的配置
-				格式：
-					zuul: 
-					    prefix: /pre //前缀
-						ignored-services: 服务名  //多个指定微服务以半角逗号分隔，所有可以用"*"通配符代替
-						routes: 
-							serverName.path: /serverName/**
-							serverName.serviceId: 服务名 //给微服务起别名
-							//或使用：serverName.url: http://${IP}:${PORT}/  //这种基于未使用服务注册中心的
-						
-
-				3,申明使用：1、程序main入口，添加@EnableZuulProxy注解，开启Zuul的支持；
-				
-	
-	分布式配置中心：
-				 -SpringCloud Config（与Git整合使用）
-				 概念来源：分布式系统面临的---配置问题
-				 概念：为微服务架构中的微服务提供集中化的外部配置支持，配置服务器为各个不同微服务应用的所有环境提供了一个中心化的外部配置
-				    分类：服务端和客户端
-						  服务端也称为分布式配置中心，它是一个独立的微服务应用，用来连接配置服务器并为客户端提供获取配置信息，加密/解密信息等访问接口
-						  客户端则是通过指定的配置中心来管理应用资源，以及与业务相关的配置内容，并在启动的时候从配置中心获取和加载配置信息配置服务器默认采用git来存储配置信息，这样就有助于对环境配置进行版本管理，并且可以通过git客户端工具来方便的管理和访问配置内容。
-					规则：1、不同环境不同配置，动态化的配置更新
-						  2、运行期间动态调整配置，不再需要在每个服务部署的机器上编写配置文件，服务会向配置中心统一拉取配置自己的信息
-						  3、当配置发生变动时，服务不需要重启即可感知到配置的变化并应用新的配置
-						  4、将配置信息以REST接口的形式暴露
-				 使用：
-					 1、用自己的Github账户建一个统一配置中心仓库，并克隆到本地；
-					 2、新建配置文件application.yml（保存格式必须为UTF-8）
-					    格式参考示例：
-						spring:
-						  profiles:
-							active:
-							- dev
-						---
-						spring:
-						  profiles: dev     #开发环境
-						  application: 
-							name: microservicecloud-config-dev
-						---
-						spring:
-						  profiles: test   #测试环境
-						  application: 
-							name: microservicecloud-config-test
-						#  请保存为UTF-8格式
-					 3、push到git仓库
-					 服务端配置使用：
-						1,引用模块：POM.XML
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-config-server</artifactId>
-							</dependency>
-						2,配置参数：application.properties或YML文件的配置
-									格式：	
-									spring:
-										application:
-											name: microservicecloud-config
-										cloud:
-											config:
-												server:
-													git:
-														uri: git@github.com***.git #GitHub上面的git仓库名字
-						3,申明使用：1、程序main入口，添加@EnableConfigServer注解，开启Config的支持；		
-						配置读取规则：
-						  1、/{application}-{profile}.yml 如：http://config-3344.com:3344/application-dev.yml
-						  2、/{application}/{profile}[/{label}] 如：http://config-3344.com:3344/application/dev/master
-						  3、/{label}/{application}-{profile}.yml 如：http://config-3344.com:3344/master/application-dev.yml
-					 客户端配置使用：
-					      前提准备：
-							本地仓库新建配置文件yml并提交到git仓库里，如：microservicecloud-config-client.yml
-								参考示例：
-									spring:
-										profiles:
-											active:
-												- dev
-									---
-									server: 
-										port: 8201 
-									spring:
-										profiles: dev
-										application: 
-											name: microservicecloud-config-client
-									eureka: 
-										client: 
-											service-url: 
-												defaultZone: http://eureka-dev.com:7001/eureka/   
-									---
-									server: 
-										ort: 8202 
-									spring:
-										profiles: test
-										application: 
-											name: microservicecloud-config-client
-									eureka: 
-										client: 
-											service-url: 
-												defaultZone: http://eureka-test.com:7001/eureka/
-
-						  1,引用模块：POM.XML
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-starter-config</artifactId>
-							</dependency>
-						  2,配置参数：bootstrap.yml配置文件的配置（系统级），而application.yml是用户级
-									格式：	
-									spring:
-										cloud:
-											config:
-												name: microservicecloud-config-client #需要从github上读取的资源名称，注意没有yml后缀名
-												profile: dev #本次访问的配置项
-												label: master   
-												uri: http://config-3344.com:3344  #本微服务启动后先去找3344号服务（链接Config服务端），通过SpringCloudConfig获取GitHub的服务地址
-						  3,申明使用：
-									测试：在控制层使用，如：@Value("${spring.application.name}")
-															 private String applicationName;
-						  
-----------------------------------------------Spring Cloud Alibaba 技术栈的使用---------------------------------------------------------						  
-					 
-	基本介绍：Spring Cloud Alibaba 致力于提供微服务开发的一站式解决方案，依托 Spring Cloud Alibaba，只需要添加一些注解和少量配置，就可以将 Spring Cloud 应用接入阿里微服务解决方案，
-			  通过阿里中间件来迅速搭建分布式应用系统。
-    基本技术栈：
-			  1、服务限流降级：默认支持 Servlet、Feign、RestTemplate、Dubbo 和 RocketMQ 限流降级功能的接入，可以在运行时通过控制台实时修改限流降级规则，还支持查看限流降级 Metrics 监控
-			  2、服务注册与发现：适配 Spring Cloud 服务注册与发现标准，默认集成了 Ribbon 的支持
-			  3、分布式配置管理：支持分布式系统中的外部化配置，配置更改时自动刷新
-			  4、消息驱动能力：基于 Spring Cloud Stream 为微服务应用构建消息驱动能力
-			  5、分布式事务：使用 @GlobalTransactional 注解， 高效并且对业务零侵入地解决分布式事务问题
-			  6、阿里云对象存储：阿里云提供的海量、安全、低成本、高可靠的云存储服务。支持在任何应用、任何时间、任何地点存储和访问任意类型的数据
-			  7、分布式任务调度：提供秒级、精准、高可靠、高可用的定时（基于 Cron 表达式）任务调度服务
-			  8、阿里云短信服务：覆盖全球的短信服务，友好、高效、智能的互联化通讯能力，帮助企业迅速搭建客户触达通道
-					  
-	1、服务注册与发现
-		-Nocas（= Spring Cloud Eureka + Spring Cloud Config）：
-				简介：Spring Cloud Alibaba 项目中开发分布式应用微服务的子组件，致力于服务发现、配置和管理微服务，基于 DNS 和基于 RPC 的服务发现。
-				关键特性：
-					1、服务发现和服务健康监测；
-					2、动态配置服务（通过 Nacos Server 和 spring-cloud-starter-alibaba-nacos-config 实现配置的动态变更）；
-					3、动态DNS服务与服务及其元数据管理（通过 Nacos Server 和 spring-cloud-starter-alibaba-nacos-discovery 实现服务的注册与发现）
-				使用-客户端（服务注册与发现）：
-				1,引用模块：POM.XML
-					<!--Nacos的服务注册与发现模块-->
-					<dependency>
-						<groupId>org.springframework.cloud</groupId>
-						<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-					</dependency>
-					<!--统一管理-->
-					<dependencyManagement>
-						<dependencies>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-dependencies</artifactId>
-								<version>Greenwich.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-								<version>0.2.2.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-						</dependencies>
-				</dependencyManagement>
-				2,配置参数：application.properties或YML文件的配置
-				格式：
-					 spring:
-						  application:
-							name: 程序名
-						  cloud:
-							nacos:
-							  discovery:
-								server-addr: 192.168.43.142:8848 # 服务IP与端口
-									metadata: # 元数据管理
-									  name1: healthy1 
-									  name2: healthy2
-
-				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现
-				
-				使用-客户端（动态配置，相当于SpringCloud Config）：
-				1,引用模块：POM.XML	
-				<!--Nacos分布式配置模块-->
-				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					  <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
-				</dependency>
-				<!--统一管理-->
-				<dependencyManagement>
-					<dependencies>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-dependencies</artifactId>
-								<version>Greenwich.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-								<version>0.2.2.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-					</dependencies>
-				</dependencyManagement>
-
-				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
-				格式：
-					spring:
-					  application:
-						name: nacos-config-client # 统一配置中心客户端
-					  cloud:
-						nacos:
-						  config:
-							server-addr: 192.168.43.142:8848 # nacos服务端
-							file-extension: yml
-					server:
-					  port: 9094 
-				3、准备外部的统一配置文件：
-							本地仓库新建配置文件yml（properties）并提交到git仓库里，如：nacos-config-client.properties或nacos-config-client.yml								
-							# nacos默认加载的是nacos-config-client.properties文件，如果需要加载yml，需要在yml增加一行配置：file-extension: yml
-				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现	  
-					  ACM （应用配置管理）配置加载规则说明：
-						参考文档：https://www.alibabacloud.com/help/zh/doc-detail/94708.htm?spm=a2c63.p38356.b99.56.547b66ae7aDsVW
-							# Nacos Spring Cloud 中，dataId 的完整格式如下：
-							${prefix}-${spring.profile.active}.${file-extension}
-							prefix 默认为 spring.application.name 的值，也可以通过配置项 spring.cloud.nacos.config.prefix来配置。
-							spring.profile.active 即为当前环境对应的 profile，详情可以参考 Spring Boot文档。
-							注意：当 spring.profile.active 为空时，对应的连接符 - 也将不存在，dataId 的拼接格式变成 ${prefix}.${file-extension}
-							file-exetension 为配置内容的数据格式，可以通过配置项 spring.cloud.nacos.config.file-extension 来配置。目前只支持 properties 和 yaml 类型。
-							# @RefreshScope 实现配置自动更新
-							
-							采用默认值的应用要加载的配置规则就是：
-							Data ID=${spring.application.name}.properties，Group=DEFAULT_GROUP。
-	2、服务调用：
-		 -Feign：声明式服务调用，与Netflix Feign 功能相似
-				使用-客户端：
-				1,引用模块：POM.XML	
-				<!--openfeign依赖-->
-				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					  <artifactId>spring-cloud-starter-openfeign</artifactId>
-				</dependency>
-				<!--Nacos的服务注册与发现模块-->
-				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-				</dependency>
-				<!--统一管理-->
-				<dependencyManagement>
-					<dependencies>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-dependencies</artifactId>
-								<version>Greenwich.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-								<version>0.2.2.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-					</dependencies>
-				</dependencyManagement>
-
-				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
-				格式：
-					spring:
-					  application:
-						name: nacos-discovery-consumer-feign # 客户端名称
-					  cloud:
-						nacos:
-						  config:
-							server-addr: 192.168.43.142:8848 # nacos服务端
-					server:
-					  port: 9091
-				3、申明使用：程序main入口，添加@EnableFeignClients注解，开启服务调用
-						具体使用：定义一个接口
-						@FeignClient("nacos-discovery-provider") //调用的服务名称
-						public interface TestService {
-							@GetMapping("/m1")
-							String m1(@RequestParam(name = "name") String name);
-						}
-
-	3、其他：
-		 -Webflux：替换了旧的Servlet线程模型。
-		 - Spring Cloud Gateway ：网关配置，目标是替代Netflix ZUUL，其不仅提供统一的路由方式，并且基于Filter链的方式提供了网关基本的功能，例如：安全，监控/埋点，和限流等。
-				使用-客户端：
-				1,引用模块：POM.XML	
-				<!--gateway依赖-->
-				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					  <artifactId>spring-cloud-starter-gateway</artifactId>
-				</dependency>
-				<!--Nacos的服务注册与发现模块-->
-				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-				</dependency>
-				<!--统一管理-->
-				<dependencyManagement>
-					<dependencies>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-dependencies</artifactId>
-								<version>Greenwich.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-								<version>0.2.2.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-					</dependencies>
-				</dependencyManagement>
-
-				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
-				格式：
-					spring:
-						  application:
-							name: nacos-discovery-gateway-server
-						  cloud:
-							nacos:
-							  discovery:
-								server-addr: 192.168.43.142:8848
-								metadata:
-								  name: healthy
-							gateway:
-							  routes:
-								- id: nacos-discovery-provider
-								  uri: lb://nacos-discovery-provider
-								  predicates:
-									- Path=/provider/**
-								  filters:
-									- StripPrefix=1
-							  
-							  discovery:
-								locator:
-								  enabled: true  #表明gateway开启服务注册和发现的功能，并且spring cloud gateway自动根据服务发现为每一个服务创建了一个router，这个router将以服务名开头的请求路径转发到对应的服务。
-								  lowerCaseServiceId: true   #是将请求路径上的服务名配置为小写（因为服务注册的时候，向注册中心注册时将服务名转成大写的了），比如以/service-hi/*的请求路径被路由转发到服务名为service-hi的服务上。
-								  filters:
-									- StripPrefix=1
-									
-						server:
-						  port: 9093
-
-				3、申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务调用
-						使用示例：http://localhost:9093/provider/hello?name=zhansan
-		 -Sentinel：
-				介绍：随着微服务的流行，服务和服务之间的稳定性变得越来越重要。Sentinel 作为流量防卫组件，以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度保护服务的稳定性。
-				特征：
-					 1、丰富的应用场景：Sentinel 承接了阿里巴巴近 10 年的双十一大促流量的核心场景，例如秒杀（即突发流量控制在系统容量可以承受的范围）、消息削峰填谷、集群流量控制、实时熔断下游不可用应用等
-					 2、完备的实时监控
-					 3、广泛的开源生态：Sentinel 提供开箱即用的与其它开源框架/库的整合模块，例如与 Spring Cloud、Dubbo、gRPC 的整合
-					 4、完善的 SPI（串行外设接口） 扩展点：Sentinel 提供简单易用、完善的 SPI 扩展接口。可以通过实现扩展接口来快速地定制逻辑。例如定制规则管理、适配动态数据源等。
-				组成：
-					 核心库（Java 客户端）
-					 控制台（Dashboard）		
-					 使用：		
-					 	 1、部署Sentinel Dashboard	
-							下载地址：https://github.com/alibaba/Sentinel/releases
-							启动(默认端口：8080)：
-							java -jar sentinel-dashboard-1.6.0.jar
-							java -jar -Dserver.port=8888 sentinel-dashboard-1.6.0.jar
-							默认用户名密码：sentinel
-							
-						 2、核心库的配置使用：
-							1,引用模块：POM.XML	
-							<!--gateway依赖-->
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								  <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
-							</dependency>
-							<!--Nacos存储扩展-->
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>sentinel-datasource-nacos</artifactId>
-							</dependency>
-							<!--统一管理-->
-							<dependencyManagement>
-								<dependencies>
-										<dependency>
-											<groupId>org.springframework.cloud</groupId>
-											<artifactId>spring-cloud-dependencies</artifactId>
-											<version>Greenwich.RELEASE</version>
-											<type>pom</type>
-											<scope>import</scope>
-										</dependency>
-										<dependency>
-											<groupId>org.springframework.cloud</groupId>
-											<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-											<version>0.2.2.RELEASE</version>
-											<type>pom</type>
-											<scope>import</scope>
-										</dependency>
-								</dependencies>
-							</dependencyManagement>
-
-							2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
-							格式：
-								spring:
-								  application:
-									name: nacos-discovery-sentinel
-								  cloud:
-									sentinel:
-									  transport:
-										dashboard: localhost:8888 #Sentinel Dashboard服务端地址 
-									  datasource:
-										ds:
-										  nacos:
-											server-addr: localhost:8848 #nacos服务地址
-											dataId: ${spring.application.name}
-											groupId: DEFAULT_GROUP
-											ruleType: flow
-								server:
-								  port: 9095
-
-							3、申明使用：访问sentinel服务列表并限流；通过nacos配置流控规则；
-							   # 注意
-								 Sentinel控制台中修改规则：仅存在于服务的内存中，不会修改Nacos中的配置值，重启后恢复原来的值。
-								 Nacos控制台中修改规则：服务的内存中规则会更新，Nacos中持久化规则也会更新，重启后依然保持。
-							4、优点:
-									1、sentinel配置变动后通知非常的迅速, 秒杀springcloud原来的config几条街,
-									   毕竟原来的config是基于git, 不提供可视化界面, 动态变更还需要依赖bus来通过所有的客户端变化
-									2、与hystrix相比，sentinel更加的轻量级,并且支持动态的限流调整,更加友好的界面ui
-									
-----------------------------------------------Spring boot 技术的使用---------------------------------------------------------	
+----------------------------------------------Spring boot 技术篇---------------------------------------------------------	
 
 	一、基本概念：
 			特点：开箱即用，自动配置
@@ -2220,9 +1437,791 @@
 					• management.context-path=/manage
 					• management.port=20001
 					– 关闭http端点
-					• management.port=-1																
+					• management.port=-1		
 					
-----------------------------------------------NoSQL缓存技术Redis的使用----------------------------------------------------------------------------------								
+----------------------------------------------SpringCloud技术栈篇---------------------------------------------------------						  
+	基础概念：
+	    微服务：强调的是服务的大小，它关注的是某一个点，是具体解决某一个问题/提供落地对应服务的一个服务应用
+		-最早提出：马丁福勒
+				微服务化的核心是将传统的一站式应用，根据业务拆分成一个一个的服务，彻底
+		地去耦合,每一个微服务提供单个业务功能的服务，一个服务做一件事，
+		从技术角度看就是一种小而独立的处理过程，类似进程概念，能够自行单独启动
+		或销毁，拥有自己独立的数据库。
+		微服务架构：架构模式，微服务之间互相协调、互相配合，每个服务运行在其独立的进程中，
+			服务与服务间采用轻量级的通信机制互相协作（通常是基于HTTP协议的RESTful API），包括一些环境，有机构成的整体。
+		优点缺点：
+		-优点：内聚小，松耦合，拥有独立的进程，开发简单；
+			   易于与第三方集成，如：与持续自动化构建部署（Jenkins, Hudson）
+			   微服务只是业务逻辑的代码，不会和HTML,CSS 或其他界面组件混合（前后端分离思想）。
+		-缺点：开发人员要处理分布式系统的复杂性
+			   多服务运维难度，随着服务的增加，运维的压力也在增大
+			   系统部署依赖
+			   服务间通信成本、数据一致性、系统集成测试、性能监控……
+		微服务技术栈：
+			微服务条目			落地技术											备注			               
+			
+			服务开发			Springboot、Spring、SpringMVC
+			服务配置与管理		Netflix公司的Archaius、阿里Diamond等
+			服务注册与发现		Eureka、Consul、Zookeeper、AliBabaNacos等
+			服务调用			Rest、RPC、gRPC
+			服务熔断器			Hystrix、Envoy等
+			负载均衡			Ribbon、Feign Nginx等
+			服务接口调用(客户端调用服务的简化工具)
+								Feign等
+			消息队列			Kafka、RabbitMQ、ActiveMQ等
+			服务配置中心管理  	SpringCloudConfig、Chef等
+			服务路由（API网关） Zuul、Spring Cloud Gateway等
+			服务监控			Zabbix、Nagios、Metrics、Spectator等
+			全链路追踪			Zipkin，Brave、Dapper、Sleuth等
+			服务部署			Docker、OpenStack、Kubernetes等
+			数据流操作开发包	SpringCloud Stream（封装与Redis,Rabbit、Kafka等发送接收消息）
+			事件消息总线    	Spring Cloud Bus
+			......
+    SpringCloud入门介绍：
+		含义：SpringCloud=分布式微服务架构下的一站式解决方案，是各个微服务架构落地技术的集合体，俗称微服务全家桶
+		与springboot之间关系：SpringBoot可以离开SpringCloud独立使用开发项目，
+							  但是SpringCloud离不开SpringBoot，属于依赖的关系.
+							  SpringBoot专注于快速、方便的开发单个微服务个体，SpringCloud关注全局的服务治理框架。
+		与Dubbo的比较： 最大区别：SpringCloud抛弃了Dubbo的RPC通信，采用的是基于HTTP的REST方式。
+						REST相比RPC更为灵活，服务提供方和调用方的依赖只依靠一纸契约，这在强调快速演化的微服务环境下，显得更加合适。
+						品牌机与组装机的区别
+						Spring Cloud的功能比DUBBO更加强大，涵盖面更广，而且作为Spring的拳头项目，它也能够与Spring Framework、Spring Boot、Spring Data、Spring Batch等其他Spring项目完美融合，这些对于微服务而言是至关重要的。
+						使用Dubbo构建的微服务架构就像组装电脑，各环节我们的选择自由度很高；
+						而Spring Cloud就像品牌机，在Spring Source的整合下，做了大量的兼容性测试，保证了机器拥有更高的稳定性。
+						社区支持与更新力度
+						最为重要的是，DUBBO停止了5年左右的更新，虽然2017.7重启了(刘军)。对于技术发展的新需求，需要由开发者自行拓展升级（比如当当网弄出了DubboX），这对于很多想要采用微服务架构的中小软件组织，显然是不太合适的，中小公司没有这么强大的技术能力去修改Dubbo源码+周边的一整套解决方案，并不是每一个公司都有阿里的大牛+真实的线上生产环境测试过。
+	简单服务调用：
+			-RestTemplate + API 使用方式： 
+			 RestTemplate提供了多种便捷访问远程Http服务的方法，是一种简单便捷的访问restful服务模板类，是Spring提供的用于访问Rest服务的客户端模板工具集 
+			使用步骤：
+			1，注入Bean：
+			如：@Configuration
+				public class ConfigBean
+				{
+				 @Bean
+				public RestTemplate getRestTemplate()
+					{
+				return new RestTemplate();
+					}
+				}
+			2，声明使用：
+			@Autowired
+			private RestTemplate restTemplate;
+			
+			方法中：
+			restTemplate.postForObject(REST_URL_PREFIX+"/dept/add", dept, Boolean.class); - 参数：REST请求地址、请求参数、HTTP响应转换被转换成的对象类型
+
+	服务注册与发现：
+			-Eureka(C/S)：
+				简介：Netflix公司的子模块，是一个基于REST的服务，用于定位服务，以实现云端中间层服务发现和故障转移。Netflix在设计Eureka时遵守的就是AP原则
+				CAP原则：CAP原则又称CAP定理，指的是在一个分布式系统中，Consistency（一致性）、 Availability（可用性）、Partition tolerance（分区容错性），三者不可兼得
+				三大角色：1、Eureka Server 提供服务注册和发现；2、Service Provider服务提供方将自身服务注册到Eureka，从而使服务消费方能够找到；3、Service Consumer服务消费方从Eureka获取注册服务列表，从而能够消费服务
+			使用注册：
+				服务端：
+				1,引用模块：POM.XML
+					<dependency>
+					<groupId>org.springframework.cloud<groupId>
+					<artifactId>spring-cloud-starter-eureka-server<artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：eureka.instance.hostname=localhost
+					  #不要向注册中心注册自己
+					  eureka.client.register-with-eureka=false
+					  #禁止检索服务
+					  eureka.client.fetch-registry=false
+					  eureka.client.service-url.defaultZone=http://${eureka.instance.hostname}:${server.port}/eureka	
+				3,申明使用：程序main入口，添加@EnableEurekaServer注解，来开启服务注册中心
+				客户端：
+				1,引用模块：POM.XML
+					 <dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-eureka</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：
+					#设置服务名
+					spring:
+					  application:
+						name: 服务名
+					eureka:
+						  client: #客户端注册进eureka服务列表内
+							service-url: 
+							  defaultZone: http://localhost:7001/eureka
+							  instance:
+								instance-id: 服务实例名（设置后可以隐藏主机名）
+							  prefer-ip-address: true #访问路径可以显示IP地址
+							  #点击显示
+							  info:
+								  app.name: 服务程序名
+								  company.name: 公司名
+								  build.artifactId: $project.artifactId$
+								  build.version: $project.version$
+							  
+				3,申明使用：主类上添加@EnableEurekaClient注解以实现Eureka中的DiscoveryClient实现，可以使用@EnableDiscoveryClient代替
+			使用发现：
+				申明使用，主启动类添加@EnableDiscoveryClient
+			    使用时注入， @Autowired
+							 private DiscoveryClient client;即可使用，注：DiscoveryClient是spring clould 对治理体系的一个抽象
+			自我保护机制：某时刻某一个微服务不可用了，eureka不会立刻清理，依旧会对该微服务的信息进行保存
+			集群处理：
+				在Eureka服务器中添加配置：
+				eureka: 
+					instance:
+						hostname: eureka1.com #eureka服务端的实例名称
+					client: 
+						register-with-eureka: false #false表示不向注册中心注册自己。
+						fetch-registry: false #false表示自己端就是注册中心，我的职责就是维护服务实例，并不需要去检索服务
+					service-url: 
+					#单机 defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/       #设置与Eureka Server交互的地址查询服务和注册服务都需要依赖这个地址（单机）。
+					defaultZone: http://eureka1.com:7002/eureka/,http://eureka3.com:7003/eureka/
+			与Dubbo的Zookeeper的比较：
+				著名的CAP理论指出，一个分布式系统不可能同时满足C(一致性)、A(可用性)和P(分区容错性)。由于分区容错性P在是分布式系统中必须要保证的，因此我们只能在A和C之间进行权衡。
+				因此,Zookeeper保证的是CP,Eureka则是AP。因此，Eureka可以很好的应对因网络故障导致部分节点失去联系的情况，而不会像zookeeper那样使整个注册服务瘫痪。
+
+			-Consul：
+				简介：Spring Cloud Consul是分布式的、高可用、横向扩展(AP原则)，它包含多个组件，但是作为一个整体，在微服务架构中为我们的基础设施提供服务发现和服务配置的工具。它包含了下面几个特性：
+					  服务发现（service discovery）
+					  健康检查（health checking）
+					  Key/Value存储（一个用来存储动态配置的系统）
+					  多数据中心（multi-datacenter）
+				使用-客户端：
+				1,引用模块：POM.XML
+					<dependency>
+					  <groupId>org.springframework.cloud</groupId>
+					  <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：
+					  spring.cloud.consul.host=localhost #域名
+					  spring.cloud.consul.port=8500 #端口
+	
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理
+				注意：consul不需要创建类似eureka-server的服务端吗？由于Consul自身提供了服务端，所以我们不需要像之前实现Eureka的时候创建服务注册中心，直接通过下载consul的服务端程序就可以使用。
+				启动consul服务：$consul agent -dev
+				
+			-Nocas：
+				参考Spring Cloud Alibaba 技术站的Nocas相关内容；
+				
+				详情参考：https://blog.csdn.net/qq_38765404/article/details/89521124
+
+	负载均衡：
+			-Ribbon（结合Eureka使用）：
+			 简介：基于Netflix实现的一套客户端负载均衡的工具，主要功能是提供客户端的软件负载均衡算法。
+			 负载均衡：将用户的请求基于某种规则平摊的分配到多个服务上，从而达到系统的HA，常见的负载均衡有软件Nginx，LVS，硬件F5等
+				分类：集中式LB-即在服务的消费方和提供方之间使用独立的LB设施(可以是硬件，如F5, 也可以是软件，如nginx), 由该设施负责把访问请求通过某种策略转发至服务的提供方；
+					  进程内LB-将LB逻辑集成到消费方，消费方从服务注册中心获知有哪些地址可用，然后自己再从这些地址中选择出一个合适的服务器。Ribbon就属于进程内LB。
+			 使用：
+				1,引用模块：POM.XML
+					 <dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-ribbon</artifactId>
+					</dependency>
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-eureka</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：（eureka配置）
+					server:
+						port: 80
+						eureka:
+							client:
+							register-with-eureka: false
+							service-url: 
+							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
+	
+				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；2、在配置文件ConfigBean 中添加@LoadBalanced注解
+				  -》结论：Ribbon和Eureka整合后服务消费方可以直接调用服务而不用再关心地址和端口号
+			    4,策略IRule：简单轮询负载均衡RoundRobinRule，区别于RetryRule，随机负载均衡，加权响应时间负载均衡 ，区域感知轮询负载均衡
+			 自定义Ribbon：	
+				主启动类添加@RibbonClient注解，格式：@RibbonClient(name="MICROSERVICECLOUD",configuration=MySelfRule.class)，注意：这个自定义配置类不能放在@ComponentScan所扫描的当前包下以及子包下，
+					否则我们自定义的这个配置类就会被所有的Ribbon客户端所共享，也就是说我们达不到特殊化定制的目的了。
+				在配置文件ConfigBean中添加@LoadBalanced注解
+			
+			-Feign（声明式服务调用，WebService客户端）：它的使用方法是定义一个接口，然后在上面添加注解，同时也支持JAX-RS（Java API for RESTful Web Services）标准的注解。
+			 特性：
+				可插拔式的注解支持，包括Feign注解和JAX-RS注解;
+				支持可插拔的HTTP编码器和解码器;
+				支持Hystrix和它的Fallback;
+				支持Ribbon的负载均衡;
+				支持HTTP请求和响应的压缩
+			 使用：
+				1,引用模块：POM.XML
+					 <dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-feign</artifactId>
+					</dependency>
+					　<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-eureka</artifactId>
+						<version>1.3.5.RELEASE</version>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：（整合eureka配置）
+					server:
+						port: 80
+						eureka:
+							client:
+							register-with-eureka: false
+							service-url: 
+							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
+	
+				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；同时添加@EnableFeignClients 来开启feign
+			                2, 定义接口：
+							   格式：value=“服务名称”,configuration = xxx.class 这个类配置Hystrix的一些精确属性
+			                   @FeignClient(value = "serviceName",fallback = FeignFallBack.class)
+							    public interface FeignService {
+									@RequestMapping(value = "/ml", method= RequestMethod.GET)
+									String method1(@RequestParam("name") String name) ;
+								}
+								@Component
+								public class FeignFallBack implements FeignService{
+							　　//实现的方法是服务调用的降级方法
+								@Override
+								public String method1() {
+									return "error";
+								}
+								
+	服务熔断器（断路器）：		 
+			-Hystrix：
+			 概念来源：服务雪崩：
+				服务扇出：多个微服务之间调用的时候，假设微服务A调用微服务B和微服务C，微服务B和微服务C又调用其它的微服务，这就是所谓的“扇出”效应。
+				解决方案：熔断模式（容错处理机制）、隔离模式（容错处理机制）、限流模式（预防模式）
+			 简介：Hystrix是一个用于处理分布式系统的延迟和容错的开源库，在分布式系统（SOA面向服务架构）里，许多依赖不可避免的会调用失败，比如超时、异常等，Hystrix能够保证在一个依赖出问题的情况下，不会导致整体服务失败，避免级联故障，以提高分布式系统的弹性。
+				   “断路器”本身是一种开关装置，当某个服务单元发生故障之后，通过断路器的故障监控（类似熔断保险丝），
+				   向调用方返回一个符合预期的、可处理的备选响应（FallBack），而不是长时间的等待或者抛出调用方无法处理的异常，这样就保证了服务调用方的线程不会被长时间、不必要地占用，从而避免了故障在分布式系统中的蔓延，乃至雪崩。
+			 服务熔断
+				使用：
+					概念：当扇出链路的某个微服务不可用或者响应时间太长时，会进行服务的降级，进而熔断该节点微服务的调用，快速返回"错误"的响应信息。 
+						  SpringCloud框架里熔断机制通过Hystrix实现。Hystrix会监控微服务间调用的状况，当失败的调用到一定阈值，缺省是5秒内20次调用失败就会启动熔断机制。熔断机制的注解是@HystrixCommand。
+					1,引用模块：POM.XML
+						 <dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-cloud-starter-hystrix</artifactId>
+						</dependency>
+					2,配置参数：application.properties或YML文件的配置
+					格式：（配合eureka配置）
+						server:
+							port: 80
+							eureka:
+								client:
+								register-with-eureka: false
+								service-url: 
+								defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
+		
+					3,申明使用：1、程序main入口，添加@EnableCircuitBreaker注解，开启熔断支持；
+								2、在控制层申明使用
+									格式示例：fallbackMethod 快速应急的处理方法，进行服务降级处理
+									@RequestMapping(value="/dept/get/{id}",method=RequestMethod.GET)
+									@HystrixCommand(fallbackMethod = "processHystrix_Get")
+									public Dept get(@PathVariable("id") Long id){
+									    Dept dept =  this.service.get(id);
+										if(null == dept){
+										throw new RuntimeException("该ID："+id+"没有没有对应的信息");
+									    }
+										return dept;	
+									}
+									public Dept processHystrix_Get(@PathVariable("id") Long id){ 
+										return new Dept().setDeptno(id)
+											   .setDname("该ID："+id+"没有没有对应的信息,null--@HystrixCommand")
+											   .setDb_source("no this database in MySQL");
+									}
+			 
+			 服务降级Fallback
+				使用： 
+					概念：整体资源快不够了，忍痛将某些服务先关掉，待渡过难关，再开启回来。
+						  服务降级处理是在客户端实现完成的，与服务端没有关系。
+				    申明使用（与Feign结合使用）：	
+						格式示例：
+						@FeignClient(value = "MICROSERVICECLOUD",fallbackFactory=DeptClientServiceFallbackFactory.class)
+						public interface DeptClientService{
+							@RequestMapping(value = "/dept/get/{id}",method = RequestMethod.GET)
+							public Dept get(@PathVariable("id") long id);
+			            }
+						
+						@Component
+						public class DeptClientServiceFallbackFactory implements FallbackFactory{
+						
+							@Override
+							public Dept get(@PathVariable("id") long id){
+								...
+							}  
+						}
+						
+						注意：在application.properties或YML文件的配置添加一行配置
+						      feign: 
+								hystrix: 
+									enabled: true //开启   
+			 
+			 服务监控HystrixDashboard
+			    使用：
+				    概念：Hystrix还提供了准实时的监控（Hystrix Dashboard），Spring Cloud也提供了Hystrix Dashboard的整合，对监控内容转化成可视化界面。
+					1,引用模块：POM.XML
+						 <dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-cloud-starter-hystrix</artifactId>
+						</dependency>
+						<dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-boot-starter-actuator</artifactId>
+						</dependency>
+						
+						在服务的监控一方添加如下配置
+						<dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>spring-cloud-starter-hystrix-dashboard</artifactId>
+						</dependency>
+					2,配置参数：application.properties或YML文件的配置
+					格式：
+						server:
+							port: 9901
+		
+					3,申明使用：1、程序main入口，添加@EnableHystrixDashboard注解，开启熔断监控的支持；
+	
+	路由网关：
+			-Zuul：
+			 概念：代理+路由+过滤三大功能，可以与Eureka整合并注册到注册中心里面
+			 使用：
+				1,引用模块：POM.XML
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-eureka</artifactId>
+					</dependency>
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-zuul</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+				格式：
+					zuul: 
+					    prefix: /pre //前缀
+						ignored-services: 服务名  //多个指定微服务以半角逗号分隔，所有可以用"*"通配符代替
+						routes: 
+							serverName.path: /serverName/**
+							serverName.serviceId: 服务名 //给微服务起别名
+							//或使用：serverName.url: http://${IP}:${PORT}/  //这种基于未使用服务注册中心的
+						
+
+				3,申明使用：1、程序main入口，添加@EnableZuulProxy注解，开启Zuul的支持；
+				
+	
+	分布式配置中心：
+				 -SpringCloud Config（与Git整合使用）
+				 概念来源：分布式系统面临的---配置问题
+				 概念：为微服务架构中的微服务提供集中化的外部配置支持，配置服务器为各个不同微服务应用的所有环境提供了一个中心化的外部配置
+				    分类：服务端和客户端
+						  服务端也称为分布式配置中心，它是一个独立的微服务应用，用来连接配置服务器并为客户端提供获取配置信息，加密/解密信息等访问接口
+						  客户端则是通过指定的配置中心来管理应用资源，以及与业务相关的配置内容，并在启动的时候从配置中心获取和加载配置信息配置服务器默认采用git来存储配置信息，这样就有助于对环境配置进行版本管理，并且可以通过git客户端工具来方便的管理和访问配置内容。
+					规则：1、不同环境不同配置，动态化的配置更新
+						  2、运行期间动态调整配置，不再需要在每个服务部署的机器上编写配置文件，服务会向配置中心统一拉取配置自己的信息
+						  3、当配置发生变动时，服务不需要重启即可感知到配置的变化并应用新的配置
+						  4、将配置信息以REST接口的形式暴露
+				 使用：
+					 1、用自己的Github账户建一个统一配置中心仓库，并克隆到本地；
+					 2、新建配置文件application.yml（保存格式必须为UTF-8）
+					    格式参考示例：
+						spring:
+						  profiles:
+							active:
+							- dev
+						---
+						spring:
+						  profiles: dev     #开发环境
+						  application: 
+							name: microservicecloud-config-dev
+						---
+						spring:
+						  profiles: test   #测试环境
+						  application: 
+							name: microservicecloud-config-test
+						#  请保存为UTF-8格式
+					 3、push到git仓库
+					 服务端配置使用：
+						1,引用模块：POM.XML
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-config-server</artifactId>
+							</dependency>
+						2,配置参数：application.properties或YML文件的配置
+									格式：	
+									spring:
+										application:
+											name: microservicecloud-config
+										cloud:
+											config:
+												server:
+													git:
+														uri: git@github.com***.git #GitHub上面的git仓库名字
+						3,申明使用：1、程序main入口，添加@EnableConfigServer注解，开启Config的支持；		
+						配置读取规则：
+						  1、/{application}-{profile}.yml 如：http://config-3344.com:3344/application-dev.yml
+						  2、/{application}/{profile}[/{label}] 如：http://config-3344.com:3344/application/dev/master
+						  3、/{label}/{application}-{profile}.yml 如：http://config-3344.com:3344/master/application-dev.yml
+					 客户端配置使用：
+					      前提准备：
+							本地仓库新建配置文件yml并提交到git仓库里，如：microservicecloud-config-client.yml
+								参考示例：
+									spring:
+										profiles:
+											active:
+												- dev
+									---
+									server: 
+										port: 8201 
+									spring:
+										profiles: dev
+										application: 
+											name: microservicecloud-config-client
+									eureka: 
+										client: 
+											service-url: 
+												defaultZone: http://eureka-dev.com:7001/eureka/   
+									---
+									server: 
+										ort: 8202 
+									spring:
+										profiles: test
+										application: 
+											name: microservicecloud-config-client
+									eureka: 
+										client: 
+											service-url: 
+												defaultZone: http://eureka-test.com:7001/eureka/
+
+						  1,引用模块：POM.XML
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-starter-config</artifactId>
+							</dependency>
+						  2,配置参数：bootstrap.yml配置文件的配置（系统级），而application.yml是用户级
+									格式：	
+									spring:
+										cloud:
+											config:
+												name: microservicecloud-config-client #需要从github上读取的资源名称，注意没有yml后缀名
+												profile: dev #本次访问的配置项
+												label: master   
+												uri: http://config-3344.com:3344  #本微服务启动后先去找3344号服务（链接Config服务端），通过SpringCloudConfig获取GitHub的服务地址
+						  3,申明使用：
+									测试：在控制层使用，如：@Value("${spring.application.name}")
+															 private String applicationName;
+						  
+----------------------------------------------Spring Cloud Alibaba 技术篇---------------------------------------------------------						  
+					 
+	基本介绍：Spring Cloud Alibaba 致力于提供微服务开发的一站式解决方案，依托 Spring Cloud Alibaba，只需要添加一些注解和少量配置，就可以将 Spring Cloud 应用接入阿里微服务解决方案，
+			  通过阿里中间件来迅速搭建分布式应用系统。
+    基本技术栈：
+			  1、服务限流降级：默认支持 Servlet、Feign、RestTemplate、Dubbo 和 RocketMQ 限流降级功能的接入，可以在运行时通过控制台实时修改限流降级规则，还支持查看限流降级 Metrics 监控
+			  2、服务注册与发现：适配 Spring Cloud 服务注册与发现标准，默认集成了 Ribbon 的支持
+			  3、分布式配置管理：支持分布式系统中的外部化配置，配置更改时自动刷新
+			  4、消息驱动能力：基于 Spring Cloud Stream 为微服务应用构建消息驱动能力
+			  5、分布式事务：使用 @GlobalTransactional 注解， 高效并且对业务零侵入地解决分布式事务问题
+			  6、阿里云对象存储：阿里云提供的海量、安全、低成本、高可靠的云存储服务。支持在任何应用、任何时间、任何地点存储和访问任意类型的数据
+			  7、分布式任务调度：提供秒级、精准、高可靠、高可用的定时（基于 Cron 表达式）任务调度服务
+			  8、阿里云短信服务：覆盖全球的短信服务，友好、高效、智能的互联化通讯能力，帮助企业迅速搭建客户触达通道
+					  
+	1、服务注册与发现
+		-Nocas（= Spring Cloud Eureka + Spring Cloud Config）：
+				简介：Spring Cloud Alibaba 项目中开发分布式应用微服务的子组件，致力于服务发现、配置和管理微服务，基于 DNS 和基于 RPC 的服务发现。
+				关键特性：
+					1、服务发现和服务健康监测；
+					2、动态配置服务（通过 Nacos Server 和 spring-cloud-starter-alibaba-nacos-config 实现配置的动态变更）；
+					3、动态DNS服务与服务及其元数据管理（通过 Nacos Server 和 spring-cloud-starter-alibaba-nacos-discovery 实现服务的注册与发现）
+				使用-客户端（服务注册与发现）：
+				1,引用模块：POM.XML
+					<!--Nacos的服务注册与发现模块-->
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+					</dependency>
+					<!--统一管理-->
+					<dependencyManagement>
+						<dependencies>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-dependencies</artifactId>
+								<version>Greenwich.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
+								<version>0.2.2.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+						</dependencies>
+				</dependencyManagement>
+				2,配置参数：application.properties或YML文件的配置
+				格式：
+					 spring:
+						  application:
+							name: 程序名
+						  cloud:
+							nacos:
+							  discovery:
+								server-addr: 192.168.43.142:8848 # 服务IP与端口
+									metadata: # 元数据管理
+									  name1: healthy1 
+									  name2: healthy2
+
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现
+				
+				使用-客户端（动态配置，相当于SpringCloud Config）：
+				1,引用模块：POM.XML	
+				<!--Nacos分布式配置模块-->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					  <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+				</dependency>
+				<!--统一管理-->
+				<dependencyManagement>
+					<dependencies>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-dependencies</artifactId>
+								<version>Greenwich.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
+								<version>0.2.2.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+					</dependencies>
+				</dependencyManagement>
+
+				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
+				格式：
+					spring:
+					  application:
+						name: nacos-config-client # 统一配置中心客户端
+					  cloud:
+						nacos:
+						  config:
+							server-addr: 192.168.43.142:8848 # nacos服务端
+							file-extension: yml
+					server:
+					  port: 9094 
+				3、准备外部的统一配置文件：
+							本地仓库新建配置文件yml（properties）并提交到git仓库里，如：nacos-config-client.properties或nacos-config-client.yml								
+							# nacos默认加载的是nacos-config-client.properties文件，如果需要加载yml，需要在yml增加一行配置：file-extension: yml
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现	  
+					  ACM （应用配置管理）配置加载规则说明：
+						参考文档：https://www.alibabacloud.com/help/zh/doc-detail/94708.htm?spm=a2c63.p38356.b99.56.547b66ae7aDsVW
+							# Nacos Spring Cloud 中，dataId 的完整格式如下：
+							${prefix}-${spring.profile.active}.${file-extension}
+							prefix 默认为 spring.application.name 的值，也可以通过配置项 spring.cloud.nacos.config.prefix来配置。
+							spring.profile.active 即为当前环境对应的 profile，详情可以参考 Spring Boot文档。
+							注意：当 spring.profile.active 为空时，对应的连接符 - 也将不存在，dataId 的拼接格式变成 ${prefix}.${file-extension}
+							file-exetension 为配置内容的数据格式，可以通过配置项 spring.cloud.nacos.config.file-extension 来配置。目前只支持 properties 和 yaml 类型。
+							# @RefreshScope 实现配置自动更新
+							
+							采用默认值的应用要加载的配置规则就是：
+							Data ID=${spring.application.name}.properties，Group=DEFAULT_GROUP。
+	2、服务调用：
+		 -Feign：声明式服务调用，与Netflix Feign 功能相似
+				使用-客户端：
+				1,引用模块：POM.XML	
+				<!--openfeign依赖-->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					  <artifactId>spring-cloud-starter-openfeign</artifactId>
+				</dependency>
+				<!--Nacos的服务注册与发现模块-->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+				</dependency>
+				<!--统一管理-->
+				<dependencyManagement>
+					<dependencies>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-dependencies</artifactId>
+								<version>Greenwich.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
+								<version>0.2.2.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+					</dependencies>
+				</dependencyManagement>
+
+				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
+				格式：
+					spring:
+					  application:
+						name: nacos-discovery-consumer-feign # 客户端名称
+					  cloud:
+						nacos:
+						  config:
+							server-addr: 192.168.43.142:8848 # nacos服务端
+					server:
+					  port: 9091
+				3、申明使用：程序main入口，添加@EnableFeignClients注解，开启服务调用
+						具体使用：定义一个接口
+						@FeignClient("nacos-discovery-provider") //调用的服务名称
+						public interface TestService {
+							@GetMapping("/m1")
+							String m1(@RequestParam(name = "name") String name);
+						}
+
+	3、其他：
+		 -Webflux：替换了旧的Servlet线程模型。
+		 - Spring Cloud Gateway ：网关配置，目标是替代Netflix ZUUL，其不仅提供统一的路由方式，并且基于Filter链的方式提供了网关基本的功能，例如：安全，监控/埋点，和限流等。
+				使用-客户端：
+				1,引用模块：POM.XML	
+				<!--gateway依赖-->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					  <artifactId>spring-cloud-starter-gateway</artifactId>
+				</dependency>
+				<!--Nacos的服务注册与发现模块-->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+				</dependency>
+				<!--统一管理-->
+				<dependencyManagement>
+					<dependencies>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-dependencies</artifactId>
+								<version>Greenwich.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
+								<version>0.2.2.RELEASE</version>
+								<type>pom</type>
+								<scope>import</scope>
+							</dependency>
+					</dependencies>
+				</dependencyManagement>
+
+				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
+				格式：
+					spring:
+						  application:
+							name: nacos-discovery-gateway-server
+						  cloud:
+							nacos:
+							  discovery:
+								server-addr: 192.168.43.142:8848
+								metadata:
+								  name: healthy
+							gateway:
+							  routes:
+								- id: nacos-discovery-provider
+								  uri: lb://nacos-discovery-provider
+								  predicates:
+									- Path=/provider/**
+								  filters:
+									- StripPrefix=1
+							  
+							  discovery:
+								locator:
+								  enabled: true  #表明gateway开启服务注册和发现的功能，并且spring cloud gateway自动根据服务发现为每一个服务创建了一个router，这个router将以服务名开头的请求路径转发到对应的服务。
+								  lowerCaseServiceId: true   #是将请求路径上的服务名配置为小写（因为服务注册的时候，向注册中心注册时将服务名转成大写的了），比如以/service-hi/*的请求路径被路由转发到服务名为service-hi的服务上。
+								  filters:
+									- StripPrefix=1
+									
+						server:
+						  port: 9093
+
+				3、申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务调用
+						使用示例：http://localhost:9093/provider/hello?name=zhansan
+		 -Sentinel：
+				介绍：随着微服务的流行，服务和服务之间的稳定性变得越来越重要。Sentinel 作为流量防卫组件，以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度保护服务的稳定性。
+				特征：
+					 1、丰富的应用场景：Sentinel 承接了阿里巴巴近 10 年的双十一大促流量的核心场景，例如秒杀（即突发流量控制在系统容量可以承受的范围）、消息削峰填谷、集群流量控制、实时熔断下游不可用应用等
+					 2、完备的实时监控
+					 3、广泛的开源生态：Sentinel 提供开箱即用的与其它开源框架/库的整合模块，例如与 Spring Cloud、Dubbo、gRPC 的整合
+					 4、完善的 SPI（串行外设接口） 扩展点：Sentinel 提供简单易用、完善的 SPI 扩展接口。可以通过实现扩展接口来快速地定制逻辑。例如定制规则管理、适配动态数据源等。
+				组成：
+					 核心库（Java 客户端）
+					 控制台（Dashboard）		
+					 使用：		
+					 	 1、部署Sentinel Dashboard	
+							下载地址：https://github.com/alibaba/Sentinel/releases
+							启动(默认端口：8080)：
+							java -jar sentinel-dashboard-1.6.0.jar
+							java -jar -Dserver.port=8888 sentinel-dashboard-1.6.0.jar
+							默认用户名密码：sentinel
+							
+						 2、核心库的配置使用：
+							1,引用模块：POM.XML	
+							<!--gateway依赖-->
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								  <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+							</dependency>
+							<!--Nacos存储扩展-->
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>sentinel-datasource-nacos</artifactId>
+							</dependency>
+							<!--统一管理-->
+							<dependencyManagement>
+								<dependencies>
+										<dependency>
+											<groupId>org.springframework.cloud</groupId>
+											<artifactId>spring-cloud-dependencies</artifactId>
+											<version>Greenwich.RELEASE</version>
+											<type>pom</type>
+											<scope>import</scope>
+										</dependency>
+										<dependency>
+											<groupId>org.springframework.cloud</groupId>
+											<artifactId>spring-cloud-alibaba-dependencies</artifactId>
+											<version>0.2.2.RELEASE</version>
+											<type>pom</type>
+											<scope>import</scope>
+										</dependency>
+								</dependencies>
+							</dependencyManagement>
+
+							2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
+							格式：
+								spring:
+								  application:
+									name: nacos-discovery-sentinel
+								  cloud:
+									sentinel:
+									  transport:
+										dashboard: localhost:8888 #Sentinel Dashboard服务端地址 
+									  datasource:
+										ds:
+										  nacos:
+											server-addr: localhost:8848 #nacos服务地址
+											dataId: ${spring.application.name}
+											groupId: DEFAULT_GROUP
+											ruleType: flow
+								server:
+								  port: 9095
+
+							3、申明使用：访问sentinel服务列表并限流；通过nacos配置流控规则；
+							   # 注意
+								 Sentinel控制台中修改规则：仅存在于服务的内存中，不会修改Nacos中的配置值，重启后恢复原来的值。
+								 Nacos控制台中修改规则：服务的内存中规则会更新，Nacos中持久化规则也会更新，重启后依然保持。
+							4、优点:
+									1、sentinel配置变动后通知非常的迅速, 秒杀springcloud原来的config几条街,
+									   毕竟原来的config是基于git, 不提供可视化界面, 动态变更还需要依赖bus来通过所有的客户端变化
+									2、与hystrix相比，sentinel更加的轻量级,并且支持动态的限流调整,更加友好的界面ui														
+					
+----------------------------------------------NoSQL缓存技术Redis技术篇----------------------------------------------------------------------------------								
 	一、NoSQL入门：
 			时代背景[架构演变]：
 				单机MySQL:APP->DAL（数据访问层）->MySQL Instance （读写混合）
@@ -2837,7 +2836,7 @@
 				
 			Redis对应Java客户端：Jedis、Spring-data-redis
 
-----------------------------------------------MysqL高级运维知识---------------------------------------------------------------------
+----------------------------------------------MysqL高级运维知识技术篇---------------------------------------------------------------------
 	一、Mysql运算符：
 		安全等于运算符[<=>]：规则均为NULL时，其返回值为1，否则返回0；
 						如：
@@ -3450,7 +3449,7 @@
 			SHOW VARIABLES LIKE 'character_set_%';  												--查看当前MySQL使用的字符集
 			SELECT  CAST(100 AS CHAR(2)),CONVERT('2013-8-9 12:12:12',TIME);						    --数据类型的转换
 		
-----------------------------------------------Linux运维相关知识---------------------------------------------------------------------									
+----------------------------------------------Linux运维相关知识篇---------------------------------------------------------------------									
 							
 	方向：运维工程师、嵌入式工程师
 	应用领域：1、个人桌面应用；2、服务器（免费、稳定、高效）；3、嵌入式领域（内核小，对网络有良好的支持，成本小，物联网运用广泛）
@@ -4309,7 +4308,7 @@
 					ssh 用户名@IP，如：ssh atguigu@192.168.188.131，使用 ssh 访问，如访问出现错误。可查看是否有该文件 ～/.ssh/known_ssh 尝试删除该文件解决
 					登出：exit 或者 logout				
 				
-----------------------------------------------Nginx WEB服务器的使用----------------------------------------------------------------------------------												
+----------------------------------------------Nginx WEB服务器篇----------------------------------------------------------------------------------												
 	一、基本介绍：参考：https://www.runoob.com/linux/nginx-install-setup.html
 			含义：Nginx("engine x")是一款是由俄罗斯的程序设计师Igor Sysoev所开发高性能的Web和反向代理服务器，也是一个IMAP/POP3/SMTP邮件代理服务器。
 				  在高连接并发的情况下，Nginx是Apache服务器不错的替代品，目前的版本有：稳定版、开发版和历史稳定版。业界使用其产品的公司如：腾讯、新浪
@@ -4918,7 +4917,7 @@
 					测试：开启2台服务的nginx和keepalived服务，然后关闭任意一个nginx观察访问的
 						  虚拟IP：192.168.1.131 所使用的的nginx服务是129的？还是130的？
 						  
-----------------------------------------------FastDfs文件存储技术----------------------------------------------------------------------------------	
+----------------------------------------------FastDfs文件存储技术篇----------------------------------------------------------------------------------	
 		技术支持：参考https://blog.csdn.net/kamroselee/article/details/80334621
 	一、简介
 		FastDFS是一款类Google FS开源的轻量级分布式文件系统，用纯C语言实现，支持UNIX系统。功能：文件存储、文件同步[组内物理节点]、文件访问（文件上传、文件下载）等，
@@ -5060,7 +5059,7 @@
 				     
 				7）、整合keepalived，提供一个VIP实现整体的访问流程；					
 					 
-----------------------------------------------大数据定制技术----------------------------------------------------------------------------------	
+----------------------------------------------大数据定制技术篇----------------------------------------------------------------------------------	
 	一、大数据：
 		概念：Big Data，指的是一段时间范围内内无法使用常规的工具[JavaEE]处理数据集合，需要新的处理模式来处理海量、高增长率、多样化的信息。主要解决的是海量的数据存储与海量的数据分析计算问题。
 		数据的存储单位：
@@ -5559,7 +5558,7 @@
 	四、Kafka
 		简介：
 		
-----------------------------------------------Java高级运用----------------------------------------------------------------------------------		
+----------------------------------------------Java高级运用技术篇----------------------------------------------------------------------------------		
 	java特性：
 		封装性：为了数据的安全，避免用户直接接触到数据，增加程序的安全性。封装隐藏类的内部属性，并且对用户隐藏了数据的访问方式，这样可以保护类的内部状态。封装可以防止类中的方法访问属性，防止对象间的交互，提高Java程序的安全性。
 		继承性：继承可以减少代码量，方法重写。
@@ -8798,10 +8797,10 @@
 					动态代理：
 						含义：
 						
-----------------------------------------------网络编程--------------------------------------------------------------------------------------------------------------	
+----------------------------------------------网络编程技术篇--------------------------------------------------------------------------------------------------------------	
 	一、Socket通讯
 		1、
-	二、Netty通讯技术
+	二、Netty通讯技术（联想Apache mina通讯框架）
 		1、初步认识：
 			Netty简单易用，健壮可扩展，当下主流框架技术底层都有用到，如：JMS中的RocketMQ、分布式通信框架Dubbox、Hadoop的RPC框架Avro等等
 			Netty是基于Java的NIO（客户端-服务端）网络应用框架，它提供了简易的API使得与业务逻辑解耦，是异步通讯的（非阻塞）；
@@ -8815,7 +8814,7 @@
 		
 			
 			
-----------------------------------------------Java工作流技术---------------------------------------------------------------------------------------------------------
+----------------------------------------------Java工作流技术篇---------------------------------------------------------------------------------------------------------
 			
 ----------------------------------------------JVM虚拟机优化篇--------------------------------------------------------------------------------------------------------		
 	一、VM含义：
