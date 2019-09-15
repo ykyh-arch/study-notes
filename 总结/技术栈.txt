@@ -8800,11 +8800,210 @@
 						
 ----------------------------------------------网络编程--------------------------------------------------------------------------------------------------------	
 	
-	
-	
-	
-	
-	
+----------------------------------------------JVM虚拟机优化篇--------------------------------------------------------------------------------------------------------		
+	一、VM含义：
+		虚拟机：虚拟的机器，是一款软件，用于执行虚拟计算机指令，可以分为系统虚拟机与程序虚拟机。
+				系统虚拟机有：Visual Box、VMare，使用时注意三种网络适配器的模式（主机模式、网络地址转化模式、桥接模式）
+				程序虚拟机有：Java虚拟机（JVM）
+		
+	二、JVM：
+		基本结构：
+			类加载子系统（加载.class的编译文件）、方法区（类、静态常量以及方法、池的概念，线程共享的）、Java堆（存储对象实例，线程共享的）、直接内存（epoll机制处理、NIO读写）、Java栈（存储变量、引用，一块线程）、本地方法栈、垃圾回收系统（GC机制、核心）、
+			PC寄存器（指针计数作用）、执行引擎（执行Java代码）
+		需要掌握的地方：
+			1、堆、栈、方法区的概念与联系
+				堆：存储对象实例，解决数据存储问题，数据怎么放、怎么存；主要是对象实例；
+				栈：解决程序运行问你题，即程序如何运行，如何处理数据；主要存变量、对象引用
+				方法区：一块永久区，是先决条件；存储类信息、静态方法以及常量，池的概念；
+			2、底层情况：
+				堆：几乎所有对象实例都存放在堆里面，而且堆是完全自动化管理的，即通过垃圾回收机制（GC），垃圾对象自动清理；根据GC机制不同，堆的结构也不同，分为新生代与老年代。
+					新生代指的是新生的对象或年龄不大的对象，而老年代指的是老年的对象。
+					新生代细分可以分为eden区、s0区（from区）与s1区（to区），而且s0区与s1区是大小相同可以相互转换角色的区域。
+					新创建的对象先进入eden区，经过一次的GC清理后会进入s0区或s1区（涉及到赋值算法概念），经过多轮的GC之后（默认15次），绝大多数对象会被清洗掉，剩下来的最终会进入老年区。
+				栈：是一块线程私有的内存空间，一般由三部分组成：
+					局部变量表：存放的是局部变量
+					操作数栈：保存的是计算的中间过程
+					帧数据区：保存访问常量池的指针，异常处理表也是一部分
+				方法区：一块线程共享的区域，存储类的信息，包括：类的字段、方法、常量池等
+		虚拟机参数：
+			主要围绕堆、栈、方法区进行配置
+			1、堆的参数设置：
+				基本概念：
+					-XX：属于系统级别（JVM）的配置，可以配置日志信息、以及JVM使用什么样的垃圾回收器
+					非-XX：属于运用级别的配置；
+					+：启用
+					-：禁用
+				常见参数解析：
+					-XX:+PrintGC：虚拟机启动后，会打印GC的日志信息
+					-XX:+UseSerialGC：使用串行回收器
+					-XX:+PrintGCDetails：打印详细的信息，包括各区情况（新生代、老年代）
+					-Xms：设置Java程序初始化堆大小
+					-Xmx：设置Java程序最大堆大小
+					-Xmx20m -Xms5m -XX:+PrintCommandLineFlags：将显示或隐式的传给虚拟机的参数打印输出
+					总结：实际工作中，将初始堆大小与最大的堆大小设置相同，可以减少程序运行时垃圾回收次数，从而提高系统性能
+					案例说明：
+					public class Test01 {
+						public static void main(String[] args) {
+							//-Xms5m -Xmx20m -XX:+PrintGCDetails -XX:+UseSerialGC -XX:+PrintCommandLineFlags							
+							//查看GC信息
+							System.out.println("max memory:" + Runtime.getRuntime().maxMemory());
+							System.out.println("free memory:" + Runtime.getRuntime().freeMemory());
+							System.out.println("total memory:" + Runtime.getRuntime().totalMemory());							
+							byte[] b1 = new byte[1*1024*1024];
+							System.out.println("分配了1M");
+							System.out.println("max memory:" + Runtime.getRuntime().maxMemory());
+							System.out.println("free memory:" + Runtime.getRuntime().freeMemory());
+							System.out.println("total memory:" + Runtime.getRuntime().totalMemory());							
+							byte[] b2 = new byte[4*1024*1024];
+							System.out.println("分配了4M");
+							System.out.println("max memory:" + Runtime.getRuntime().maxMemory());
+							System.out.println("free memory:" + Runtime.getRuntime().freeMemory());
+							System.out.println("total memory:" + Runtime.getRuntime().totalMemory());							
+						}						
+					}
+					#新生代的配置
+					-Xmn：设置新生代的大小，这个参数对GC的行为有很大影响，一般设置为整个堆内存的1/3到1/4左右
+					-XX:SurvivorRatio：设置新生代中的eden空间和from/to空间的比例，含义：-XX:SurvivorRatio=eden/to=eden/from
+					-XX:NewRatio：设置新生代与老年代的比例，即：-XX:NewRatio=老年代/新生代
+					总结：尽可能的将对象预留在新生代，减少老年代GC的次数
+					案例说明：
+					public class Test02 {
+						public static void main(String[] args) {							
+							//第一次配置
+							//-Xms20m -Xmx20m -Xmn1m -XX:SurvivorRatio=2 -XX:+PrintGCDetails -XX:+UseSerialGC							
+							//第二次配置
+							//-Xms20m -Xmx20m -Xmn7m -XX:SurvivorRatio=2 -XX:+PrintGCDetails -XX:+UseSerialGC							
+							//第三次配置
+							//-XX:NewRatio=老年代/新生代
+							//-Xms20m -Xmx20m -XX:NewRatio=2 -XX:+PrintGCDetails -XX:+UseSerialGC							
+							byte[] b = null;
+							//连续向系统申请10MB空间
+							for(int i = 0 ; i <10; i ++){
+								b = new byte[1*1024*1024];
+							}
+						}
+					}
+				堆内存溢出处理：
+					含义：Java程序在运行的时候，如果堆空间不足，则会抛出堆内存溢出的错误（Out Of Memory）OOM，在生产环境下，严重影响业务中断；JVM提供了-XX:+HeapDumpOnOutOfMemoryError参数，
+						  可以导出整个堆信息，配合-XX:+HeapDumpPath来设置存储路径；配合使用插件：Memory Analyzer 1.5.0进行分析；
+					案例分析：
+					public class Test03 {
+						public static void main(String[] args) {							
+							//-Xms1m -Xmx1m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=d:/Test03.dump
+							//堆内存溢出
+							Vector v = new Vector();
+							for(int i=0; i < 5; i ++){
+								v.add(new Byte[1*1024*1024]);
+							}							
+						}
+					}
+			2、栈的参数设置：
+				-Xss：指定线程的最大栈空间，决定了函数调用的最大深度；
+				案例分析：
+				public class Test04 {
+					//-Xss1m  
+					//-Xss5m					
+					//栈调用深度
+					private static int count;					
+					public static void recursion(){
+						count++;
+						recursion();
+					}
+					public static void main(String[] args){
+						try {
+							recursion();
+						} catch (Throwable t) {
+							System.out.println("调用最大深入：" + count);
+							t.printStackTrace();
+						}
+					}
+				}
+			3、方法区的参数设置：
+				-XX:MaxPermSize=64MB
+				-XX:PermSize=64MB，默认设置就是64MB
+			4、直接内存的参数设置：		
+				-XX:MaxDirectMemorySize：利用这一参数设置，可以忽略；广泛用于NIO中；
+			5、对象如何进入老年代？参数设置：
+				-XX:MaxTenuringThreshold=15，默认值15
+				案例分析：
+				public class Test05 {
+					public static void main(String[] args) {
+						//初始的对象在eden区
+						//参数：-Xmx64M -Xms64M -XX:+PrintGCDetails
+				//		for(int i=0; i< 5; i++){//5M
+				//			byte[] b = new byte[1024*1024];
+				//		}																		
+						//测试进入老年代的对象
+						//参数：-Xmx1024M -Xms1024M -XX:+UseSerialGC -XX:MaxTenuringThreshold=15 -XX:+PrintGCDetails -XX:+PrintHeapAtGC
+				//		Map<Integer, byte[]> m = new HashMap<Integer, byte[]>();
+				//		for(int i =0; i <5 ; i++) {
+				//			byte[] b = new byte[1024*1024];
+				//			m.put(i, b);
+				//		}	
+				//		for(int k = 0; k<20; k++) {
+				//			for(int j = 0; j<300; j++){
+				//				byte[] b = new byte[1024*1024]; 
+				//			}
+				//		}											
+					}
+				}
+			6、当对象过大，eden区装不了直接进入老年代，可以设置参数来确定，但要注意TLAB区域：
+				-XX:PretenureSizeThreshold
+				TLAB区：全程为Thread Local Allocation Buffer，即线程本地分配缓存，线程专用的，目的是为了加速对象分配而产生的，避免多线程冲突的问题；一般不会太大，但TLAB装不下，会直接分配到堆上；
+						相关参数设置：
+							-XX:+UseTLAB：使用TLAB
+							-XX:+TLABSize：设置TLAB的大小
+							-XX:TLABRefillWasteFraction：设置进入TLAB区单个对象的大小，是一个比值，默认64，即但单个对象大于整个区的1/64，则在堆内存中创建对象
+							-XX:+PrintTLAB：打印信息
+							-XX:ResizeTLAB：自动调整TLABRefillWasteFraction的阈值
+				案例分析：
+				public class Test06 {
+					public static void main(String[] args) {						
+						//参数：-Xmx30M -Xms30M -XX:+UseSerialGC -XX:+PrintGCDetails -XX:PretenureSizeThreshold=1000
+						//出现这种现象原因为：JVM虚拟机对于体积不大的对象 会优先把数据分配到TLAB区域中，因此就失去了在老年代分配的机会
+						//参数：-Xmx30M -Xms30M -XX:+UseSerialGC -XX:+PrintGCDetails -XX:PretenureSizeThreshold=1000 -XX:-UseTLAB
+						Map<Integer, byte[]> m = new HashMap<Integer, byte[]>();
+						for(int i=0; i< 5*1024; i++){
+							byte[] b = new byte[1024];
+							m.put(i, b);
+						}
+					}
+				}
+				public class Test07 {
+					public static void alloc(){
+						byte[] b = new byte[2];
+					}
+					public static void main(String[] args) {						
+						//TLAB分配
+						//参数：-XX:+UseTLAB -XX:+PrintTLAB -XX:+PrintGC -XX:TLABSize=102400 -XX:-ResizeTLAB -XX:TLABRefillWasteFraction=100 -XX:-DoEscapeAnalysis -server
+						for(int i=0; i<10000000;i++){
+							alloc();
+						}																																																
+					}
+				}
+			7、对象创建流程图：
+				new 关键字创建对象 --------->尝试栈上分配（临时变量、对象）----N---->尝试TLAB分配（逻辑概念）----N---->是否满足进入老年代-----N---->eden区分配---->END
+													|Y										|Y									|Y
+													栈										TLAB								老年代								
+		虚拟机工作模式：
+			支持Client和Server两种工作模式，使用相应的参数：-client或-server调用相应的模式，区别：Client模式启动快，用于测试环境；Server模式启动慢，用于生产环境，JDK1.7以后都是Server模式
+		垃圾回收和算法：
+			垃圾回收：
+				概念：Garbage Collection，简称GC，在GC内存中不再使用的对象，需要回收。垃圾回收涉及多种算法，如：引用计数法，标记压缩法，复制算法，分代、分区思想
+					引用计数法：古老的方法，核心思想是：对象被引用时计数加1，对象失去引用时计数减1，缺点：在循环迭代时易出错，频繁的加减操作影响系统性能
+					标记清除法：分为标记和清除2个阶段，缺点存在空间碎片问题，GC以后内存空间是不连续的
+					复制算法：Java新生代中的S0区或S1区使用这种算法
+					标记压缩法：Java老年代使用这种算法，在标记清除基础之上，对标记对象进行压缩放置到一端而进行的垃圾清理
+					分代算法：将内存分成多块，每块使用不同的算法
+					分区算法：分区概念类似于磁盘分区，将整个内存空间分成独立的N块小空间，每个空间都可以独立使用，GC时只需对某一块内存空间进行GC，提高性能，减少GC停顿时间
+			垃圾回收停顿想象：
+				在GC的时候，会要求系统进入一个停顿的状态，此时程序会终止所有的线程，此刻程序是不会产生新的垃圾，也有利于更好的标记垃圾对象
+		
+				
+			
+			
+					
+			
 	
 	
 	
