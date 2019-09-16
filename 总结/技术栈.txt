@@ -8976,7 +8976,7 @@
 				public class Test06 {
 					public static void main(String[] args) {						
 						//参数：-Xmx30M -Xms30M -XX:+UseSerialGC -XX:+PrintGCDetails -XX:PretenureSizeThreshold=1000
-						//出现这种现象原因为：JVM虚拟机对于体积不大的对象 会优先把数据分配到TLAB区域中，因此就失去了在老年代分配的机会
+						//出现这种现象原因为：JVM虚拟机对于体积不大的对象会优先把数据分配到TLAB区域中，因此就失去了在老年代分配的机会
 						//参数：-Xmx30M -Xms30M -XX:+UseSerialGC -XX:+PrintGCDetails -XX:PretenureSizeThreshold=1000 -XX:-UseTLAB
 						Map<Integer, byte[]> m = new HashMap<Integer, byte[]>();
 						for(int i=0; i< 5*1024; i++){
@@ -9002,14 +9002,14 @@
 													|Y										|Y									|Y
 													栈										TLAB								老年代								
 		虚拟机工作模式：
-			支持Client和Server两种工作模式，使用相应的参数：-client或-server调用相应的模式，区别：Client模式启动快，用于测试环境；Server模式启动慢，用于生产环境，JDK1.7以后都是Server模式
+			JVM支持Client和Server两种工作模式，使用相应的参数：-client或-server调用相应的模式，区别：Client模式启动快，用于测试环境；Server模式启动慢，用于生产环境，JDK1.7以后都是Server模式
 		垃圾回收和算法：
 			垃圾回收：
 				概念：Garbage Collection，简称GC，在GC内存中不再使用的对象，需要回收。垃圾回收涉及多种算法，如：引用计数法，标记压缩法，复制算法，分代、分区思想
 					引用计数法：古老的方法，核心思想是：对象被引用时计数加1，对象失去引用时计数减1，缺点：在循环迭代时易出错，频繁的加减操作影响系统性能
 					标记清除法：分为标记和清除2个阶段，缺点存在空间碎片问题，GC以后内存空间是不连续的
-					复制算法：Java新生代中的S0区或S1区使用这种算法
-					标记压缩法：Java老年代使用这种算法，在标记清除基础之上，对标记对象进行压缩放置到一端而进行的垃圾清理
+					复制算法：Jvm新生代中的S0区或S1区使用这种算法
+					标记压缩法：Jvm老年代使用这种算法，在标记清除基础之上，对标记对象进行压缩放置到一端而进行的垃圾清理
 					分代算法：将内存分成多块，每块使用不同的算法
 					分区算法：分区概念类似于磁盘分区，将整个内存空间分成独立的N块小空间，每个空间都可以独立使用，GC时只需对某一块内存空间进行GC，提高性能，减少GC停顿时间
 			垃圾回收停顿想象：
