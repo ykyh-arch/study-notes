@@ -4,6 +4,8 @@ http://www.itmuch.com/  --周立博客（技术干货）
 https://pnote.net/pan/ --百度网盘提取码查询
 https://github.com/wu-dada/baidupankey --百度网盘提取码源码
 https://www.extractpdf.com/zh.html --pdf在线提取
+https://smallpdf.com/ --pdf在线转化工具
+https://tool.book118.com/ --在线转换
 http://www.cnblogs.com/iflytek/ --龙飞博客
 http://maven.outofmemory.cn/ --MAVEN中央仓库
 https://52sharing.cn --吾爱分享网
@@ -20,7 +22,6 @@ http://www.662p.com/ --开源网
 https://msdn.itellyou.cn/ --msdn，我告诉你（操作系统镜像下载）
 http://www.pansoso.com --盘搜搜
 https://max.book118.com/ --原创力文档
-https://tool.book118.com/ --在线转换
 https://www.jsdaima.com/ --JS代码网
 https://www.soupan8.com/ --搜盘8
 
