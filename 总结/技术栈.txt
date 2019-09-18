@@ -9012,8 +9012,211 @@
 					  Channel：网络数据通过Channel读写，方向是双向的，与多路复用器结合，有多种状态位；有2种分类：网路读写（SelectableChannel）、文件操作（FileChannel）;
 					  Selector：多路复用器、选择器，是NIO基础，轮询注册其上的Channel，查看通道状态；理论上channel是无上限的，底层利用JDK的epoll机制，获取连接句柄；
 								类似一个管理者角色，管理channel，在客户端通道注册到选择器后，Selector会分配每一个channel一个key，轮询的是key；当管道准备就绪（accept）状态时，通知cpu进行读写操作；
-				
-					  
+					  Buffer：API说明示例；
+					  public class TestBuffer {						
+						public static void main(String[] args) {							
+							// 1 基本操作
+							//创建指定长度的缓冲区
+							IntBuffer buf = IntBuffer.allocate(10);//声明容量
+							buf.put(13);// position位置：0 - > 1
+							buf.put(21);// position位置：1 - > 2
+							buf.put(35);// position位置：2 - > 3
+							//把位置复位为0，也就是position位置：3 - > 0
+							buf.flip();
+							System.out.println("使用flip复位：" + buf);
+							System.out.println("容量为: " + buf.capacity());	//容量一旦初始化后不允许改变（warp方法包裹数组除外）
+							System.out.println("限制为: " + buf.limit());		//由于只装载了三个元素,所以可读取或者操作的元素为3 则limit=3														
+							System.out.println("获取下标为1的元素：" + buf.get(1));
+							System.out.println("get(index)方法，position位置不改变：" + buf);
+							buf.put(1, 4);
+							System.out.println("put(index, change)方法，position位置不变：" + buf);							
+							for (int i = 0; i < buf.limit(); i++) {
+								//调用get方法会使其缓冲区位置（position）向后递增一位
+								System.out.print(buf.get() + "\t");
+							}
+							System.out.println("buf对象遍历之后为: " + buf);							
+							// 2 wrap方法使用
+							//  wrap方法会包裹一个数组: 一般这种用法不会先初始化缓存对象的长度，因为没有意义，最后还会被wrap所包裹的数组覆盖掉。 
+							//  并且wrap方法修改缓冲区对象的时候，数组本身也会跟着发生变化。                     
+							int[] arr = new int[]{1,2,5};
+							IntBuffer buf1 = IntBuffer.wrap(arr);
+							System.out.println(buf1);							
+							IntBuffer buf2 = IntBuffer.wrap(arr, 0 , 2);
+							//这样使用表示容量为数组arr的长度，但是可操作的元素只有实际进入缓存区的元素长度
+							System.out.println(buf2);														
+							// 3 其他方法
+							IntBuffer buf1 = IntBuffer.allocate(10);
+							int[] arr = new int[]{1,2,5};
+							buf1.put(arr);
+							System.out.println(buf1);
+							//一种复制方法
+							IntBuffer buf3 = buf1.duplicate();
+							System.out.println(buf3);	
+							//设置buf1的位置属性
+							//buf1.position(0);
+							buf1.flip();
+							System.out.println(buf1);							
+							System.out.println("可读数据为：" + buf1.remaining());							
+							int[] arr2 = new int[buf1.remaining()];
+							//将缓冲区数据放入arr2数组中去
+							buf1.get(arr2);
+							for(int i : arr2){
+								System.out.print(Integer.toString(i) + ",");
+							}							
+						}
+					}
+				  NIO案例说明（了解）：
+					//服务端
+					public class Server implements Runnable{
+						//1 多路复用器（管理所有的通道）
+						private Selector seletor;
+						//2 建立缓冲区
+						private ByteBuffer readBuf = ByteBuffer.allocate(1024);
+						private ByteBuffer writeBuf = ByteBuffer.allocate(1024);
+						public Server(int port){
+							try {
+								//1 打开路复用器
+								this.seletor = Selector.open();
+								//2 打开服务器通道
+								ServerSocketChannel ssc = ServerSocketChannel.open();
+								//3 设置服务器通道为非阻塞模式
+								ssc.configureBlocking(false);
+								//4 绑定地址
+								ssc.bind(new InetSocketAddress(port));
+								//5 把服务器通道注册到多路复用器上，并且监听阻塞事件
+								ssc.register(this.seletor, SelectionKey.OP_ACCEPT);								
+								System.out.println("Server start, port :" + port);								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						@Override
+						public void run() {
+							while(true){
+								try {
+									//1 必须要让多路复用器开始监听
+									this.seletor.select();
+									//2 返回多路复用器已经选择的结果集
+									Iterator<SelectionKey> keys = this.seletor.selectedKeys().iterator();
+									//3 进行遍历
+									while(keys.hasNext()){
+										//4 获取一个选择的元素
+										SelectionKey key = keys.next();
+										//5 直接从容器中移除就可以了
+										keys.remove();
+										//6 如果是有效的
+										if(key.isValid()){
+											//7 如果为阻塞状态
+											if(key.isAcceptable()){
+												this.accept(key);
+											}
+											//8 如果为可读状态
+											if(key.isReadable()){
+												this.read(key);
+											}
+											//9 写数据
+											if(key.isWritable()){
+												//this.write(key); //ssc
+											}
+										}										
+									}
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+						}						
+						private void write(SelectionKey key){
+							//ServerSocketChannel ssc =  (ServerSocketChannel) key.channel();
+							//ssc.register(this.seletor, SelectionKey.OP_WRITE);
+						}
+						private void read(SelectionKey key) {
+							try {
+								//1 清空缓冲区旧的数据
+								this.readBuf.clear();
+								//2 获取之前注册的socket通道对象
+								SocketChannel sc = (SocketChannel) key.channel();
+								//3 读取数据
+								int count = sc.read(this.readBuf);
+								//4 如果没有数据
+								if(count == -1){
+									key.channel().close();
+									key.cancel();
+									return;
+								}
+								//5 有数据则进行读取 读取之前需要进行复位方法(把position 和limit进行复位)
+								this.readBuf.flip();
+								//6 根据缓冲区的数据长度创建相应大小的byte数组，接收缓冲区的数据
+								byte[] bytes = new byte[this.readBuf.remaining()];
+								//7 接收缓冲区数据
+								this.readBuf.get(bytes);
+								//8 打印结果
+								String body = new String(bytes).trim();
+								System.out.println("Server : " + body);								
+								// 9..可以写回给客户端数据 								
+							} catch (IOException e) {
+								e.printStackTrace();
+							}							
+						}
+						private void accept(SelectionKey key) {
+							try {
+								//1 获取服务通道
+								ServerSocketChannel ssc =  (ServerSocketChannel) key.channel();
+								//2 执行阻塞方法
+								SocketChannel sc = ssc.accept();
+								//3 设置阻塞模式
+								sc.configureBlocking(false);
+								//4 注册到多路复用器上，并设置读取标识
+								sc.register(this.seletor, SelectionKey.OP_READ);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}						
+						public static void main(String[] args) {
+							
+							new Thread(new Server(8765)).start();;
+						}											
+					}
+					//客户端
+					public class Client {
+						//需要一个Selector 
+						public static void main(String[] args) {							
+							//创建连接的地址
+							InetSocketAddress address = new InetSocketAddress("127.0.0.1", 8765);							
+							//声明连接通道
+							SocketChannel sc = null;							
+							//建立缓冲区
+							ByteBuffer buf = ByteBuffer.allocate(1024);							
+							try {
+								//打开通道
+								sc = SocketChannel.open();
+								//进行连接
+								sc.connect(address);								
+								while(true){
+									//定义一个字节数组，然后使用系统录入功能：
+									byte[] bytes = new byte[1024];
+									System.in.read(bytes);									
+									//把数据放到缓冲区中
+									buf.put(bytes);
+									//对缓冲区进行复位
+									buf.flip();
+									//写出数据
+									sc.write(buf);
+									//清空缓冲区数据
+									buf.clear();
+								}
+							} catch (IOException e) {
+								e.printStackTrace();
+							} finally {
+								if(sc != null){
+									try {
+										sc.close();
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+								}
+							}							
+						}						
+					}
 	二、Netty通讯技术（联想Apache mina通讯框架）
 		1、初步认识：
 			Netty简单易用，健壮可扩展，当下主流框架技术底层都有用到，如：JMS中的RocketMQ、分布式通信框架Dubbox、Hadoop的RPC框架Avro等等
