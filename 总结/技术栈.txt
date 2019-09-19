@@ -9004,7 +9004,7 @@
 					}														
 				}
 				//客户端、Handler类同上；
-			NIO：非阻塞IO（同步），核心概念：Buffer（缓冲区）、Channel（通道）、Selector（多路复用器、选择器），目的就是减少TCP的3次握手4次挥手操作，减少连接开销；
+			NIO：（JDK1.5）非阻塞IO（同步），核心概念：Buffer（缓冲区）、Channel（通道）、Selector（多路复用器、选择器），目的就是减少TCP的3次握手4次挥手操作，减少连接开销；
 				原理：Client端（核心类：SocketChannel类，对Socket类的进一步抽象）注册到服务端选择器上
 					  Server端（核心类：ServerSocketChannel类，对ServerSocket类的进一步抽象），这里有多路复用器，采用轮询（Key）所有注册通道，查看通道状态（Connect、Accept、Read、Write），执行相关操作；
 				基本概念解释：	  
@@ -9083,7 +9083,7 @@
 								ssc.configureBlocking(false);
 								//4 绑定地址
 								ssc.bind(new InetSocketAddress(port));
-								//5 把服务器通道注册到多路复用器上，并且监听阻塞事件
+								//5 把服务器通道注册到多路复用器上，并且监听阻塞事件，标识位
 								ssc.register(this.seletor, SelectionKey.OP_ACCEPT);								
 								System.out.println("Server start, port :" + port);								
 							} catch (IOException e) {
@@ -9165,7 +9165,7 @@
 								SocketChannel sc = ssc.accept();
 								//3 设置阻塞模式
 								sc.configureBlocking(false);
-								//4 注册到多路复用器上，并设置读取标识
+								//4 注册到多路复用器上，并设置读取标识，即sc通道可读
 								sc.register(this.seletor, SelectionKey.OP_READ);
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -9216,7 +9216,10 @@
 							}							
 						}						
 					}
-			AIO：	
+				优缺点：优点减少连接数量，采用抽象的通道技术（取代了TCP/IP的通讯技术）以及多路复用等技术；缺点：书写繁琐，所有的细节都要自己去实现；
+			AIO：（JDK1.7）	异步非阻塞，引入异步通道概念；在多路复用器轮询通道是异步的，两个核心类：AsynchronousSocketChannel与AsynchronousServerSocketChannel；
+				
+			
 	二、Netty通讯技术（联想Apache mina通讯框架）
 		1、初步认识：
 			Netty简单易用，健壮可扩展，当下主流框架技术底层都有用到，如：JMS中的RocketMQ、分布式通信框架Dubbox、Hadoop的RPC框架Avro等等
