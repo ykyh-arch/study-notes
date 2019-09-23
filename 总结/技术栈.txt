@@ -9390,10 +9390,10 @@
 							sc.pipeline().addLast(new ServerHandler());
 						}
 					});					
-					//4 进行绑定 
+					//4 进行绑定，即服务端可以开放多个端口 
 					ChannelFuture cf1 = b.bind(8765).sync();
 					//ChannelFuture cf2 = b.bind(8764).sync();
-					//5 等待关闭
+					//5 等待关闭，同步优雅关闭
 					cf1.channel().closeFuture().sync();
 					//cf2.channel().closeFuture().sync();
 					pGroup.shutdownGracefully();
@@ -9416,7 +9416,7 @@
 						System.out.println("Server :" + body );//服务端接收到的shuju
 						String response = "进行返回给客户端的响应：" + body ;
 						ctx.writeAndFlush(Unpooled.copiedBuffer(response.getBytes()));
-						//.addListener(ChannelFutureListener.CLOSE);
+						//.addListener(ChannelFutureListener.CLOSE);//将Netty长连接转成短连接
 				}
 				@Override
 				public void channelReadComplete(ChannelHandlerContext ctx)
@@ -9443,7 +9443,7 @@
 							sc.pipeline().addLast(new ClientHandler());
 						}
 					});					
-					ChannelFuture cf1 = b.connect("127.0.0.1", 8765).sync();//寻址
+					ChannelFuture cf1 = b.connect("127.0.0.1", 8765).sync();//寻址，模拟多个客户端连接
 					//ChannelFuture cf2 = b.connect("127.0.0.1", 8764).sync();
 					//发送消息
 					Thread.sleep(1000);
@@ -9473,7 +9473,7 @@
 						System.out.println("Client :" + body );//客户端接收到的服务端的响应数据
 						String response = "收到服务器端的返回信息：" + body;
 					} finally {
-						ReferenceCountUtil.release(msg);
+						ReferenceCountUtil.release(msg);//释放信息
 					}
 				}
 				@Override
@@ -9489,6 +9489,204 @@
 			问题产生：TCP是一个“流”的协议，即没有界限的遗传数据，会产生拆包、粘包问题，对应的解决方案：
 				1、消息定长（固定报文的长度）；2、在包尾部添加特殊的字符进行分割；3、将消息分为消息头（消息长度）与消息体；
 			Netty提供：DelimiterBasedFrameDecoder（自定义分割符类）、FixedLengthFrameDecoder（定长）来处理这一问题；
+			案例分析一：
+			//服务端
+			public class Server {
+				public static void main(String[] args) throws Exception{
+					//1 创建2个线程，一个是负责接收客户端的连接。一个是负责进行数据传输的
+					EventLoopGroup pGroup = new NioEventLoopGroup();
+					EventLoopGroup cGroup = new NioEventLoopGroup();					
+					//2 创建服务器辅助类
+					ServerBootstrap b = new ServerBootstrap();
+					b.group(pGroup, cGroup)
+					 .channel(NioServerSocketChannel.class)
+					 .option(ChannelOption.SO_BACKLOG, 1024)
+					 .option(ChannelOption.SO_SNDBUF, 32*1024)
+					 .option(ChannelOption.SO_RCVBUF, 32*1024)
+					 .childHandler(new ChannelInitializer<SocketChannel>() {
+						@Override
+						protected void initChannel(SocketChannel sc) throws Exception {
+							//设置特殊分隔符$_
+							ByteBuf buf = Unpooled.copiedBuffer("$_".getBytes());
+							sc.pipeline().addLast(new DelimiterBasedFrameDecoder(1024, buf));
+							//设置字符串形式的解码
+							sc.pipeline().addLast(new StringDecoder());
+							sc.pipeline().addLast(new ServerHandler());
+						}
+					});					
+					//4 绑定连接
+					ChannelFuture cf = b.bind(8765).sync();					
+					//等待服务器监听端口关闭
+					cf.channel().closeFuture().sync();
+					pGroup.shutdownGracefully();
+					cGroup.shutdownGracefully();					
+				}				
+			}
+			//ServerHandler
+			public class ServerHandler extends ChannelHandlerAdapter {
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {
+					System.out.println(" server channel active... ");
+				}
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					String request = (String)msg;//接收客户端数据是解码后的字符串数据
+					System.out.println("Server :" + msg);
+					String response = "服务器响应：" + msg + "$_";
+					ctx.writeAndFlush(Unpooled.copiedBuffer(response.getBytes()));
+				}
+				@Override
+				public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {					
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) throws Exception {
+					ctx.close();
+				}
+			}
+			//客户端
+			public class Client {
+				public static void main(String[] args) throws Exception {					
+					EventLoopGroup group = new NioEventLoopGroup();					
+					Bootstrap b = new Bootstrap();
+					b.group(group)
+					 .channel(NioSocketChannel.class)
+					 .handler(new ChannelInitializer<SocketChannel>() {
+						@Override
+						protected void initChannel(SocketChannel sc) throws Exception {
+							//同服务端
+							ByteBuf buf = Unpooled.copiedBuffer("$_".getBytes());
+							sc.pipeline().addLast(new DelimiterBasedFrameDecoder(1024, buf));
+							sc.pipeline().addLast(new StringDecoder());
+							sc.pipeline().addLast(new ClientHandler());
+						}
+					});					
+					ChannelFuture cf = b.connect("127.0.0.1", 8765).sync();					
+					cf.channel().writeAndFlush(Unpooled.wrappedBuffer("bbbb$_".getBytes()));
+					cf.channel().writeAndFlush(Unpooled.wrappedBuffer("cccc$_".getBytes()));										
+					//等待客户端端口关闭
+					cf.channel().closeFuture().sync();
+					group.shutdownGracefully();				
+				}
+			}
+			//ClientHandler
+			public class ClientHandler extends ChannelHandlerAdapter{
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {
+					System.out.println("client channel active... ");
+				}
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					try {
+						String response = (String)msg;
+						System.out.println("Client: " + response);
+					} finally {
+						ReferenceCountUtil.release(msg);
+					}
+				}
+				@Override
+				public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+					ctx.close();
+				}
+			}
+			//案例分析二：
+			//服务端
+			public class Server {
+				public static void main(String[] args) throws Exception{
+					//1 创建2个线程，一个是负责接收客户端的连接。一个是负责进行数据传输的
+					EventLoopGroup pGroup = new NioEventLoopGroup();
+					EventLoopGroup cGroup = new NioEventLoopGroup();					
+					//2 创建服务器辅助类
+					ServerBootstrap b = new ServerBootstrap();
+					b.group(pGroup, cGroup)
+					 .channel(NioServerSocketChannel.class)
+					 .option(ChannelOption.SO_BACKLOG, 1024)
+					 .option(ChannelOption.SO_SNDBUF, 32*1024)
+					 .option(ChannelOption.SO_RCVBUF, 32*1024)
+					 .childHandler(new ChannelInitializer<SocketChannel>() {
+						@Override
+						protected void initChannel(SocketChannel sc) throws Exception {
+							//设置定长字符串接收
+							sc.pipeline().addLast(new FixedLengthFrameDecoder(5));
+							//设置字符串形式的解码
+							sc.pipeline().addLast(new StringDecoder());
+							sc.pipeline().addLast(new ServerHandler());
+						}
+					});					
+					//4 绑定连接
+					ChannelFuture cf = b.bind(8765).sync();					
+					//等待服务器监听端口关闭
+					cf.channel().closeFuture().sync();
+					pGroup.shutdownGracefully();
+					cGroup.shutdownGracefully();					
+				}				
+			}
+			//ServerHandler
+			public class ServerHandler extends ChannelHandlerAdapter {
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {
+					System.out.println(" server channel active... ");
+				}
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					String request = (String)msg;
+					System.out.println("Server :" + msg);
+					String response =  request ;
+					ctx.writeAndFlush(Unpooled.copiedBuffer(response.getBytes()));
+				}
+				@Override
+				public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {					
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) throws Exception {
+				}
+			}
+			//客户端
+			public class Client {
+				public static void main(String[] args) throws Exception {					
+					EventLoopGroup group = new NioEventLoopGroup();					
+					Bootstrap b = new Bootstrap();
+					b.group(group)
+					 .channel(NioSocketChannel.class)
+					 .handler(new ChannelInitializer<SocketChannel>() {
+						@Override
+						protected void initChannel(SocketChannel sc) throws Exception {
+							sc.pipeline().addLast(new FixedLengthFrameDecoder(5));
+							sc.pipeline().addLast(new StringDecoder());
+							sc.pipeline().addLast(new ClientHandler());
+						}
+					});					
+					ChannelFuture cf = b.connect("127.0.0.1", 8765).sync();					
+					cf.channel().writeAndFlush(Unpooled.wrappedBuffer("aaaaabbbbb".getBytes()));
+					cf.channel().writeAndFlush(Unpooled.copiedBuffer("ccccccc".getBytes()));					
+					//等待客户端端口关闭
+					cf.channel().closeFuture().sync();
+					group.shutdownGracefully();					
+				}
+			}
+			//ClientHandler
+			public class ClientHandler extends ChannelHandlerAdapter{
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {
+					System.out.println("client channel active... ");
+				}
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					String response = (String)msg;
+					System.out.println("Client: " + response);
+				}
+				@Override
+				public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+				}
+			}
+		5、Netty编解码问题：
+			含义：实质是Java序列化问题，目的：进行网络传输；对象持久化；
+				可以使用对象序列化，但性能太低，一般使用编解码框架：Jboss的Marshalling包、google的Protobuf；
 			
 ----------------------------------------------Java工作流技术篇---------------------------------------------------------------------------------------------------------
 			
