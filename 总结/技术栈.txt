@@ -9687,7 +9687,259 @@
 		5、Netty编解码问题：
 			含义：实质是Java序列化问题，目的：进行网络传输；对象持久化；
 				可以使用对象序列化，但性能太低，一般使用编解码框架：Jboss的Marshalling包、google的Protobuf；
-			
+			案例分析：
+			//服务端
+			public class Server {
+				public static void main(String[] args) throws Exception{
+					//开启2个线程组
+					EventLoopGroup pGroup = new NioEventLoopGroup();
+					EventLoopGroup cGroup = new NioEventLoopGroup();
+					//辅助工具类
+					ServerBootstrap b = new ServerBootstrap();
+					b.group(pGroup, cGroup)
+					 .channel(NioServerSocketChannel.class)
+					 .option(ChannelOption.SO_BACKLOG, 1024)
+					 //设置日志级别
+					 .handler(new LoggingHandler(LogLevel.INFO))
+					 //初始化工作
+					 .childHandler(new ChannelInitializer<SocketChannel>() {
+						protected void initChannel(SocketChannel sc) throws Exception {
+							//管道处理
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingDecoder());//解码
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingEncoder());//编码
+							sc.pipeline().addLast(new ServerHandler());//处理业务逻辑
+						}
+					});					
+					ChannelFuture cf = b.bind(8765).sync();
+					//关闭资源
+					cf.channel().closeFuture().sync();
+					pGroup.shutdownGracefully();
+					cGroup.shutdownGracefully();					
+				}
+			}
+			//编解码工具类
+			public final class MarshallingCodeCFactory {
+				/**
+				 * 创建Jboss Marshalling解码器MarshallingDecoder
+				 * @return MarshallingDecoder
+				 */
+				public static MarshallingDecoder buildMarshallingDecoder() {
+					//首先通过Marshalling工具类的精通方法获取Marshalling实例对象 参数serial标识创建的是java序列化工厂对象。
+					final MarshallerFactory marshallerFactory = Marshalling.getProvidedMarshallerFactory("serial");
+					//创建了MarshallingConfiguration对象，配置了版本号为5 
+					final MarshallingConfiguration configuration = new MarshallingConfiguration();
+					configuration.setVersion(5);
+					//根据marshallerFactory和configuration创建provider
+					UnmarshallerProvider provider = new DefaultUnmarshallerProvider(marshallerFactory, configuration);
+					//构建Netty的MarshallingDecoder对象，俩个参数分别为provider和单个消息序列化后的最大长度
+					MarshallingDecoder decoder = new MarshallingDecoder(provider, 1024 * 1024 * 1);
+					return decoder;
+				}
+				/**
+				 * 创建Jboss Marshalling编码器MarshallingEncoder
+				 * @return MarshallingEncoder
+				 */
+				public static MarshallingEncoder buildMarshallingEncoder() {
+					final MarshallerFactory marshallerFactory = Marshalling.getProvidedMarshallerFactory("serial");
+					final MarshallingConfiguration configuration = new MarshallingConfiguration();
+					configuration.setVersion(5);
+					MarshallerProvider provider = new DefaultMarshallerProvider(marshallerFactory, configuration);
+					//构建Netty的MarshallingEncoder对象，MarshallingEncoder用于实现序列化接口的POJO对象序列化为二进制数组
+					MarshallingEncoder encoder = new MarshallingEncoder(provider);
+					return encoder;
+				}
+			}
+			//服务端业务逻辑处理，ServerHandler类
+			public class ServerHandler extends ChannelHandlerAdapter{
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {
+				}
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					Req req = (Req)msg;
+					System.out.println("Server : " + req.getId() + ", " + req.getName() + ", " + req.getRequestMessage());
+					byte[] attachment = GzipUtils.ungzip(req.getAttachment());
+					//程序所在的目录下的文件
+					String path = System.getProperty("user.dir") + File.separatorChar + "receive" +  File.separatorChar + "001.jpg";
+					FileOutputStream fos = new FileOutputStream(path);
+					fos.write(attachment);
+					fos.close();
+					//服务端响应
+					Resp resp = new Resp();
+					resp.setId(req.getId());
+					resp.setName("resp" + req.getId());
+					resp.setResponseMessage("响应内容" + req.getId());
+					ctx.writeAndFlush(resp);//.addListener(ChannelFutureListener.CLOSE);
+				}
+				@Override
+				public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {					
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+					ctx.close();
+				}								
+			}
+			//基础对象类：Req与Resp
+			public class Req implements Serializable{
+				private static final long  SerialVersionUID = 1L;				
+				private String id;
+				private String name;
+				private String requestMessage;
+				private byte[] attachment;				
+				public String getId() {
+					return id;
+				}
+				public void setId(String id) {
+					this.id = id;
+				}
+				public String getName() {
+					return name;
+				}
+				public void setName(String name) {
+					this.name = name;
+				}
+				public String getRequestMessage() {
+					return requestMessage;
+				}
+				public void setRequestMessage(String requestMessage) {
+					this.requestMessage = requestMessage;
+				}
+				public byte[] getAttachment() {
+					return attachment;
+				}
+				public void setAttachment(byte[] attachment) {
+					this.attachment = attachment;
+				}								
+			}
+			public class Resp implements Serializable{				
+				private static final long serialVersionUID = 1L;				
+				private String id;
+				private String name;
+				private String responseMessage;				
+				public String getId() {
+					return id;
+				}
+				public void setId(String id) {
+					this.id = id;
+				}
+				public String getName() {
+					return name;
+				}
+				public void setName(String name) {
+					this.name = name;
+				}
+				public String getResponseMessage() {
+					return responseMessage;
+				}
+				public void setResponseMessage(String responseMessage) {
+					this.responseMessage = responseMessage;
+				}				
+			}
+			//压缩/解压工具包
+			public class GzipUtils {
+				public static byte[] gzip(byte[] data) throws Exception{
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					GZIPOutputStream gzip = new GZIPOutputStream(bos);
+					gzip.write(data);
+					gzip.finish();
+					gzip.close();
+					byte[] ret = bos.toByteArray();
+					bos.close();
+					return ret;
+				}				
+				public static byte[] ungzip(byte[] data) throws Exception{
+					ByteArrayInputStream bis = new ByteArrayInputStream(data);
+					GZIPInputStream gzip = new GZIPInputStream(bis);
+					byte[] buf = new byte[1024];
+					int num = -1;
+					ByteArrayOutputStream bos = new ByteArrayOutputStream();
+					while((num = gzip.read(buf, 0 , buf.length)) != -1 ){
+						bos.write(buf, 0, num);
+					}
+					gzip.close();
+					bis.close();
+					byte[] ret = bos.toByteArray();
+					bos.flush();
+					bos.close();
+					return ret;
+				}				
+				public static void main(String[] args) throws Exception{					
+					//读取文件
+					String readPath = System.getProperty("user.dir") + File.separatorChar + "sources" +  File.separatorChar + "006.jpg";
+					File file = new File(readPath);  
+					FileInputStream in = new FileInputStream(file);  
+					byte[] data = new byte[in.available()];  
+					in.read(data);  
+					in.close();  					
+					System.out.println("文件原始大小:" + data.length);
+					//测试压缩					
+					byte[] ret1 = GzipUtils.gzip(data);
+					System.out.println("压缩之后大小:" + ret1.length);					
+					byte[] ret2 = GzipUtils.ungzip(ret1);
+					System.out.println("还原之后大小:" + ret2.length);					
+					//写出文件
+					String writePath = System.getProperty("user.dir") + File.separatorChar + "receive" +  File.separatorChar + "006.jpg";
+					FileOutputStream fos = new FileOutputStream(writePath);
+					fos.write(ret2);
+					fos.close();    											
+				}												
+			}
+			//客户端
+			public class Client {				
+				public static void main(String[] args) throws Exception{					
+					EventLoopGroup group = new NioEventLoopGroup();
+					Bootstrap b = new Bootstrap();
+					b.group(group)
+					 .channel(NioSocketChannel.class)
+					 .handler(new ChannelInitializer<SocketChannel>() {
+						@Override
+						protected void initChannel(SocketChannel sc) throws Exception {
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingDecoder());
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingEncoder());
+							sc.pipeline().addLast(new ClientHandler());
+						}
+					});					
+					ChannelFuture cf = b.connect("127.0.0.1", 8765).sync();					
+					for(int i = 0; i < 5; i++ ){
+						Req req = new Req();
+						req.setId("" + i);
+						req.setName("pro" + i);
+						req.setRequestMessage("数据信息" + i);	
+						String path = System.getProperty("user.dir") + File.separatorChar + "sources" +  File.separatorChar + "001.jpg";
+						File file = new File(path);
+						FileInputStream in = new FileInputStream(file);  
+						byte[] data = new byte[in.available()];  
+						in.read(data);  
+						in.close(); 
+						req.setAttachment(GzipUtils.gzip(data));
+						cf.channel().writeAndFlush(req);
+					}
+					cf.channel().closeFuture().sync();
+					group.shutdownGracefully();
+				}
+			}
+			//ClientHandler
+			public class ClientHandler extends ChannelHandlerAdapter{				
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {					
+				}
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					try {
+						Resp resp = (Resp)msg;
+						System.out.println("Client : " + resp.getId() + ", " + resp.getName() + ", " + resp.getResponseMessage());			
+					} finally {
+						ReferenceCountUtil.release(msg);
+					}
+				}
+				@Override
+				public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {					
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+					ctx.close();
+				}				
+			}
 ----------------------------------------------Java工作流技术篇---------------------------------------------------------------------------------------------------------
 			
 			
