@@ -9940,6 +9940,441 @@
 					ctx.close();
 				}				
 			}
+		6、数据通讯
+		   含义：在实际工作中，多台机器可以通过netty通讯，对于参数的设置取决于服务器性能，具体通讯方式可以分为三类：
+				a、使用长连接，客户端与服务端一直处于开启连接转态，对服务器的性能要求比较高，而且适用于客户端数量较少的情况，业务场景：滴滴打车
+				b、使用短链接，客户端一次批量的提交数据，客户端会把数据临时存储在缓存区或临时表中，当条件满足阈值时，才与服务端连接，提交数据，弊端：不能实时的提交数据
+				c、特殊的长连接，规定在一定时间内两者没有通讯，则断开连接，下次连接客户端向服务端发起连接请求，建立连接；但需要注意2个因素：
+					超时如何关闭通讯，以及后续如何建立连接；服务端宕机，客户端如何与服务端进行连接（方案：客户端使用job任务，定时检测）；
+			案例分析：
+				//服务端
+			public class Server {
+				public static void main(String[] args) throws Exception{
+					//开启2个线程组
+					EventLoopGroup pGroup = new NioEventLoopGroup();
+					EventLoopGroup cGroup = new NioEventLoopGroup();
+					//辅助类
+					ServerBootstrap b = new ServerBootstrap();
+					b.group(pGroup, cGroup)
+					 .channel(NioServerSocketChannel.class)
+					 .option(ChannelOption.SO_BACKLOG, 1024)
+					 //设置日志
+					 .handler(new LoggingHandler(LogLevel.INFO))
+					 .childHandler(new ChannelInitializer<SocketChannel>() {
+						protected void initChannel(SocketChannel sc) throws Exception {
+							//管道链
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingDecoder());
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingEncoder());
+							//设置服务端与客户端超时断开连接时间：5s
+							sc.pipeline().addLast(new ReadTimeoutHandler(5)); 
+							sc.pipeline().addLast(new ServerHandler());
+						}
+					});					
+					ChannelFuture cf = b.bind(8765).sync();
+					//关闭通道 
+					cf.channel().closeFuture().sync();
+					pGroup.shutdownGracefully();
+					cGroup.shutdownGracefully();					
+				}
+			}
+			//JavaBean类
+			public class Request implements Serializable{
+				private static final long  SerialVersionUID = 1L;				
+				private String id;
+				private String name;
+				private String requestMessage;				
+				public String getId() {
+					return id;
+				}
+				public void setId(String id) {
+					this.id = id;
+				}
+				public String getName() {
+					return name;
+				}
+				public void setName(String name) {
+					this.name = name;
+				}
+				public String getRequestMessage() {
+					return requestMessage;
+				}
+				public void setRequestMessage(String requestMessage) {
+					this.requestMessage = requestMessage;
+				}
+			}
+			public class Response implements Serializable{				
+				private static final long serialVersionUID = 1L;				
+				private String id;
+				private String name;
+				private String responseMessage;				
+				public String getId() {
+					return id;
+				}
+				public void setId(String id) {
+					this.id = id;
+				}
+				public String getName() {
+					return name;
+				}
+				public void setName(String name) {
+					this.name = name;
+				}
+				public String getResponseMessage() {
+					return responseMessage;
+				}
+				public void setResponseMessage(String responseMessage) {
+					this.responseMessage = responseMessage;
+				}				
+			}
+			//MarshallingCodeCFactory类同上
+			//ServerHandler
+			public class ServerHandler extends ChannelHandlerAdapter{
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {
+				}
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					Request request = (Request)msg;
+					System.out.println("Server : " + request.getId() + ", " + request.getName() + ", " + request.getRequestMessage());
+					Response response = new Response();
+					response.setId(request.getId());
+					response.setName("response" + request.getId());
+					response.setResponseMessage("响应内容" + request.getId());
+					ctx.writeAndFlush(response);//.addListener(ChannelFutureListener.CLOSE);
+				}
+				@Override
+				public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {					
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+					ctx.close();
+				}								
+			}
+			//客户端
+			public class Client {
+				//单例获取实例对象
+				private static class SingletonHolder {
+					static final Client instance = new Client();
+				}				
+				public static Client getInstance(){
+					return SingletonHolder.instance;
+				}
+				//建立辅助类
+				private EventLoopGroup group;
+				private Bootstrap b;
+				private ChannelFuture cf;				
+				private Client(){
+						group = new NioEventLoopGroup();
+						b = new Bootstrap();
+						b.group(group)
+						 .channel(NioSocketChannel.class)
+						 .handler(new LoggingHandler(LogLevel.INFO))
+						 .handler(new ChannelInitializer<SocketChannel>() {
+								@Override
+								protected void initChannel(SocketChannel sc) throws Exception {
+									sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingDecoder());
+									sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingEncoder());
+									//超时handler（当服务器端与客户端在指定时间以上没有任何进行通信，则会关闭响应的通道，主要为减小服务端资源占用）
+									sc.pipeline().addLast(new ReadTimeoutHandler(5)); 
+									sc.pipeline().addLast(new ClientHandler());
+								}
+						});
+				}				
+				public void connect(){
+					try {
+						this.cf = b.connect("127.0.0.1", 8765).sync();//寻址连接
+						System.out.println("远程服务器已经连接, 可以进行数据交换..");				
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				//获取ChannelFuture对象
+				public ChannelFuture getChannelFuture(){					
+					if(this.cf == null){
+						this.connect();
+					}
+					if(!this.cf.channel().isActive()){
+						this.connect();
+					}					
+					return this.cf;
+				}				
+				public static void main(String[] args) throws Exception{
+					final Client c = Client.getInstance();
+					//c.connect();					
+					ChannelFuture cf = c.getChannelFuture();
+					for(int i = 1; i <= 3; i++ ){
+						Request request = new Request();
+						request.setId("" + i);
+						request.setName("pro" + i);
+						request.setRequestMessage("数据信息" + i);
+						cf.channel().writeAndFlush(request);
+						//间隔4S写入数据
+						TimeUnit.SECONDS.sleep(4);
+					}
+					cf.channel().closeFuture().sync();					
+					//模拟客户端连接服务器
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								System.out.println("进入子线程...");
+								ChannelFuture cf = c.getChannelFuture();
+								System.out.println(cf.channel().isActive());
+								System.out.println(cf.channel().isOpen());								
+								//再次发送数据
+								Request request = new Request();
+								request.setId("" + 4);
+								request.setName("pro" + 4);
+								request.setRequestMessage("数据信息" + 4);
+								cf.channel().writeAndFlush(request);					
+								cf.channel().closeFuture().sync();
+								System.out.println("子线程结束.");
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+					}).start();					
+					System.out.println("断开连接,主线程结束..");					
+				}											
+			}
+			//ClientHandler
+			public class ClientHandler extends ChannelHandlerAdapter{				
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {
+				}
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					try {
+						Response resp = (Response)msg;
+						System.out.println("Client : " + resp.getId() + ", " + resp.getName() + ", " + resp.getResponseMessage());			
+					} finally {
+						//只做读取操作，没有写数据需要释放消息
+						ReferenceCountUtil.release(msg);
+					}
+				}
+				@Override
+				public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {					
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+					ctx.close();
+				}				
+			}
+		7、心跳检测
+			含义：在服务器集群之间需要进行心跳检测，基于Master-Slaver模式，监控各个服务器节点的各个方面情况（CPU、磁盘、网络），把这样的过程叫心跳检测；
+			案例分析（利用netty与sigar相关技术实现心跳检测）：
+			//服务端
+			public class Server {
+				public static void main(String[] args) throws Exception{					
+					EventLoopGroup pGroup = new NioEventLoopGroup();
+					EventLoopGroup cGroup = new NioEventLoopGroup();					
+					ServerBootstrap b = new ServerBootstrap();
+					b.group(pGroup, cGroup)
+					 .channel(NioServerSocketChannel.class)
+					 .option(ChannelOption.SO_BACKLOG, 1024)
+					 //设置日志
+					 .handler(new LoggingHandler(LogLevel.INFO))
+					 .childHandler(new ChannelInitializer<SocketChannel>() {
+						protected void initChannel(SocketChannel sc) throws Exception {
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingDecoder());
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingEncoder());
+							//心跳检测类
+							sc.pipeline().addLast(new ServerHeartBeatHandler());
+						}
+					});					
+					ChannelFuture cf = b.bind(8765).sync();					
+					cf.channel().closeFuture().sync();
+					pGroup.shutdownGracefully();
+					cGroup.shutdownGracefully();					
+				}
+			}
+			//ServerHeartBeatHandler类
+			public class ServerHeartBeatHandler extends ChannelHandlerAdapter {				
+				private static HashMap<String, String> AUTH_IP_MAP = new HashMap<String, String>();
+				private static final String SUCCESS_KEY = "auth_success_key";				
+				static {
+					AUTH_IP_MAP.put("192.168.1.200", "1234");
+				}				
+				private boolean auth(ChannelHandlerContext ctx, Object msg){
+						//System.out.println(msg);
+						//从客户端取到的信息
+						String [] ret = ((String) msg).split(",");
+						String auth = AUTH_IP_MAP.get(ret[0]);
+						if(auth != null && auth.equals(ret[1])){
+							ctx.writeAndFlush(SUCCESS_KEY);//认证通过
+							return true;
+						} else {
+							ctx.writeAndFlush("auth failure !").addListener(ChannelFutureListener.CLOSE);
+							return false;
+						}
+				}				
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					if(msg instanceof String){
+						//首次认证
+						auth(ctx, msg);
+					} else if (msg instanceof RequestInfo) {						
+						RequestInfo info = (RequestInfo) msg;
+						System.out.println("--------------------------------------------");
+						System.out.println("当前主机ip为: " + info.getIp());
+						System.out.println("当前主机cpu情况: ");
+						HashMap<String, Object> cpu = info.getCpuPercMap();
+						System.out.println("总使用率: " + cpu.get("combined"));
+						System.out.println("用户使用率: " + cpu.get("user"));
+						System.out.println("系统使用率: " + cpu.get("sys"));
+						System.out.println("等待率: " + cpu.get("wait"));
+						System.out.println("空闲率: " + cpu.get("idle"));
+						
+						System.out.println("当前主机memory情况: ");
+						HashMap<String, Object> memory = info.getMemoryMap();
+						System.out.println("内存总量: " + memory.get("total"));
+						System.out.println("当前内存使用量: " + memory.get("used"));
+						System.out.println("当前内存剩余量: " + memory.get("free"));
+						System.out.println("--------------------------------------------");
+						//响应数据
+						ctx.writeAndFlush("info received!");
+					} else {
+						ctx.writeAndFlush("connect failure!").addListener(ChannelFutureListener.CLOSE);
+					}
+				}
+			}
+			//客户端
+			public class Client {				
+				public static void main(String[] args) throws Exception{					
+					EventLoopGroup group = new NioEventLoopGroup();
+					Bootstrap b = new Bootstrap();
+					b.group(group)
+					 .channel(NioSocketChannel.class)
+					 .handler(new ChannelInitializer<SocketChannel>() {
+						@Override
+						protected void initChannel(SocketChannel sc) throws Exception {
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingDecoder());
+							sc.pipeline().addLast(MarshallingCodeCFactory.buildMarshallingEncoder());
+							//心跳检测类
+							sc.pipeline().addLast(new ClienHeartBeattHandler());
+						}
+					});
+					//寻址连接
+					ChannelFuture cf = b.connect("127.0.0.1", 8765).sync();
+					cf.channel().closeFuture().sync();
+					group.shutdownGracefully();
+				}
+			}
+			//ClienHeartBeattHandler
+			public class ClienHeartBeattHandler extends ChannelHandlerAdapter {
+				//池化技术，特点是可以定时执行任务
+				private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);				
+				private ScheduledFuture<?> heartBeat;
+				//主动向服务器发送认证信息
+				private InetAddress addr;				
+				private static final String SUCCESS_KEY = "auth_success_key";
+				@Override
+				public void channelActive(ChannelHandlerContext ctx) throws Exception {
+					addr = InetAddress.getLocalHost();
+					String ip = addr.getHostAddress();
+					String key = "1234";
+					//证书，由两部分构成：IP与KEY
+					String auth = ip + "," + key;
+					//写出
+					ctx.writeAndFlush(auth);
+				}				
+				@Override
+				public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+					try {
+						if(msg instanceof String){
+							String ret = (String)msg;
+							if(SUCCESS_KEY.equals(ret)){
+								// 握手成功，主动发送心跳消息，每2S执行一次任务
+								this.heartBeat = this.scheduler.scheduleWithFixedDelay(new HeartBeatTask(ctx), 0, 2, TimeUnit.SECONDS);
+								System.out.println(msg);    			
+							}
+							else {
+								System.out.println(msg);
+							}
+						}
+					} finally {
+						ReferenceCountUtil.release(msg);
+					}
+				}
+				//线程任务
+				private class HeartBeatTask implements Runnable {
+					private final ChannelHandlerContext ctx;
+					public HeartBeatTask(final ChannelHandlerContext ctx) {
+						this.ctx = ctx;
+					}				
+					@Override
+					public void run() {
+						try {
+							RequestInfo info = new RequestInfo();
+							//ip
+							info.setIp(addr.getHostAddress());
+							Sigar sigar = new Sigar();
+							//cpu prec
+							CpuPerc cpuPerc = sigar.getCpuPerc();
+							HashMap<String, Object> cpuPercMap = new HashMap<String, Object>();
+							cpuPercMap.put("combined", cpuPerc.getCombined());
+							cpuPercMap.put("user", cpuPerc.getUser());
+							cpuPercMap.put("sys", cpuPerc.getSys());
+							cpuPercMap.put("wait", cpuPerc.getWait());
+							cpuPercMap.put("idle", cpuPerc.getIdle());
+							// memory
+							Mem mem = sigar.getMem();
+							HashMap<String, Object> memoryMap = new HashMap<String, Object>();
+							memoryMap.put("total", mem.getTotal() / 1024L);
+							memoryMap.put("used", mem.getUsed() / 1024L);
+							memoryMap.put("free", mem.getFree() / 1024L);
+							info.setCpuPercMap(cpuPercMap);
+							info.setMemoryMap(memoryMap);
+							ctx.writeAndFlush(info);
+							
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+					public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+						cause.printStackTrace();
+						if (heartBeat != null) {
+							heartBeat.cancel(true);
+							heartBeat = null;
+						}
+						ctx.fireExceptionCaught(cause);
+					}					
+				}
+			}
+			//JavaBean类
+			public class RequestInfo implements Serializable {
+				private String ip ;
+				private HashMap<String, Object> cpuPercMap ;
+				private HashMap<String, Object> memoryMap;				
+				public String getIp() {
+					return ip;
+				}
+				public void setIp(String ip) {
+					this.ip = ip;
+				}
+				public HashMap<String, Object> getCpuPercMap() {
+					return cpuPercMap;
+				}
+				public void setCpuPercMap(HashMap<String, Object> cpuPercMap) {
+					this.cpuPercMap = cpuPercMap;
+				}
+				public HashMap<String, Object> getMemoryMap() {
+					return memoryMap;
+				}
+				public void setMemoryMap(HashMap<String, Object> memoryMap) {
+					this.memoryMap = memoryMap;
+				}								
+			}
+		8、基于Http协议实现上传/下载
+			Http协议的认识：超文本传输协议，是基于TCP协议之上的运用层协议，主要用于WEB开发；Netty下的Http也是异步非阻塞的，Http协议特点：简单（使用简单、在URL中携带必要参数即可）、
+			灵活（支持任意类型的数据对象）、无状态（对事务处理没有记忆能力、即想获取之前的信息必须重新请求）；构成：请求行、请求头、请求体组成；
+			请求方式：GET、POST、HEAD、PUT、DELETE、TRACE、CONNECT、OPTINS
+			响应码：
+				1XX：提示信息；2XX：成功；3XX：重定向；4XX:客户端错误；5XX:服务端错误；
+				常见状态码：200 OK、400 Bad Request（语法不对）、401 Unauthorized（未授权）、403 Forbidden（服务器拒绝）、404 Not Fund（找不到）、405 Method Not Allowed（请求方式不被允许）
+							500 Inernal Server Error（服务器内部错误）、503 Server Unavailable （服务当前不可用）；
+			
+		   
 ----------------------------------------------Java工作流技术篇---------------------------------------------------------------------------------------------------------
 			
 			
