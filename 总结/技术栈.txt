@@ -5584,13 +5584,119 @@
 		优先级：线程的优先级是一个整数，其取值范围是 1 （Thread.MIN_PRIORITY ） - 10 （Thread.MAX_PRIORITY ）
 		创建线程的方法[4种]：
 			通过继承 Thread 类本身，重写Run()方法，新建实例调用它的 start() 方法
-			通过实现 Runnable 接口，重写Run()方法，新建实例调用它的 start() 方法			
+			实例：
+			class ThreadDemo1 extends Thread {
+			   //关联关系，关联其他对象
+			   public void run() {
+					//业务逻辑
+			   }			  
+			}
+			//使用
+			new ThreadDemo1( "Thread-1").start();
+			通过实现 Runnable 接口，重写Run()方法，新建实例调用它的 start() 方法
+			实例：
+			class ThreadDemo2 implements Runnable  {
+			   //关联关系，关联其他对象
+			   public void run() {
+					//业务逻辑
+			   }			  
+			}
+			//使用
+			new ThreadDemo2( "Thread-2").start();
 			通过 Callable 和 Future 创建线程，实现Callable接口，重写 call() 方法，创建 Callable 实现类的实例，使用 FutureTask 类来包装 Callable 对象，新建Thread实例（传入FutureTask对象）调用它的 start() 方法，注意与实现Runable的区别：多了一个接收的结果。
+			案列说明：
+			如：public class TestCallable {
+					public static void main(String[] args) {
+						ThreadDemo td = new ThreadDemo();		
+						//1.执行 Callable 方式，需要 FutureTask 实现类的支持，用于接收运算结果。
+						FutureTask<Integer> result = new FutureTask<>(td);		
+						new Thread(result).start();		
+						//2.接收线程运算后的结果
+						try {
+							Integer sum = result.get();  //FutureTask 可用于闭锁
+							System.out.println(sum);
+							System.out.println("------------------------------------");
+						} catch (InterruptedException | ExecutionException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				class ThreadDemo implements Callable<Integer>{
+					@Override
+					public Integer call() throws Exception {
+						int sum = 0;		
+						for (int i = 0; i <= 100000; i++) {
+							sum += i;
+						}		
+						return sum;
+					}	
+				}	
 			通过线程池来创建
-		
+			案列说明：
+			public class TestThreadPool {				
+					public static void main(String[] args) throws Exception {
+						//1. 创建线程池，固定5个线程
+						ExecutorService pool = Executors.newFixedThreadPool(5);						
+						List<Future<Integer>> list = new ArrayList<>();						
+						for (int i = 0; i < 10; i++) {
+							Future<Integer> future = pool.submit(new Callable<Integer>(){
+								@Override
+								public Integer call() throws Exception {
+									int sum = 0;									
+									for (int i = 0; i <= 100; i++) {
+										sum += i;
+									}									
+									return sum;
+								}								
+							});
+							list.add(future);
+						}
+						//关闭线程池
+						pool.shutdown();						
+						for (Future<Integer> future : list) {
+							System.out.println(future.get());//查看结果
+						}																		
+						/*ThreadPoolDemo tpd = new ThreadPoolDemo();						
+						//2. 为线程池中的线程分配任务
+						for (int i = 0; i < 10; i++) {
+							pool.submit(tpd);
+						}						
+						//3. 关闭线程池
+						pool.shutdown();*/
+					}					
+				//	new Thread(tpd).start();
+				//	new Thread(tpd).start();
+				}
+				class ThreadPoolDemo implements Runnable{
+					private int i = 0;					
+					@Override
+					public void run() {
+						while(i <= 100){
+							System.out.println(Thread.currentThread().getName() + " : " + i++);
+						}
+					}					
+				}	
+				public class TestScheduledThreadPool {
+					public static void main(String[] args) throws Exception {
+						ScheduledExecutorService pool = Executors.newScheduledThreadPool(5);						
+						for (int i = 0; i < 5; i++) {
+							Future<Integer> result = pool.schedule(new Callable<Integer>(){
+								@Override
+								public Integer call() throws Exception {
+									int num = new Random().nextInt(100);//生成随机数
+									System.out.println(Thread.currentThread().getName() + " : " + num);
+									return num;
+								}								
+							}, 1, TimeUnit.SECONDS);							
+							System.out.println(result.get());
+						}
+						//关闭线程池
+						pool.shutdown();
+					}					
+				}			
 		关键类：Thread
 		接口：Runable
-		主要方法：start()，run()，sleep()，destory()，setName()，setPriority()，setDaemon(true)，yield()...
+		主要方法：start()，run()，sleep()，destory()，setName()，setPriority()，setDaemon(true)，yield()（暂停）...
 		关键字：synchronized，同步代码块，同步是一种高开销的操作，因此应该尽量减少同步的内容    
 		
 	二、JUC[java.utils.current]多线程高级JDK1.5以后版本
@@ -5618,7 +5724,7 @@
 						public static void main(String[] args) {
 							ThreadDemo td = new ThreadDemo();
 							new Thread(td).start();							
-							while(true){//JVM底层支持
+							while(true){//JVM底层支持优化
 								if(td.isFlag()){
 									System.out.println("------------------");
 									break;
@@ -5723,6 +5829,7 @@
 					}
 				}
 				class LatchDemo implements Runnable {
+					//利用UML类图的聚合关系
 					private CountDownLatch latch;
 					public LatchDemo(CountDownLatch latch) {
 						this.latch = latch;
@@ -5750,7 +5857,7 @@
 						new Thread(result).start();		
 						//2.接收线程运算后的结果
 						try {
-							Integer sum = result.get();  //FutureTask 可用于 闭锁
+							Integer sum = result.get();  //FutureTask 可用于闭锁
 							System.out.println(sum);
 							System.out.println("------------------------------------");
 						} catch (InterruptedException | ExecutionException e) {
@@ -5786,10 +5893,8 @@
 					private Lock lock = new ReentrantLock();
 					@Override
 					public void run() {
-						while(true){
-							
-							lock.lock(); //上锁
-							
+						while(true){							
+							lock.lock(); //上锁							
 							try{
 								if(tick > 0){
 									try {
@@ -5803,11 +5908,10 @@
 								lock.unlock(); //释放锁
 							}
 						}
-					}
-					
+					}					
 				}
-		“等待-唤醒”机制：经典的生成者-消费者案例，
-			方式一：使用synchronized关键字实现，（Object）核心方法：this.wait()[注：为避免存在虚假唤醒问题，需要将此方法放在while循环语句内]、this.notifyAll()
+		“等待（wait）-唤醒（notifyAll）”机制：经典的生成者-消费者（PC）案例
+			方式一：使用synchronized关键字实现，（Object）核心方法：this.wait()[注：为避免存在虚假唤醒问题，需要将此方法放在while循环语句内，JDK规定的]、this.notifyAll()
 			如：public class TestProductorAndConsumer {
 					public static void main(String[] args) {
 						Clerk clerk = new Clerk();						
@@ -5864,7 +5968,6 @@
 						}
 					}
 				}
-
 				//消费者
 				class Consumer implements Runnable{
 					private Clerk clerk;
