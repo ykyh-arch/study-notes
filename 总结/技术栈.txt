@@ -1,325 +1,324 @@
 ----------------------------------------------容器虚拟化技术Docker------------------------------------------------------- 
-一、容器虚拟化技术Docker
-	定义：解决了运行环境和配置问题软件容器，方便做持续集成并有助于整体发布的容器虚拟化技术。
-	特点:一次构建、随处运行，DevOps，内核虚拟化，依赖与宿主机内核（不同于传统的虚拟机技术）
-	基本组成：镜像、容器、仓库
-	docker安装：
-	docker启动：centos 6+ 命令：service docker start
-				centos 7+ 命令：systemctl start docker 
-	docker关闭重启：centos 7+ 命令：systemctl restart docker  systemctl stop docker systemctl enable docker //开机自启
-二、常用命令：
-	帮助命令：docker version/docker info/docker --help
-	镜像命令：docker images 
-			  docker search XXX镜像名，可选参数：
-			  docker pull XXX镜像名
-			  docker rmi -f XXX镜像名ID
-			  移除所有镜像：docker rmi -f $(docker images -qa)
-	容器命令：docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
-			   OPTIONS说明（常用）：有些是一个减号，有些是两个减号
-				--name="容器新名字": 为容器指定一个名称；
-				-d: 后台运行容器，并返回容器ID，也即启动守护式容器；
-				-i：以交互模式运行容器，通常与 -t 同时使用；
-				-t：为容器重新分配一个伪输入终端，通常与 -i 同时使用；
-				-P: 随机端口映射；
-				-p: 指定端口映射，有以下四种格式
-					  ip:hostPort:containerPort
-					  ip::containerPort
-					  hostPort:containerPort
-					  containerPort 
-			当前所有正在运行的容器：docker ps [OPTIONS] 
-									OPTIONS说明（常用）：
-									-a :列出当前所有正在运行的容器+历史上运行过的
-									-l :显示最近创建的容器。
-									-n：显示最近n个创建的容器。
-									-q :静默模式，只显示容器编号。
-									--no-trunc :不截断输出。
-			退出容器：容器停止退出exit
-					  容器不停止退出ctrl+P+Q
-			启动/停止/重启/强制停止容器：docker start/stop/restart/kill 容器ID或者容器名
-			删除已停止的容器：docker rm -f 容器ID 
-			删除所有容器：docker rm -f $(docker ps -a -q) 或docker ps -a -q | xargs docker rm
-			启动守护式容器：docker run -d 容器名
-			查看容器日志：docker logs -f -t --tail n 容器ID
-			查看容器内运行的进程：docker top 容器ID
-			查看容器内部细节：docker inspect 容器ID
-			进入正在运行的容器并以命令行交互：docker exec -it 容器ID bashShell
-											  重新进入docker attach 容器ID
-			从容器内拷贝文件到主机上：docker cp 容器ID:容器内路径 目的主机路径
-三、Docker镜像
-	镜像加速原理：bootfs(加载kernel) / rootfs(不同的操作系统发行版)			
-	分层的联合文件系统：最大的一个好处就是 - 共享资源
-	Docker镜像commit操作补充：docker commit -m=“提交的描述信息” -a=“作者” 容器ID 要创建的目标镜像名:[标签名]
-四、Docker容器数据卷
-	作用：容器间继承+共享数据、容器的持久化
-	卷的设计目的就是数据的持久化，完全独立于容器的生存周期，因此Docker不会在容器删除时删除其挂载的数据卷
-	特点：
-		1：数据卷可在容器之间共享或重用数据
-		2：卷中的更改可以直接生效
-		3：数据卷中的更改不会包含在镜像的更新中
-		4：数据卷的生命周期一直持续到没有容器使用它为止
-	直接命令添加：
-		docker run -it -v /宿主机绝对路径目录:/容器内目录[:ro] [--privileged=true] 镜像名
-	查看数据卷是否挂载成功
-		docker inspect 容器ID
-	容器和宿主机之间数据共享				  
-	容器停止退出后，宿主机修改后数据是否同步-同步				  
-	DockerFile添加-生成镜像：
-		使用方式：在Dockerfile中使用VOLUME指令来给镜像添加一个或多个数据卷，格式：VOLUME["/dataVolumeContainer1","/dataVolumeContainer2","/dataVolumeContainer3"]
-		构建：docker build -f Dockerfile路径 -t 新的镜像名
-	数据卷容器(容器间继承+传递共享数据)：
-		语法：--volumes-from，例如：docker run -it --name doc2 --volumes-from doc01 zzyy/centos
-五、DockerFile解析
-	定义：Dockerfile是用来构建Docker镜像的构建文件，是由一系列命令和参数构成的脚本。
-	构建三步骤：编写Dockerfile文件、docker build、docker run
-	关系：
-		Dockerfile面向开发，Docker镜像成为交付标准，Docker容器则涉及部署与运维，三者缺一不可，合力充当Docker体系的基石
-	保留字:
-六、Docker发布
-	aliyun镜像的使用：
-	登录阿里云Docker Registry：$ sudo docker login --username=ali域逸诚 registry.cn-hangzhou.aliyuncs.com
-	从Registry中拉取镜像：$ sudo docker pull registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]				  
-	将镜像推送到Registry：				  
-					$ sudo docker login --username=ali域逸诚 registry.cn-hangzhou.aliyuncs.com
-					$ sudo docker tag [ImageId] registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]
-					$ sudo docker push registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]  
+	一、容器虚拟化技术Docker
+		定义：解决了运行环境和配置问题软件容器，方便做持续集成并有助于整体发布的容器虚拟化技术。
+		特点:一次构建、随处运行，DevOps，内核虚拟化，依赖与宿主机内核（不同于传统的虚拟机技术）
+		基本组成：镜像、容器、仓库
+		docker安装：
+		docker启动：centos 6+ 命令：service docker start
+					centos 7+ 命令：systemctl start docker 
+		docker关闭重启：centos 7+ 命令：systemctl restart docker  systemctl stop docker systemctl enable docker //开机自启
+	二、常用命令：
+		帮助命令：docker version/docker info/docker --help
+		镜像命令：docker images 
+				  docker search XXX镜像名，可选参数：
+				  docker pull XXX镜像名
+				  docker rmi -f XXX镜像名ID
+				  移除所有镜像：docker rmi -f $(docker images -qa)
+		容器命令：docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+				   OPTIONS说明（常用）：有些是一个减号，有些是两个减号
+					--name="容器新名字": 为容器指定一个名称；
+					-d: 后台运行容器，并返回容器ID，也即启动守护式容器；
+					-i：以交互模式运行容器，通常与 -t 同时使用；
+					-t：为容器重新分配一个伪输入终端，通常与 -i 同时使用；
+					-P: 随机端口映射；
+					-p: 指定端口映射，有以下四种格式
+						  ip:hostPort:containerPort
+						  ip::containerPort
+						  hostPort:containerPort
+						  containerPort 
+				当前所有正在运行的容器：docker ps [OPTIONS] 
+										OPTIONS说明（常用）：
+										-a :列出当前所有正在运行的容器+历史上运行过的
+										-l :显示最近创建的容器。
+										-n：显示最近n个创建的容器。
+										-q :静默模式，只显示容器编号。
+										--no-trunc :不截断输出。
+				退出容器：容器停止退出exit
+						  容器不停止退出ctrl+P+Q
+				启动/停止/重启/强制停止容器：docker start/stop/restart/kill 容器ID或者容器名
+				删除已停止的容器：docker rm -f 容器ID 
+				删除所有容器：docker rm -f $(docker ps -a -q) 或docker ps -a -q | xargs docker rm
+				启动守护式容器：docker run -d 容器名
+				查看容器日志：docker logs -f -t --tail n 容器ID
+				查看容器内运行的进程：docker top 容器ID
+				查看容器内部细节：docker inspect 容器ID
+				进入正在运行的容器并以命令行交互：docker exec -it 容器ID bashShell
+												  重新进入docker attach 容器ID
+				从容器内拷贝文件到主机上：docker cp 容器ID:容器内路径 目的主机路径
+	三、Docker镜像
+		镜像加速原理：bootfs(加载kernel) / rootfs(不同的操作系统发行版)			
+		分层的联合文件系统：最大的一个好处就是 - 共享资源
+		Docker镜像commit操作补充：docker commit -m=“提交的描述信息” -a=“作者” 容器ID 要创建的目标镜像名:[标签名]
+	四、Docker容器数据卷
+		作用：容器间继承+共享数据、容器的持久化
+		卷的设计目的就是数据的持久化，完全独立于容器的生存周期，因此Docker不会在容器删除时删除其挂载的数据卷
+		特点：
+			1：数据卷可在容器之间共享或重用数据
+			2：卷中的更改可以直接生效
+			3：数据卷中的更改不会包含在镜像的更新中
+			4：数据卷的生命周期一直持续到没有容器使用它为止
+		直接命令添加：
+			docker run -it -v /宿主机绝对路径目录:/容器内目录[:ro] [--privileged=true] 镜像名
+		查看数据卷是否挂载成功
+			docker inspect 容器ID
+		容器和宿主机之间数据共享				  
+		容器停止退出后，宿主机修改后数据是否同步-同步				  
+		DockerFile添加-生成镜像：
+			使用方式：在Dockerfile中使用VOLUME指令来给镜像添加一个或多个数据卷，格式：VOLUME["/dataVolumeContainer1","/dataVolumeContainer2","/dataVolumeContainer3"]
+			构建：docker build -f Dockerfile路径 -t 新的镜像名
+		数据卷容器(容器间继承+传递共享数据)：
+			语法：--volumes-from，例如：docker run -it --name doc2 --volumes-from doc01 zzyy/centos
+	五、DockerFile解析
+		定义：Dockerfile是用来构建Docker镜像的构建文件，是由一系列命令和参数构成的脚本。
+		构建三步骤：编写Dockerfile文件、docker build、docker run
+		关系：
+			Dockerfile面向开发，Docker镜像成为交付标准，Docker容器则涉及部署与运维，三者缺一不可，合力充当Docker体系的基石
+		保留字:
+	六、Docker发布
+		aliyun镜像的使用：
+		登录阿里云Docker Registry：$ sudo docker login --username=ali域逸诚 registry.cn-hangzhou.aliyuncs.com
+		从Registry中拉取镜像：$ sudo docker pull registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]				  
+		将镜像推送到Registry：				  
+						$ sudo docker login --username=ali域逸诚 registry.cn-hangzhou.aliyuncs.com
+						$ sudo docker tag [ImageId] registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]
+						$ sudo docker push registry.cn-hangzhou.aliyuncs.com/ali_yuyicheng/redis_test:[镜像版本号]  
 					
 ----------------------------------------------文档数据结构MongoDB技术篇-------------------------------------------------------					  
-一、npm（Node Package Manager 包管理器）工具的使用
-	- 通过npm可以对node中的包进行上传、下载、搜索等操作
-		- npm会在安装完node以后，自动安装
-		- npm的常用指令
-			npm -v 查看npm的版本
-			npm version 查看所有模块的版本
-			npm init 初始化项目-创建package.json
-			npm i/install 包名 安装指定的包
-			npm i/install 包名 --save 安装指定的包并添加依赖
-			npm i/install 包名 -g 全局安装（一般都是一些工具）
-			npm i/install 安装当前项目所依赖的包
-			npm s/search 包名 搜索包	
-			npm r/remove 包名 删除一个包
-二、MongoDB	
-	定义：为快速开发WEB应用而设计的数据库，面向文档，类似JSON数据(BSON),注意：MongoDB数据库使用的是JavaScript进行操作的，在MongoDB含有一个对ES标准实现的引擎，
-		在MongoDB中所有ES中的语法中都可以使用
-	启动：
-		- 打开cmd命令行窗口
-			- 输入 mongod 启动mongodb服务器
-			- 32位注意：
-				启动服务器时，需要输入如下内容
-					mongod --storageEngine=mmapv1
-					mongod --dbpath 数据库路径 --port 端口
-			
-		- 再打开一个cmd窗口
-			- 输入 mongo 连接mongodb ，出现 >				  
-					  
-	- 基本概念
-		数据库（database）- 类比SQL数据库、集合（collection）- 类比SQL表、文档（document）- 类比SQL表记录
-		- 在MongoDB中，数据库和集合都不需要手动创建，当我们创建文档时，如果文档所在的集合或数据库不存在会自动创建数据库和集合		
-		
-	- 基本指令
-		show dbs/databases 
-			- 显示当前的所有数据库
-		use 数据库名
-			- 进入到指定的数据库中
-		db
-			- db表示的是当前所处的数据库
-		show collections
-			- 显示数据库中所有的集合
-			
-	- 数据库的CRUD（增删改查）的操作
-		  
-		- 向数据库中插入文档
-		- db.collection.insert()
-			- insert()可以向集合中插入一个或多个文档
-		- db.collection.insertOne()
-			- 向集合中插入一个文档
-		- db.collection.insertMany()
-			- 向集合中插入多个文档
-		如：db.stus.insert([
-				{name:"沙和尚",age:38,gender:"男"},
-				{name:"白骨精",age:16,gender:"女"},
-				{name:"蜘蛛精",age:14,gender:"女"}
-			]);
-			db.stus.find({}); //查询所有文档
+	一、npm（Node Package Manager 包管理器）工具的使用
+		- 通过npm可以对node中的包进行上传、下载、搜索等操作
+			- npm会在安装完node以后，自动安装
+			- npm的常用指令
+				npm -v 查看npm的版本
+				npm version 查看所有模块的版本
+				npm init 初始化项目-创建package.json
+				npm i/install 包名 安装指定的包
+				npm i/install 包名 --save 安装指定的包并添加依赖
+				npm i/install 包名 -g 全局安装（一般都是一些工具）
+				npm i/install 安装当前项目所依赖的包
+				npm s/search 包名 搜索包	
+				npm r/remove 包名 删除一个包
+	二、MongoDB	
+		定义：为快速开发WEB应用而设计的数据库，面向文档，类似JSON数据(BSON),注意：MongoDB数据库使用的是JavaScript进行操作的，在MongoDB含有一个对ES标准实现的引擎，
+			在MongoDB中所有ES中的语法中都可以使用
+		启动：
+			- 打开cmd命令行窗口
+				- 输入 mongod 启动mongodb服务器
+				- 32位注意：
+					启动服务器时，需要输入如下内容
+						mongod --storageEngine=mmapv1
+						mongod --dbpath 数据库路径 --port 端口
 				
-		- 查询数据库中的文档
-			- db.collection.find()
-				- 可以根据指定条件从集合中查询所有符合条件的文档
-				- 返回的是一个数组
-			- db.collection.findOne()
-				- 查询第一个符合条件的文档
-				- 返回的是一个对象
-			- db.collection.find().count()
-				- 查询符合条件的文档的数量
-			查询条件：
-				-$gt $eq $lt $lte limit() $or
-				如：db.emp.find({sal:{$lt:2000 , $gt:1000}}).limit(5);
-					db.emp.find({$or:[{sal:{$lt:1000}} , {sal:{$gt:2500}}]});
-			分页：
-			skip()用于跳过指定数量的数据，MongoDB会自动调整skip和limit的位置
-			如：db.numbers.find().skip(10).limit(10); -第11条到20条数据	
-			如：db.stus.find({age:16 , name:"白骨精"});
+			- 再打开一个cmd窗口
+				- 输入 mongo 连接mongodb ，出现 >				  
+						  
+		- 基本概念
+			数据库（database）- 类比SQL数据库、集合（collection）- 类比SQL表、文档（document）- 类比SQL表记录
+			- 在MongoDB中，数据库和集合都不需要手动创建，当我们创建文档时，如果文档所在的集合或数据库不存在会自动创建数据库和集合		
+			
+		- 基本指令
+			show dbs/databases 
+				- 显示当前的所有数据库
+			use 数据库名
+				- 进入到指定的数据库中
+			db
+				- db表示的是当前所处的数据库
+			show collections
+				- 显示数据库中所有的集合
 				
-		- 修改数据库中的文档
-			- db.collection.update()
-				- 可以修改、替换集合中的一个或多个文档（默认修改一个）
-				注意：  - update()默认情况下会使用新对象来替换旧的对象
-						- 如果需要修改指定的属性，而不是替换需要使用“修改操作符”来完成修改
-							$set 可以用来修改文档中的指定属性
-							$unset 可以用来删除文档的指定属性
-							内嵌文档中：
-							$push 用于向数组中添加一个新的元素
-							$addToSet 向数组中添加一个新元素 ，如果数组中已经存在了该元素，则不会添加
-							$inc 增加到	，如:db.emp.updateMany({sal:{$lte:1000}} , {$inc:{sal:400}});						
-						- update()默认只会修改一个
-			- db.collection.updateOne()
-				- 修改集合中的一个文档
-			- db.collection.updateMany()
-				- 修改集合中的多个文档
-			- db.collection.replaceOne()
-				- 替换集合中的一个文档
-			如：db.stus.update(
-				{"_id" : ObjectId("59c219689410bc1dbecc0709")},
-				{$set:{
-					gender:"男",
-					address:"流沙河"
-				}}    
-			)
-			又如：db.stus.update(
-					{"name" : "猪八戒"},
+		- 数据库的CRUD（增删改查）的操作
+			  
+			- 向数据库中插入文档
+			- db.collection.insert()
+				- insert()可以向集合中插入一个或多个文档
+			- db.collection.insertOne()
+				- 向集合中插入一个文档
+			- db.collection.insertMany()
+				- 向集合中插入多个文档
+			如：db.stus.insert([
+					{name:"沙和尚",age:38,gender:"男"},
+					{name:"白骨精",age:16,gender:"女"},
+					{name:"蜘蛛精",age:14,gender:"女"}
+				]);
+				db.stus.find({}); //查询所有文档
 					
-					{
-						$set:{
-						address:"呵呵呵"
-						}
-					}  ,
-					{
-						multi:true
-					}    
+			- 查询数据库中的文档
+				- db.collection.find()
+					- 可以根据指定条件从集合中查询所有符合条件的文档
+					- 返回的是一个数组
+				- db.collection.findOne()
+					- 查询第一个符合条件的文档
+					- 返回的是一个对象
+				- db.collection.find().count()
+					- 查询符合条件的文档的数量
+				查询条件：
+					-$gt $eq $lt $lte limit() $or
+					如：db.emp.find({sal:{$lt:2000 , $gt:1000}}).limit(5);
+						db.emp.find({$or:[{sal:{$lt:1000}} , {sal:{$gt:2500}}]});
+				分页：
+				skip()用于跳过指定数量的数据，MongoDB会自动调整skip和limit的位置
+				如：db.numbers.find().skip(10).limit(10); -第11条到20条数据	
+				如：db.stus.find({age:16 , name:"白骨精"});
+					
+			- 修改数据库中的文档
+				- db.collection.update()
+					- 可以修改、替换集合中的一个或多个文档（默认修改一个）
+					注意：  - update()默认情况下会使用新对象来替换旧的对象
+							- 如果需要修改指定的属性，而不是替换需要使用“修改操作符”来完成修改
+								$set 可以用来修改文档中的指定属性
+								$unset 可以用来删除文档的指定属性
+								内嵌文档中：
+								$push 用于向数组中添加一个新的元素
+								$addToSet 向数组中添加一个新元素 ，如果数组中已经存在了该元素，则不会添加
+								$inc 增加到	，如:db.emp.updateMany({sal:{$lte:1000}} , {$inc:{sal:400}});						
+							- update()默认只会修改一个
+				- db.collection.updateOne()
+					- 修改集合中的一个文档
+				- db.collection.updateMany()
+					- 修改集合中的多个文档
+				- db.collection.replaceOne()
+					- 替换集合中的一个文档
+				如：db.stus.update(
+					{"_id" : ObjectId("59c219689410bc1dbecc0709")},
+					{$set:{
+						gender:"男",
+						address:"流沙河"
+					}}    
 				)
-				
-		- 删除集合中的文档
-			- db.collection.remove()
-				- 删除集合中的一个或多个文档（默认删除多个），可以第二个参数传递一个true，则只会删除一个
-			- db.collection.deleteOne()
-				- 删除集合中的一个文档
-			- db.collection.deleteMany()
-				- 删除集合中的多个文档
-			- 清空一个集合
-				db.collection.remove({})
-			- 删除一个集合
-				db.collection.drop()
-			- 删除一个数据库
-				db.dropDatabase()	
-			注意：一般数据库数据中添加一个字段，来表示数据是否被删除
-				如：db.stus.insert([
-					{
-						name:"zbj",
-						isDel:0
-						},
+				又如：db.stus.update(
+						{"name" : "猪八戒"},
+						
 						{
-						name:"shs",
-						isDel:0
-						},
-					{
-					name:"ts",
-						isDel:0
-					}
-
-				]);
-				db.stus.updateOne({name:"ts"},{$set:{isDel:1}});	
-				db.stus.find({isDel:0});
-	文档关系：一对一（one to one），内嵌文档的形式
-			  如：db.wifeAndHusband.insert([
-					{
-						name:"黄蓉",
-						husband:{
-							name:"郭靖"
+							$set:{
+							address:"呵呵呵"
+							}
+						}  ,
+						{
+							multi:true
+						}    
+					)
+					
+			- 删除集合中的文档
+				- db.collection.remove()
+					- 删除集合中的一个或多个文档（默认删除多个），可以第二个参数传递一个true，则只会删除一个
+				- db.collection.deleteOne()
+					- 删除集合中的一个文档
+				- db.collection.deleteMany()
+					- 删除集合中的多个文档
+				- 清空一个集合
+					db.collection.remove({})
+				- 删除一个集合
+					db.collection.drop()
+				- 删除一个数据库
+					db.dropDatabase()	
+				注意：一般数据库数据中添加一个字段，来表示数据是否被删除
+					如：db.stus.insert([
+						{
+							name:"zbj",
+							isDel:0
+							},
+							{
+							name:"shs",
+							isDel:0
+							},
+						{
+						name:"ts",
+							isDel:0
 						}
-					},{
-						name:"潘金莲",
-						husband:{
-							name:"武大郎"
-						}
-					}
 
-				]);
-			  一对多（one to many）/多对一(many to one)，也可以用内嵌文档的形式
-			  多对多(many to many) 用两个集合表示
-	排序与投影：
-			查询文档时，默认情况是按照_id的值进行排列（升序）
-			sort()可以用来指定文档的排序的规则,sort()需要传递一个对象来指定排序规则 1表示升序 -1表示降序
-			limit skip sort 可以以任意的顺序进行调用
-			如：db.emp.find({}).sort({sal:1,empno:-1});
-			在查询时，可以在第二个参数的位置来设置查询结果的投影，0不显示；1：显示
-			如：db.emp.find({},{ename:1 , _id:0 , sal:1});
-	分组查询：
-		分组分片查询，aggregate的使用
-		//源数据
-		db.items.insert( [
-		  {
-		   "quantity" : 2,
-		   "price" : 5.0,
-		   "pnumber" : "p003",
-		  }...,{
-		   "quantity" : 5,
-		   "price" : 10.0,
-		   "pnumber" : "p002"
-		  }
-		])    
-		//$group语法:{ $group: { _id: <expression>, <field1>: { <accumulator1> : <expression1> }, ... } }
-		/*
-		 *_id 分组的key,expression分组的字段，如果_id为null 相当于SQL:select count(*) from table
-		 *field1 分组后展示的字段
-		 *accumulator1 分组管道函数，如：$sum\$avg\$min\$max\$push\$addToSet\$first\$last
-		 *expression1  分组显示数据相关
-		 */	
-		//查询总数,相当于SQL:select count(1) as count from items
-		db.items.count();
-		db.items.aggregate([{$group:{_id:null,count:{$sum:1}}}])
-		//统计数量，相当于SQL:select sum(quantity) as total  from  items
-		db.items.aggregate([{$group:{_id:null,total:{$sum:"$quantity"}}}]);
-		//按产品类型来进行分组，然后在统计卖出的数量是多少，相当于SQL：select sum(quantity) as total from  items  group by pnumber
-		db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}}])
-		//通过相同的产品类型来进行分组，然后查询相同产品类型卖出最多的订单详情，相当于SQL:select max(quantity) as quantity from  items  group by pnumber
-		db.items.aggregate([{$group:{_id:"$pnumber",max:{$max:"$quantity"}}}])
-		db.items.aggregate([{$group:{_id:"$pnumber",min:{$min:"$quantity"}}}])
-		//通过相同的产品类型来进行分组，统计各个产品数量，然后获取最大的数量，相当于SQL:select max(t.total) from (select sum(quantity) as total from  items  group by pnumber) t
-		db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}}])
-		db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}},{$group:{_id:null,max:{$max:"$total"}}}])
-		//通过相同的产品类型来进行分组，然后查询每个订单详情相同产品类型卖出的平均价格，相当于SQL:select avg(price) as price from  items  group by pnumber
-		db.items.aggregate([{$group:{_id:"$pnumber",price:{$avg:"$price"}}}])
-		//通过相同的产品类型来进行分组，然后查询每个相同产品卖出的数量放在数组里面,，注意值数组中的值不要超过16M
-		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}}])
-		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:{quantity:"$quantity",price:"$price"}}}}])
-		//表达式的值添加到一个数组中（无重复值），这个值不要超过16M
-		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$addToSet:"$quantity"}}}])
-		//$first：返回每组第一个文档，如果有排序，按照排序，如果没有按照默认的存储的顺序的第一个文档。
-		//$last：返回每组最后一个文档，如果有排序，按照排序，如果没有按照默认的存储的顺序的最后个文档。
-		db.items.aggregate([{$group:{_id:"$pnumber",quantityFrist:{$first:"$quantity"}}}])
-		//$project显示或不显示字段，相当于SQL:select
-		db.items.aggregate([{$group:{_id:null,count:{$sum:1}}},{$project:{"_id":0,"count":1}}])
-		//通过滤订单中，想知道卖出的数量大于8的产品有哪些产品，相当于SQL:select sum(quantity) as total from  items  group by pnumber having total>8   
-		db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}},{$match:{total:{$gt:8}}}])
-		//$match如果是放在$group之前就是当做where来使用，我们只统计pnumber =p001 产品卖出了多少个  select sum(quantity) as total from  items where pnumber='p001'
-		db.items.aggregate([{$match:{"pnumber":"p001"}},{$group:{_id:null,total:{$sum:"$quantity"}}}])
-		//$skip、$limit使用顺序不同，结果也不同，注意：$limit、$skip、$sort、$match可以使用在阶段管道，如果使用在$group之前可以过滤掉一些数据，提高性能
-		db.items.aggregate([{ $skip: 2 },{ $limit: 4 },{ $sort: { quantity : -1 }}])
-		db.items.aggregate([{ $limit: 4 },{ $skip: 2 }])
-		//将文档中的某一个数组类型字段拆分成多条，每条包含数组中的一个值
-		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}}])
-		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}},{$unwind:"$quantitys"}])
-		//$out必须为pipeline最后一个阶段管道，因为是将最后计算结果写入到指定的collection中
-		db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}},{$unwind:"$quantitys"},{$project:{"_id":0,"quantitys":1}},{$out:"result"}])
-		db.result.find()
-	模糊查询：$options - 可选参数				  
-		如：db.students.find({"user_name": {$regex: /尚/, $options:'i'}}); 
-			db.students.find({"user_name": {$regex:/尚.*/i}}); 
-			db.students.find({user_name:{$in:[/^孙尚香/i,/^胡歌/]}});
-			db.students.find({user_name:{$regex:/^孙尚香/i,$nin:['孙尚香II']}});
-			db.students.find({user_name:{$regex:/香/,$options:"si"}});
+					]);
+					db.stus.updateOne({name:"ts"},{$set:{isDel:1}});	
+					db.stus.find({isDel:0});
+		文档关系：一对一（one to one），内嵌文档的形式
+				  如：db.wifeAndHusband.insert([
+						{
+							name:"黄蓉",
+							husband:{
+								name:"郭靖"
+							}
+						},{
+							name:"潘金莲",
+							husband:{
+								name:"武大郎"
+							}
+						}
+
+					]);
+				  一对多（one to many）/多对一(many to one)，也可以用内嵌文档的形式
+				  多对多(many to many) 用两个集合表示
+		排序与投影：
+				查询文档时，默认情况是按照_id的值进行排列（升序）
+				sort()可以用来指定文档的排序的规则,sort()需要传递一个对象来指定排序规则 1表示升序 -1表示降序
+				limit skip sort 可以以任意的顺序进行调用
+				如：db.emp.find({}).sort({sal:1,empno:-1});
+				在查询时，可以在第二个参数的位置来设置查询结果的投影，0不显示；1：显示
+				如：db.emp.find({},{ename:1 , _id:0 , sal:1});
+		分组查询：
+			分组分片查询，aggregate的使用
+			//源数据
+			db.items.insert( [
+			  {
+			   "quantity" : 2,
+			   "price" : 5.0,
+			   "pnumber" : "p003",
+			  }...,{
+			   "quantity" : 5,
+			   "price" : 10.0,
+			   "pnumber" : "p002"
+			  }
+			])    
+			//$group语法:{ $group: { _id: <expression>, <field1>: { <accumulator1> : <expression1> }, ... } }
+			/*
+			 *_id 分组的key,expression分组的字段，如果_id为null 相当于SQL:select count(*) from table
+			 *field1 分组后展示的字段
+			 *accumulator1 分组管道函数，如：$sum\$avg\$min\$max\$push\$addToSet\$first\$last
+			 *expression1  分组显示数据相关
+			 */	
+			//查询总数,相当于SQL:select count(1) as count from items
+			db.items.count();
+			db.items.aggregate([{$group:{_id:null,count:{$sum:1}}}])
+			//统计数量，相当于SQL:select sum(quantity) as total  from  items
+			db.items.aggregate([{$group:{_id:null,total:{$sum:"$quantity"}}}]);
+			//按产品类型来进行分组，然后在统计卖出的数量是多少，相当于SQL：select sum(quantity) as total from  items  group by pnumber
+			db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}}])
+			//通过相同的产品类型来进行分组，然后查询相同产品类型卖出最多的订单详情，相当于SQL:select max(quantity) as quantity from  items  group by pnumber
+			db.items.aggregate([{$group:{_id:"$pnumber",max:{$max:"$quantity"}}}])
+			db.items.aggregate([{$group:{_id:"$pnumber",min:{$min:"$quantity"}}}])
+			//通过相同的产品类型来进行分组，统计各个产品数量，然后获取最大的数量，相当于SQL:select max(t.total) from (select sum(quantity) as total from  items  group by pnumber) t
+			db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}}])
+			db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}},{$group:{_id:null,max:{$max:"$total"}}}])
+			//通过相同的产品类型来进行分组，然后查询每个订单详情相同产品类型卖出的平均价格，相当于SQL:select avg(price) as price from  items  group by pnumber
+			db.items.aggregate([{$group:{_id:"$pnumber",price:{$avg:"$price"}}}])
+			//通过相同的产品类型来进行分组，然后查询每个相同产品卖出的数量放在数组里面,，注意值数组中的值不要超过16M
+			db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}}])
+			db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:{quantity:"$quantity",price:"$price"}}}}])
+			//表达式的值添加到一个数组中（无重复值），这个值不要超过16M
+			db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$addToSet:"$quantity"}}}])
+			//$first：返回每组第一个文档，如果有排序，按照排序，如果没有按照默认的存储的顺序的第一个文档。
+			//$last：返回每组最后一个文档，如果有排序，按照排序，如果没有按照默认的存储的顺序的最后个文档。
+			db.items.aggregate([{$group:{_id:"$pnumber",quantityFrist:{$first:"$quantity"}}}])
+			//$project显示或不显示字段，相当于SQL:select
+			db.items.aggregate([{$group:{_id:null,count:{$sum:1}}},{$project:{"_id":0,"count":1}}])
+			//通过滤订单中，想知道卖出的数量大于8的产品有哪些产品，相当于SQL:select sum(quantity) as total from  items  group by pnumber having total>8   
+			db.items.aggregate([{$group:{_id:"$pnumber",total:{$sum:"$quantity"}}},{$match:{total:{$gt:8}}}])
+			//$match如果是放在$group之前就是当做where来使用，我们只统计pnumber =p001 产品卖出了多少个  select sum(quantity) as total from  items where pnumber='p001'
+			db.items.aggregate([{$match:{"pnumber":"p001"}},{$group:{_id:null,total:{$sum:"$quantity"}}}])
+			//$skip、$limit使用顺序不同，结果也不同，注意：$limit、$skip、$sort、$match可以使用在阶段管道，如果使用在$group之前可以过滤掉一些数据，提高性能
+			db.items.aggregate([{ $skip: 2 },{ $limit: 4 },{ $sort: { quantity : -1 }}])
+			db.items.aggregate([{ $limit: 4 },{ $skip: 2 }])
+			//将文档中的某一个数组类型字段拆分成多条，每条包含数组中的一个值
+			db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}}])
+			db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}},{$unwind:"$quantitys"}])
+			//$out必须为pipeline最后一个阶段管道，因为是将最后计算结果写入到指定的collection中
+			db.items.aggregate([{$group:{_id:"$pnumber",quantitys:{$push:"$quantity"}}},{$unwind:"$quantitys"},{$project:{"_id":0,"quantitys":1}},{$out:"result"}])
+			db.result.find()
+		模糊查询：$options - 可选参数				  
+			如：db.students.find({"user_name": {$regex: /尚/, $options:'i'}}); 
+				db.students.find({"user_name": {$regex:/尚.*/i}}); 
+				db.students.find({user_name:{$in:[/^孙尚香/i,/^胡歌/]}});
+				db.students.find({user_name:{$regex:/^孙尚香/i,$nin:['孙尚香II']}});
+				db.students.find({user_name:{$regex:/香/,$options:"si"}});
 	
 ----------------------------------------------Spring boot 技术篇---------------------------------------------------------	
-
 	一、基本概念：
 			特点：开箱即用，自动配置
 			配置文件：YAML 的基本使用-支持文档块
@@ -10468,7 +10467,7 @@
 					this.memoryMap = memoryMap;
 				}								
 			}
-		8、基于Http协议实现上传/下载
+		8、基于Http协议实现上传/下载（了解即可，实现文件的上传与下载可以使用专业的框架：如FastDfs、HDFs）
 			Http协议的认识：超文本传输协议，是基于TCP协议之上的运用层协议，主要用于WEB开发；Netty下的Http也是异步非阻塞的，Http协议特点：简单（使用简单、在URL中携带必要参数即可）、
 			灵活（支持任意类型的数据对象）、无状态（对事务处理没有记忆能力、即想获取之前的信息必须重新请求）；构成：请求行、请求头、请求体组成；
 			请求方式：GET、POST、HEAD、PUT、DELETE、TRACE、CONNECT、OPTINS
@@ -10476,10 +10475,356 @@
 				1XX：提示信息；2XX：成功；3XX：重定向；4XX:客户端错误；5XX:服务端错误；
 				常见状态码：200 OK、400 Bad Request（语法不对）、401 Unauthorized（未授权）、403 Forbidden（服务器拒绝）、404 Not Fund（找不到）、405 Method Not Allowed（请求方式不被允许）
 							500 Inernal Server Error（服务器内部错误）、503 Server Unavailable （服务当前不可用）；
-			
-		   
-----------------------------------------------Java工作流技术篇---------------------------------------------------------------------------------------------------------
-			
+			案例分析：（Netty实现文件上传核心利用的是chuck分片断点续传技术）		
+			#与Http的整合例子
+			public final class HttpHelloWorldServer {
+				  //安全验证
+				  static final boolean SSL = System.getProperty("ssl") != null;
+				  static final int PORT = Integer.parseInt(System.getProperty("port", SSL? "8443" : "8080"));			  
+				  public static void main(String[] args) throws Exception {
+					  //配置SSL
+					  final SslContext sslCtx;
+					  if (SSL) {
+						  SelfSignedCertificate ssc = new SelfSignedCertificate();
+						  sslCtx = SslContext.newServerContext(ssc.certificate(), ssc.privateKey());
+					  } else {
+						  sslCtx = null;
+					  }			  
+					  //配置服务端
+					  EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+					  EventLoopGroup workerGroup = new NioEventLoopGroup();
+					  try {
+						  ServerBootstrap b = new ServerBootstrap();
+						  b.option(ChannelOption.SO_BACKLOG, 1024);
+						  b.group(bossGroup, workerGroup)
+						   .channel(NioServerSocketChannel.class)
+						   .handler(new LoggingHandler(LogLevel.INFO))
+						   .childHandler(new HttpHelloWorldServerInitializer(sslCtx));			  
+						  Channel ch = b.bind(PORT).sync().channel();			  
+						  System.err.println("Open your web browser and navigate to " +
+								  (SSL? "https" : "http") + "://127.0.0.1:" + PORT + '/');			  
+						  ch.closeFuture().sync();
+					  } finally {
+						  bossGroup.shutdownGracefully();
+						  workerGroup.shutdownGracefully();
+					  }
+				  }				  				  
+			}
+			#HttpHelloWorldServerInitializer
+			public class HttpHelloWorldServerInitializer extends ChannelInitializer<SocketChannel> {			  
+				  private final SslContext sslCtx;			  
+				  public HttpHelloWorldServerInitializer(SslContext sslCtx) {
+					 this.sslCtx = sslCtx;
+				  }			  
+				  @Override
+				  public void initChannel(SocketChannel ch) {
+					  ChannelPipeline p = ch.pipeline();
+					  if (sslCtx != null) {
+						  p.addLast(sslCtx.newHandler(ch.alloc()));
+					  }
+					  //管道链
+					  p.addLast(new HttpServerCodec());
+					  p.addLast(new HttpHelloWorldServerHandler());
+				  }
+			  }
+			  public class HttpHelloWorldServerHandler extends ChannelHandlerAdapter {
+				  //连接OK，响应标识
+				  private static final byte[] CONTENT = { 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd' };			  
+				  @Override
+				  public void channelReadComplete(ChannelHandlerContext ctx) {
+					  ctx.flush();
+				  }			  
+				  @Override
+				  public void channelRead(ChannelHandlerContext ctx, Object msg) {
+					  if (msg instanceof HttpRequest) {
+						  HttpRequest req = (HttpRequest) msg;			  
+						  if (HttpHeaderUtil.is100ContinueExpected(req)) {
+							  ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
+						  }
+						  boolean keepAlive = HttpHeaderUtil.isKeepAlive(req);
+						  FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(CONTENT));
+						  response.headers().set(CONTENT_TYPE, "text/plain");
+						  response.headers().setInt(CONTENT_LENGTH, response.content().readableBytes());			  
+						  if (!keepAlive) {
+							  ctx.write(response).addListener(ChannelFutureListener.CLOSE);
+						  } else {
+							  response.headers().set(CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+							  ctx.write(response);
+						  }
+					  }
+				  }			  
+				  @Override
+				  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+					  cause.printStackTrace();
+					  ctx.close();
+				  }
+			  }
+			  #注：浏览器访问:127.0.0.1:8080，页面出现Hello Word，说明netty与http配置成功！
+			  #FileList列表
+			  public class HttpFileServer {
+				private static final String DEFAULT_URL = "/sources/";
+				public void run(final int port, final String url) throws Exception {
+					EventLoopGroup bossGroup = new NioEventLoopGroup();
+					EventLoopGroup workerGroup = new NioEventLoopGroup();
+					try {
+						ServerBootstrap b = new ServerBootstrap();
+						b.group(bossGroup, workerGroup)
+							.channel(NioServerSocketChannel.class)
+							.childHandler(new ChannelInitializer<SocketChannel>() {
+							@Override
+							protected void initChannel(SocketChannel ch)
+								throws Exception {
+								// 加入http的解码器
+								ch.pipeline().addLast("http-decoder", new HttpRequestDecoder());
+								// 加入ObjectAggregator解码器，作用是他会把多个消息转换为单一的FullHttpRequest或者FullHttpResponse
+								ch.pipeline().addLast("http-aggregator", new HttpObjectAggregator(65536));
+								// 加入http的编码器
+								ch.pipeline().addLast("http-encoder", new HttpResponseEncoder());
+								// 加入chunked 主要作用是支持异步发送的码流（大文件传输），但不专用过多的内存，防止java内存溢出
+								ch.pipeline().addLast("http-chunked", new ChunkedWriteHandler());
+								// 加入自定义处理文件服务器的业务逻辑handler
+								ch.pipeline().addLast("fileServerHandler",new HttpFileServerHandler(url));									
+							}
+							});
+						ChannelFuture future = b.bind("192.168.1.200", port).sync();
+						System.out.println("HTTP文件目录服务器启动，网址是 : " + "http://192.168.1.200:"  + port + url);
+						future.channel().closeFuture().sync();
+					} finally {
+						bossGroup.shutdownGracefully();
+						workerGroup.shutdownGracefully();
+					}
+				}
+				public static void main(String[] args) throws Exception {
+					int port = 8765;
+					String url = DEFAULT_URL;
+					new HttpFileServer().run(port, url);
+				}
+			}
+			public class HttpFileServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {				
+				private final String url;
+				public HttpFileServerHandler(String url) {
+					this.url = url;
+				}
+				@Override
+				public void messageReceived(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+					//对请求的解码结果进行判断：
+					if (!request.decoderResult().isSuccess()) {
+						// 400
+						sendError(ctx, BAD_REQUEST);
+						return;
+					}
+					//对请求方式进行判断：如果不是get方式（如post方式）则返回异常
+					if (request.method() != GET) {
+						// 405
+						sendError(ctx, METHOD_NOT_ALLOWED);
+						return;
+					}
+					//获取请求uri路径
+					final String uri = request.uri();
+					//对url进行分析，返回本地系统
+					final String path = sanitizeUri(uri);
+					//如果 路径构造不合法，则path为null
+					if (path == null) {
+						//403
+						sendError(ctx, FORBIDDEN);
+						return;
+					}
+					// 创建file对象
+					File file = new File(path);
+					// 判断文件是否为隐藏或者不存在
+					if (file.isHidden() || !file.exists()) {
+						// 404 
+						sendError(ctx, NOT_FOUND);
+						return;
+					}
+					// 如果为文件夹
+					if (file.isDirectory()) {
+						if (uri.endsWith("/")) {
+							//如果以正常"/"结束 说明是访问的一个文件目录：则进行展示文件列表（web服务端则可以跳转一个Controller，遍历文件并跳转到一个页面）
+							sendListing(ctx, file);
+						} else {
+							//如果非"/"结束 则重定向，补全"/" 再次请求
+							sendRedirect(ctx, uri + '/');
+						}
+						return;
+					}
+					// 如果所创建的file对象不是文件类型
+					if (!file.isFile()) {
+						// 403
+						sendError(ctx, FORBIDDEN);
+						return;
+					}					
+					//随机文件读写类
+					RandomAccessFile randomAccessFile = null;
+					try {
+						randomAccessFile = new RandomAccessFile(file, "r");// 以只读的方式打开文件
+					} catch (FileNotFoundException fnfe) {
+						// 404
+						sendError(ctx, NOT_FOUND);
+						return;
+					}					
+					//获取文件长度
+					long fileLength = randomAccessFile.length();
+					//建立响应对象
+					HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+					//设置响应信息
+					HttpHeaderUtil.setContentLength(response, fileLength);
+					//设置响应头
+					setContentTypeHeader(response, file);
+					//如果一直保持连接则设置响应头信息为：HttpHeaders.Values.KEEP_ALIVE
+					if (HttpHeaderUtil.isKeepAlive(request)) {
+						response.headers().set(CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+					}
+					//进行写出
+					ctx.write(response);					
+					//构造发送文件线程，将文件写入到Chunked缓冲区中
+					ChannelFuture sendFileFuture;
+					//写出ChunkedFile
+					sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
+					//添加传输监听，文件上传进度监听
+					sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
+						@Override
+						public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
+							if (total < 0) { // total unknown
+								System.err.println("Transfer progress: " + progress);
+							} else {
+								System.err.println("Transfer progress: " + progress + " / " + total);
+							}
+						}
+						@Override
+						public void operationComplete(ChannelProgressiveFuture future) throws Exception {
+							System.out.println("Transfer complete.");
+						}
+					});					
+					//如果使用Chunked编码，最后则需要发送一个编码结束的看空消息体，进行标记，表示所有消息体已经成功发送完成。
+					ChannelFuture lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+					//如果当前连接请求非Keep-Alive ，最后一包消息发送完成后 服务器主动关闭连接
+					if (!HttpHeaderUtil.isKeepAlive(request)) {
+						lastContentFuture.addListener(ChannelFutureListener.CLOSE);
+					}
+				}
+				@Override
+				public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+					if (ctx.channel().isActive()) {
+						sendError(ctx, INTERNAL_SERVER_ERROR);
+						ctx.close();
+					}
+				}
+				//非法URI正则
+				private static final Pattern INSECURE_URI = Pattern.compile(".*[<>&\"].*");
+				/**
+				 * <B>方法名称：</B>解析URI<BR>
+				 * <B>概要说明：</B>对URI进行分析<BR>
+				 * @param uri netty包装后的字符串对象
+				 * @return path 解析结果
+				 */
+				private String sanitizeUri(String uri) {
+					try {
+						//使用UTF-8字符集
+						uri = URLDecoder.decode(uri, "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						try {
+							//尝试ISO-8859-1
+							uri = URLDecoder.decode(uri, "ISO-8859-1");
+						} catch (UnsupportedEncodingException e1) {
+							//抛出预想外异常信息
+							throw new Error();
+						}
+					}
+					// 对uri进行细粒度判断：4步验证操作
+					// step 1 基础验证
+					if (!uri.startsWith(url)) {
+						return null;
+					}
+					// step 2 基础验证
+					if (!uri.startsWith("/")) {
+						return null;
+					}
+					// step 3 将文件分隔符替换为本地操作系统的文件路径分隔符
+					uri = uri.replace('/', File.separatorChar);
+					// step 4 二次验证合法性
+					if (uri.contains(File.separator + '.')
+						|| uri.contains('.' + File.separator) || uri.startsWith(".")
+						|| uri.endsWith(".") || INSECURE_URI.matcher(uri).matches()) {
+						return null;
+					}
+					//当前工程所在目录 + URI构造绝对路径进行返回 
+					return System.getProperty("user.dir") + File.separator + uri;
+				}				
+				//文件是否被允许访问下载验证
+				private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[A-Za-z0-9][-_A-Za-z0-9\\.]*");
+				private static void sendListing(ChannelHandlerContext ctx, File dir) {
+					// 设置响应对象
+					FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
+					// 响应头
+					response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
+					// 追加文本内容
+					StringBuilder ret = new StringBuilder();
+					String dirPath = dir.getPath();
+					ret.append("<!DOCTYPE html>\r\n");
+					ret.append("<html><head><title>");
+					ret.append(dirPath);
+					ret.append(" 目录：");
+					ret.append("</title></head><body>\r\n");
+					ret.append("<h3>");
+					ret.append(dirPath).append(" 目录：");
+					ret.append("</h3>\r\n");
+					ret.append("<ul>");
+					ret.append("<li>链接：<a href=\"../\">..</a></li>\r\n");					
+					// 遍历文件 添加超链接
+					for (File f : dir.listFiles()) {
+						//step 1: 跳过隐藏或不可读文件 
+						if (f.isHidden() || !f.canRead()) {
+							continue;
+						}
+						String name = f.getName();
+						//step 2: 如果不被允许，则跳过此文件
+						if (!ALLOWED_FILE_NAME.matcher(name).matches()) {
+							continue;
+						}
+						//拼接超链接即可
+						ret.append("<li>链接：<a href=\"");
+						ret.append(name);
+						ret.append("\">");
+						ret.append(name);
+						ret.append("</a></li>\r\n");
+					}
+					ret.append("</ul></body></html>\r\n");
+					//构造结构，写入缓冲区
+					ByteBuf buffer = Unpooled.copiedBuffer(ret, CharsetUtil.UTF_8);
+					//进行写出操作
+					response.content().writeBytes(buffer);
+					//重置写出区域
+					buffer.release();
+					//使用ctx对象写出并且刷新到SocketChannel中去 并主动关闭连接(这里是指关闭处理发送数据的线程连接)
+					ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+				}
+				//重定向操作
+				private static void sendRedirect(ChannelHandlerContext ctx, String newUri) {
+					//建立响应对象
+					FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, FOUND);
+					//设置新的请求地址放入响应对象中去
+					response.headers().set(LOCATION, newUri);
+					//使用ctx对象写出并且刷新到SocketChannel中去 并主动关闭连接(这里是指关闭处理发送数据的线程连接)
+					ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+				}
+				//错误信息
+				private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
+					//建立响应对象
+					FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status, Unpooled.copiedBuffer("Failure: " + status.toString()+ "\r\n", CharsetUtil.UTF_8));
+					//设置响应头信息
+					response.headers().set(CONTENT_TYPE, "text/plain; charset=UTF-8");
+					//使用ctx对象写出并且刷新到SocketChannel中去 并主动关闭连接(这里是指关闭处理发送数据的线程连接)
+					ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+				}
+				private static void setContentTypeHeader(HttpResponse response, File file) {
+					//使用mime对象获取文件类型
+					MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+					response.headers().set(CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
+				}
+			}			  
+----------------------------------------------Java数据结构与算法---------------------------------------------------------------------------------------------------------
+		一、	
 			
 ----------------------------------------------JVM虚拟机优化篇----------------------------------------------------------------------------------------------------------		
 	一、VM含义：
