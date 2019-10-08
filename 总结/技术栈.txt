@@ -8299,9 +8299,9 @@
 				装饰者模式：
 					含义：动态的将新功能附加到对象上，比继承更有弹性，符合开闭原则[OCP原则]，防止类爆炸，生活中的物流包裹就是一个典型的生活案列；
 					原理：
-						  Component ：抽象类
-						  ConcreteComponent：子类，继承Component，具体的主体；中间可以适当添加缓冲层；
-						  Decorator：装饰者[装饰类]，继承Component，组合Component
+					   Component ：抽象类
+					   ConcreteComponent：子类，继承Component，具体的主体；中间可以适当添加缓冲层；
+					   Decorator：装饰者[装饰类]，继承Component，组合Component
 					如：[星巴克咖啡订单案例，单品+种类]
 						//抽象类，饮料
 						public abstract class Drink {
@@ -8399,7 +8399,7 @@
 								// 装饰者模式下的订单：2份巧克力+一份牛奶的LongBlack
 								// 1. 点一份 LongBlack
 								Drink order1 = new LongBlack();
-								System.out.println("费用=" + order1cost());
+								System.out.println("费用=" + order1.cost());
 								System.out.println("描述=" + order1.getDes());
 								// 2. order 加入一份牛奶，装饰迭代
 								order1 = new Milk(order1);
