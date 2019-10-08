@@ -8584,9 +8584,9 @@
 							HashMap：具体的实现，非叶子节点[角色:Composite]，重写或继承了put/putAll方法，Node: 叶子节点，是HashMap静态内部类，角色Leaf;
 					小结：适用于具有明确的组织结构或树形结构的场景，且叶子节点与非叶子节点属性没有明显的差异性；优点：简化客户端操作，有利于扩展；
 				外观模式/过程模式：
-					含义：定义一个一致性接口（界面类/高层接口），用于屏蔽内部子系统的细节，使调用端只跟这个接口发生调用，不需要关系子系统内部的细节；
+					含义：定义一个一致性接口（界面类/高层接口），用于屏蔽内部子系统的细节，使调用端只跟这个高层接口发生调用，不需要关系子系统内部的细节；
 					原理/角色：
-						外观类[Facade]：为调用者提供统一的接口，聚合/组合子系统集合，代理处理请求；
+						外观类[Facade]：为调用者提供统一的接口（方法），聚合/组合子系统集合，代理处理请求；
 						调用者：外观接口的调用者；
 						子系统集合：模块或子系统，处理Facade对象的任务，它是实际功能的提供者；
 				    如：[家庭影院案例]
@@ -8769,135 +8769,133 @@
 					Mybaits中的Configuration类用到了外观模式；
 					大致实现思路：Configuration类外观类依赖MetaObject类[方法：newMetaObject():MetaObject]，组合/聚合了子系统集合[工厂类]，如：DefultObjectFactory，客户端只依赖Configuration外观类；
 				小结：
-					屏蔽内部子系统的细节，降低客户端对子系统使用的复杂性；将客户端与子系统解耦；更好的划分访问层次；
-				
-				享元模式/蝇量模式：共享对象/数据
-					含义：运用共享技术有效的支持大量细粒度的对象，常用于系统底层开发，解决系统性能问题；它可以解决内存浪费问题；经典运用场景就是池技术，如常量池、数据库连接池、缓冲池等；
-					角色分析：
-						FlyWeight：抽象的享元角色，是产品抽象类，它定义出了对象的外部状态[对象不可分享出来的信息]与内部状态[对象分享出来的信息]的接口或抽象类；
-						ConcreteFlyWeight：具体的享元角色，具体的产品类；
-						UnSharedConcreteFlyWeight：不可共享的角色，一般不会出现在享元工厂里；
-						FlyWeightFactory：享元工厂类，用于构建池容器（集合），同时提供了从池中获取对象的方法；依赖FlyWeight享元角色；
-					如：[网站展现案例，网站外包问题]
-					//FlyWeight： 抽象类，享元角色；
-					public abstract class WebSite {
-						public abstract void use(User user);//抽象方法
+				        屏蔽内部子系统的细节，降低客户端对子系统使用的复杂性；将客户端与子系统解耦；更好的划分访问层次；
+			享元模式/蝇量模式：共享对象/数据
+				含义：运用共享技术有效的支持大量细粒度的对象，常用于系统底层开发，解决系统性能问题；它可以解决内存浪费问题；经典运用场景就是池技术，如常量池、数据库连接池、缓冲池等；
+				角色分析：
+					FlyWeight：抽象的享元角色，是产品抽象类，它定义出了对象的外部状态[对象不可分享出来的信息]与内部状态[对象分享出来的信息]的接口或抽象类；
+					ConcreteFlyWeight：具体的享元角色，具体的产品类；
+					UnSharedConcreteFlyWeight：不可共享的角色，一般不会出现在享元工厂里；
+					FlyWeightFactory：享元工厂类，用于构建池容器（集合），同时提供了从池中获取对象的方法；依赖FlyWeight享元角色；
+				如：[网站展现案例，网站外包问题]
+				//FlyWeight： 抽象类，享元角色；
+				public abstract class WebSite {
+					public abstract void use(User user);//抽象方法
+				}
+				//
+				//ConcreteFlyWeight：具体的享元角色，具体网站；
+				public class ConcreteWebSite extends WebSite {
+					//共享的部分，内部状态
+					private String type = ""; //网站发布的形式(类型，如：新闻、博客、公众号)					
+					//构造器
+					public ConcreteWebSite(String type) {							
+						this.type = type;
 					}
-					//
-					//ConcreteFlyWeight：具体的享元角色，具体网站；
-					public class ConcreteWebSite extends WebSite {
-						//共享的部分，内部状态
-						private String type = ""; //网站发布的形式(类型，如：新闻、博客、公众号)					
+					@Override
+					public void use(User user) {
+						System.out.println("网站的发布形式为:" + type + " 在使用中 .. 使用者是" + user.getName());
+					}												
+				}
+				// FlyWeightFactory：享元工厂类，根据需要返回一个网站，提供池技术
+				public class WebSiteFactory {						
+					//集合， 充当池的作用
+					private HashMap<String, ConcreteWebSite> pool = new HashMap<>();						
+					//根据网站的类型，返回一个网站, 如果没有就创建一个网站，并放入到池中,并返回
+					public WebSite getWebSiteCategory(String type) {
+						if(!pool.containsKey(type)) {
+							//就创建一个网站，并放入到池中
+							pool.put(type, new ConcreteWebSite(type));
+						}							
+						return (WebSite)pool.get(type);
+					}						
+					//获取网站分类的总数 (池中有多少个网站类型)
+					public int getWebSiteCount() {
+						return pool.size();
+					}
+				}
+				//用户
+				public class User {						
+					private String name;						
+					public User(String name) {
+						super();
+						this.name = name;
+					}
+					public String getName() {
+						return name;
+					}
+					public void setName(String name) {
+						this.name = name;
+					}											
+				}
+				//客户端
+				public class Client {
+					public static void main(String[] args) {
+						// 创建一个工厂类
+						WebSiteFactory factory = new WebSiteFactory();
+						// 客户要一个以新闻形式发布的网站
+						WebSite webSite1 = factory.getWebSiteCategory("新闻");							
+						webSite1.use(new User("tom"));
+						// 客户要一个以博客形式发布的网站
+						WebSite webSite2 = factory.getWebSiteCategory("博客");
+						webSite2.use(new User("jack"));
+						// 客户要一个以博客形式发布的网站
+						WebSite webSite3 = factory.getWebSiteCategory("博客");
+						webSite3.use(new User("smith"));
+						// 客户要一个以博客形式发布的网站
+						WebSite webSite4 = factory.getWebSiteCategory("博客");
+						webSite4.use(new User("king"));							
+						System.out.println("网站的分类共=" + factory.getWebSiteCount());
+					}
+				}
+				源码分析：
+					JDK中的Integer类使用到了享元模式；Integer.valueOf（），使用到了享元模式；
+					观察源码发现：先判断值是否在IntegerCache缓存池中[范围-128~127]，在的话直接从池中取值，否则使用new Integer（），结论：在-128~127中使用valueOf（）的方式要比new的方式要快；
+				小结：享元即共享对象，降低了对象的创建，减少了内存的消耗；缓存池技术的使用，一般使用HashMap或HashTable来存储；提高了系统的复杂度，需要区分内部状态与外部状态；				
+			代理模式：
+				含义：为目标对象提供一个替身，以实现对这个目标对象的访问；即代理对象访问目标对象；
+					  被代理对象可以是远程对象、创建开销大的对象和需要安全控制的对象，代理的形式：静态代理、动态代理（JDK代理、接口代理）以及Cglib代理（可以在内存中动态的创建对象，不需要实现接口，属于动态代理）
+				静态代理：
+					含义：需要定义一个接口或父类，目标对象与代理对象一起实现接口或继承父类；
+					如：[老师授课案例]
+					//接口
+					public interface ITeacherDao {							
+						void teach(); // 授课的方法
+					}
+					//目标对象
+					public class TeacherDao implements ITeacherDao {
+						@Override
+						public void teach() {
+							System.out.println("老师授课中  。。。。。");
+						}
+					}
+					//代理对象，静态代理
+					public class TeacherDaoProxy implements ITeacherDao{							
+						private ITeacherDao target; // 目标对象，通过接口来聚合														
 						//构造器
-						public ConcreteWebSite(String type) {							
-							this.type = type;
+						public TeacherDaoProxy(ITeacherDao target) {
+							this.target = target;
 						}
 						@Override
-						public void use(User user) {
-							System.out.println("网站的发布形式为:" + type + " 在使用中 .. 使用者是" + user.getName());
-						}												
-					}
-					// FlyWeightFactory：享元工厂类，根据需要返回一个网站，提供池技术
-					public class WebSiteFactory {						
-						//集合， 充当池的作用
-						private HashMap<String, ConcreteWebSite> pool = new HashMap<>();						
-						//根据网站的类型，返回一个网站, 如果没有就创建一个网站，并放入到池中,并返回
-						public WebSite getWebSiteCategory(String type) {
-							if(!pool.containsKey(type)) {
-								//就创建一个网站，并放入到池中
-								pool.put(type, new ConcreteWebSite(type));
-							}							
-							return (WebSite)pool.get(type);
-						}						
-						//获取网站分类的总数 (池中有多少个网站类型)
-						public int getWebSiteCount() {
-							return pool.size();
+						public void teach() {
+							System.out.println("开始代理，完成某些操作。。。。。 ");//方法
+							target.teach();
+							System.out.println("提交。。。。。");//方法
 						}
-					}
-					//用户
-					public class User {						
-						private String name;						
-						public User(String name) {
-							super();
-							this.name = name;
-						}
-						public String getName() {
-							return name;
-						}
-						public void setName(String name) {
-							this.name = name;
-						}											
 					}
 					//客户端
 					public class Client {
 						public static void main(String[] args) {
-							// 创建一个工厂类
-							WebSiteFactory factory = new WebSiteFactory();
-							// 客户要一个以新闻形式发布的网站
-							WebSite webSite1 = factory.getWebSiteCategory("新闻");							
-							webSite1.use(new User("tom"));
-							// 客户要一个以博客形式发布的网站
-							WebSite webSite2 = factory.getWebSiteCategory("博客");
-							webSite2.use(new User("jack"));
-							// 客户要一个以博客形式发布的网站
-							WebSite webSite3 = factory.getWebSiteCategory("博客");
-							webSite3.use(new User("smith"));
-							// 客户要一个以博客形式发布的网站
-							WebSite webSite4 = factory.getWebSiteCategory("博客");
-							webSite4.use(new User("king"));							
-							System.out.println("网站的分类共=" + factory.getWebSiteCount());
+							//创建目标对象(被代理对象)
+							TeacherDao teacherDao = new TeacherDao();								
+							//创建代理对象, 同时将被代理对象传递给代理对象
+							TeacherDaoProxy teacherDaoProxy = new TeacherDaoProxy(teacherDao);								
+							//通过代理对象，调用到被代理对象的方法，即：执行的是代理对象的方法，代理对象再去调用目标对象的方法 
+							teacherDaoProxy.teach();
 						}
 					}
-				源码分析：
-					JDK中的Integer类使用到了享元模式；Integer.valueOf（），使用到了享元模式；
-					观察源码发现：先判断值是否在IntegerCache缓存池中[范围-128~127]，在的话直接从池中取值，否则使用new Integer（），结论：在-128~127中使用valueOf（）的方式要比new的方式要快；
-				小结：享元即共享对象，降低了对象的创建，减少了内存的消耗；缓存池技术的使用，一般使用HashMap或HashTable来存储；提高了系统的复杂度，需要区分内部状态与外部状态；
-				
-				代理模式：
-					含义：为目标对象提供一个替身，以实现对这个目标对象的访问；即代理对象访问目标对象；
-						  被代理对象可以是远程对象、创建开销大的对象和需要安全控制的对象，代理的形式：静态代理、动态代理（JDK代理、接口代理）以及Cglib代理（可以在内存中动态的创建对象，不需要实现接口，属于动态代理）
-					静态代理：
-						含义：需要定义一个接口或父类，目标对象与代理对象一起实现接口或继承父类；
-						如：[老师授课案例]
-						//接口
-						public interface ITeacherDao {							
-							void teach(); // 授课的方法
-						}
-						//目标对象
-						public class TeacherDao implements ITeacherDao {
-							@Override
-							public void teach() {
-								System.out.println("老师授课中  。。。。。");
-							}
-						}
-						//代理对象，静态代理
-						public class TeacherDaoProxy implements ITeacherDao{							
-							private ITeacherDao target; // 目标对象，通过接口来聚合														
-							//构造器
-							public TeacherDaoProxy(ITeacherDao target) {
-								this.target = target;
-							}
-							@Override
-							public void teach() {
-								System.out.println("开始代理，完成某些操作。。。。。 ");//方法
-								target.teach();
-								System.out.println("提交。。。。。");//方法
-							}
-						}
-						//客户端
-						public class Client {
-							public static void main(String[] args) {
-								//创建目标对象(被代理对象)
-								TeacherDao teacherDao = new TeacherDao();								
-								//创建代理对象, 同时将被代理对象传递给代理对象
-								TeacherDaoProxy teacherDaoProxy = new TeacherDaoProxy(teacherDao);								
-								//通过代理对象，调用到被代理对象的方法，即：执行的是代理对象的方法，代理对象再去调用目标对象的方法 
-								teacherDaoProxy.teach();
-							}
-						}
-						优缺点：在不改变目标对象功能前提下，通过代理对目标功能进行了扩展；一旦接口增加了方法，目标对象与代理对象都要维护；
-					动态代理：
-						含义：
+					优缺点：在不改变目标对象功能前提下，通过代理对目标功能进行了扩展；一旦接口增加了方法，目标对象与代理对象都要维护；
+				动态代理：
+					含义：
 						
 ----------------------------------------------网络编程技术篇--------------------------------------------------------------------------------------------------------------	
 	一、网络编程基础知识
