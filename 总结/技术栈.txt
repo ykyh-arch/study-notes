@@ -3480,8 +3480,84 @@
 			逻辑表：对于应用来说相当于MySQL中的数据表，逻辑库对应后端多个物理数据库中的表，当中并不保存数据；分类：按是否分片分为：分片表（按水平拆分的，表结构相同，存储数据不同，汇总在一起才是真正的数据表）与非分片表、
 			        全局表：所有分片都存在的表（通常是字典表）、ER关系表；
 		4、MyCAT安装：	
-			
-				 
+				1）下载解压安装包；
+				2）安装好JDK1.7+；
+				3）为新建的MyCAT新建系统运行账户（权限控制）；
+				4）为MyCAT与JDK配置好系统环境变量，便于后期使用；
+		5、	MyCAT配置文件
+				1）种类：server.xml：系统参数、用户权限配置；scheme.xml：逻辑库与逻辑表配置；rule.xml：水平切分时配置一些规则；log4j2.xml：配置日志格式以及级别；
+			2）详细说明：
+			   server.xml配置文件说明
+			   用途：系统参数配置、用户权限控制、配置SQL防火墙以及SQL拦截功能；
+			   <system>系统参数： 
+			   如：
+			   <system>
+					<property name="serverPort">3306</property><!-- 服务端口->
+					<property name="managerPort">3306</property><!-- 管理端口->
+					<property name="nonePasswordLogin">0</property><!-- 密码登陆，0需要密码；1不需要密码，默认0->
+					<property name="bindIp">0.0.0.0</property><!-- 绑定Ip，0.0.0.0允许所有Ip->
+					<property name="frontWriteQueueSize">2048</property><!-- 前端允许队列大小->
+					<property name="charset">utf-8</property><!-- 字符集编码->
+					<property name="txIsolation">2</property>
+					<property name="processors">8</property><!-- 进程数->
+					<property name="idleTimeOut">18000000</property><!-- 空闲超时数，单位毫秒->
+					<property name="sqlExecuteTimeOut">300</property><!-- SQL执行的超时时间，单位秒->
+					<property name="useSqlStat">0</property>
+					<property name="useGlobalTableCheck">0</property>
+					<property name="sequnceHandleType">2</property>
+					<property name="defaultMaxLimit">100</property><!-- 返回数据集大小限制->
+					<property name="maxPacketSize">104857600</property><!-- 最大包大小->
+			   </system>
+			   <user>用户参数： 
+			    <user name="test" defaultAccount="true"><!-- 默认用户->
+					<property name="usingDecrypt">1</property><!-- 是否加密，1加密->
+					<!-- <property name="password">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</property>-><!-- 加密密码，通过java -cp Mycat-server-1.6.5-release.jar io.mycat.util.DecryptUtil 0:root:123456 ->
+					<property name="password">123456</property><!-- 明文密码->
+					<property name="schemas">db1,db2</property><!-- 当前用户访问的逻辑库，可以配置多个->
+					<property name="readOnly">false</property><!-- 是否只读用户->
+			   </user>
+				<user name="test">
+					<privileges check="true">
+						<schema name="db1" dml="0110"><!-- 逻辑库的权限，dml表示insert、update、select、delete权限，0不具有，1具有->
+							<table name="tb1" dml="0000"></table><!-- 逻辑表的权限->
+							<table name="tb2" dml="1111"></table>
+						</schema>
+					</privileges><!-- 权限->
+			   </user> 
+			   log4j2.xml（Apache）配置文件说明
+			   用途：输出日志格式配置；日志级别控制；
+			   <PatternLayout>
+					<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}[%t]%5p - %m%n</pattern><!-- 时间、线程、级别、消息、换行->
+			   <PatternLayout>
+			   日志级别：
+			   <asyncRoot level="info" includeLocation="true" />
+			   All -> Trace -> Debug -> Info -> Warn -> Error -> Fatal -> OFF （级别越来越高，输出信息越少）
+			   rule.xml配置文件说明
+			   用途：配置水平分片的分片规则；配置水平分片的分片规则对应的分片函数；
+			   如：
+			   <tableRule name="hash-mod-4_id"><!-- 分片规则，名称->
+					<rule>
+						<columns>id</columns><!-- 分片规则，列值->
+						<algorithm>hash-mod-4</algorithm><!-- 分片规则，算法，取<function>的name属性->
+					</rule>
+			   </tableRule>
+			   <function name="hash-mod-4"
+						class="io.mycat.route.function.PartitionByHashMod">
+						<property name="count">4</property><!-- 将表分4分->
+			   </function>
+			   常用的分片算法：
+					简单取模-PartitionByMod （对分片列取模）
+					哈希取模-PartitionByHashMod （对分片列进行哈希运算后再取模）
+					分片枚举-PartitionByFileMap （）
+					
+					
+					
+					
+					
+					
+					
+					
+					
 ----------------------------------------------Linux运维相关知识篇---------------------------------------------------------------------									
 							
 	方向：运维工程师、嵌入式工程师
