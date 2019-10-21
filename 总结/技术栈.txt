@@ -3547,9 +3547,64 @@
 			   </function>
 			   常用的分片算法：
 					简单取模-PartitionByMod （对分片列取模）
+					如：
+					<tableRule name="customer_login"><!-- 分片规则，名称->
+						<rule>
+						  <columns>customer_id</columns><!-- 分片列->
+						  <algorithm>mod-long</algorithm>
+						</rule>
+					  </tableRule>
+					<function name="mod-long" class="io.mycat.route.function.PartitionByMod">
+						<property name="count">2</property><!-- 分片基数->
+					</function>
+					特点：分片列整数类型的表；
 					哈希取模-PartitionByHashMod （对分片列进行哈希运算后再取模）
-					分片枚举-PartitionByFileMap （）
-					
+					如：
+					<tableRule name="customer_login"><!-- 分片规则，名称->
+						<rule>
+						  <columns>login_name</columns><!-- 分片列->
+						  <algorithm>mod-long</algorithm>
+						</rule>
+					  </tableRule>
+					<function name="mod-long" class="io.mycat.route.function.PartitionByHashMod">
+						<property name="count">2</property><!-- 分片基数->
+					</function>
+					特点：可以运用于多种数据类型如字符串日期，对分片列hash再mod
+					分片枚举-PartitionByFileMap
+					如：
+					<tableRule name="customer_login"><!-- 分片规则，名称->
+						<rule>
+						  <columns>arear_id</columns><!-- 分片列->
+						  <algorithm>mod-long</algorithm>
+						</rule>
+					  </tableRule>
+					<function name="mod-long" class="io.mycat.route.function.PartitionByFileMap">
+						<property name="mapFile">partion-hash-init.txt</property><!-- 指定分片枚举值与节点关系，具体的节点由scheme.xml指定->
+						<property name="type">0</property><!-- 数据类型：0整型，非0字符串->
+						<property name="defaultNode">0</property><!-- 默认分片节点，>=0启动默认节点->
+					</function>
+					特点：人为的根据枚举值指定数据存储的位置，需要配置好枚举值与节点关系（$MYCAT/conf目录下）
+					字符串范围取模分片-PartitionByPrefixPattern（指定字符串首字母长度进行ASCII值运算并求和与取模基数取模）
+					如：
+					<tableRule name="customer_login"><!-- 分片规则，名称->
+						<rule>
+						  <columns>login_name</columns><!-- 分片列->
+						  <algorithm>partition-prefix-pattern</algorithm>
+						</rule>
+					  </tableRule>
+					<function name="partition-prefix-pattern" class="io.mycat.route.function.PartitionByPrefixPattern">
+						<property name="mapFile">partition-prefix-pattern.txt</property><!-- 指定分片范围值与节点关系，具体的节点由scheme.xml指定->
+						<property name="patternValue">128</property><!-- 取模基数->
+						<property name="prefixPattern">2</property><!-- 字符串前缀->
+					</function>
+					特点：指定字符串前N个字符确认存储位置，需要配置好范围值与节点关系（$MYCAT/conf目录下）
+				scheme.xml（逻辑库，逻辑表）配置文件说明
+				用途：配置逻辑库与逻辑表；配置逻辑表所存储的数据节点（真实的物理节点）；配置数据节点所对应的物理数据库服务器信息；
+				<scheme>标签-定义逻辑库
+				如：<scheme name="db1" checkSQLscheme="false" sqlMaxLimit="1000"></scheme><!-- 逻辑库名称、返回结果集行数，-1关闭限制、发给MyCAT的SQL是否含库名（库名.表名）->
+				<table>标签-定义逻辑表
+				如：<table name="customer_login" primaryKey="customer_id" dataNode="db01,db02" rule="customer_login"/><!-- 逻辑表名称（与后端物理表名保持一致）、逻辑表主键、数据节点（后端物理数据库）、分片规则，对应rule.xml中的tableRule->
+				<dataNode>标签-定义逻辑表所对应的存储物理数据库	
 					
 					
 					
