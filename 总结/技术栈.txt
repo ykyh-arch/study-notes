@@ -3459,13 +3459,13 @@
 	八、MyCAT数据库分库分表高可用（数据库中间层：OneProxy、MaxScale）
 		1、含义：由阿里团队用JAVA语言开发，对于DBA数据库管理员来说，相当于MySQL的SERVER层，不存储数据，所有数据存储在MySQL里，而MySQL相当于存储层；
 				 对于研发来说，等同于MySQL，是透明的，但对SQL有些限制；
-				 对于架构来说，是数据库中间件层，可以实现对后端数据库的分库分表和读写分离，对前端运用影藏了后端数据库的存储逻辑；
+				 对于系统架构来说，是数据库中间件层，可以实现对后端数据库的分库分表和读写分离，对前端运用影藏了后端数据库的存储逻辑；
 		  数据库中间层：位于前端运用（APP）与后端数据库（MySQL）中间；
 		2、作用：作为分布式数据库（相对于关系型数据库）的中间层（APP->MyCAT->MYSQL/SQL SERVER/MongoDB等）；实现后端数据库读写分离以及负载均衡；控制数据库连接数量（池的作用）
 					        读/写	
-				 传统：APP----------->主库
+				 传统：APP----------->主库MySQL
 				 当读的负载大后，演变成                 写
-					   APP----------->中间层（MyCAT）---------->主库
+					   APP----------->中间层（MyCAT）---------->主库MySQL
 													 ---------->从库，即实现了读写分离，从库可以有多个；	
 													    读
 		         当主库宕机后，在一主一从模式下，从库自动实现承担起读写的功能，实现了高可用；当在一主多从模式下，其中一个从库实现了承担起读写的功能，而其他数据库不能同步；
@@ -3478,7 +3478,7 @@
 		3、MyCAT基本元素：
 			逻辑库：对于应用来说相当于MySQL中的数据库，逻辑库对应后端多个物理数据库，当中并不保存数据；
 			逻辑表：对于应用来说相当于MySQL中的数据表，逻辑库对应后端多个物理数据库中的表，当中并不保存数据；分类：按是否分片分为：分片表（按水平拆分的，表结构相同，存储数据不同，汇总在一起才是真正的数据表）与非分片表、
-			        全局表：所有分片都存在的表（通常是字典表）、ER关系表；
+			 全局表：所有分片都存在的表（通常是字典表）、ER关系表；
 		4、MyCAT安装：	
 				1）下载解压安装包；
 				2）安装好JDK1.7+；
@@ -3498,14 +3498,14 @@
 					<property name="bindIp">0.0.0.0</property><!-- 绑定Ip，0.0.0.0允许所有Ip->
 					<property name="frontWriteQueueSize">2048</property><!-- 前端允许队列大小->
 					<property name="charset">utf-8</property><!-- 字符集编码->
-					<property name="txIsolation">2</property>
+					<property name="txIsolation">2</property><!-- 事务隔离， repeatable可重复读read可读commited已提交->
 					<property name="processors">8</property><!-- 进程数->
 					<property name="idleTimeOut">18000000</property><!-- 空闲超时数，单位毫秒->
 					<property name="sqlExecuteTimeOut">300</property><!-- SQL执行的超时时间，单位秒->
-					<property name="useSqlStat">0</property>
+					<property name="useSqlStat">0</property><!-- 1为开启实时统计、0为关闭 -->
 					<property name="useGlobalTableCheck">0</property>
 					<property name="sequnceHandleType">2</property>
-					<property name="defaultMaxLimit">100</property><!-- 返回数据集大小限制->
+					<property name="defaultMaxLimit">100</property><!-- 返回数据集大小限制，行数->
 					<property name="maxPacketSize">104857600</property><!-- 最大包大小->
 			   </system>
 			   <user>用户参数： 
@@ -3517,14 +3517,14 @@
 					<property name="readOnly">false</property><!-- 是否只读用户->
 			   </user>
 				<user name="test">
-					<privileges check="true">
+					<privileges check="true"><!-- 权限->
 						<schema name="db1" dml="0110"><!-- 逻辑库的权限，dml表示insert、update、select、delete权限，0不具有，1具有->
 							<table name="tb1" dml="0000"></table><!-- 逻辑表的权限->
 							<table name="tb2" dml="1111"></table>
 						</schema>
 					</privileges><!-- 权限->
 			   </user> 
-			   log4j2.xml（Apache）配置文件说明
+			 log4j2.xml（Apache）配置文件说明
 			   用途：输出日志格式配置；日志级别控制；
 			   <PatternLayout>
 					<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}[%t]%5p - %m%n</pattern><!-- 时间、线程、级别、消息、换行->
