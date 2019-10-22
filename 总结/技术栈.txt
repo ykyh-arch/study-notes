@@ -3605,13 +3605,36 @@
 				<table>标签-定义逻辑表
 				如：<table name="customer_login" primaryKey="customer_id" dataNode="db01,db02" rule="customer_login"/><!-- 逻辑表名称（与后端物理表名保持一致）、逻辑表主键、数据节点（后端物理数据库）、分片规则，对应rule.xml中的tableRule->
 				<dataNode>标签-定义逻辑表所对应的存储物理数据库	
-					
-					
-					
-					
-					
-					
-					
+				如：<dataNode name="db01" dataHost="mysql01" database="db1"/><!-- 数据节点名称、分片所在的物理主机、物理数据库名称->
+				<dataHost>标签-定义后端数据库主机信息
+				如：<dataHost name="mysql01" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1" >
+					<!-- 物理主机名称
+						 最大/最小连接数（池作用）
+						 balance：0不开启读写分离机制（都在主库），1全部的readHost与stand by writeHost参与select语句的负载均衡（双主双从），2全部的readHost与writeHost参与select语句的负载均衡（写压力不大）,3全部的readHost参与select语句的负载均衡（一主多从）
+					     写类型，取值0或1，一般为0
+						 数据库类型，如：mysql、mongodb
+						 数据库驱动，取值有：native原生的，jdbc
+						 切换类型，值有1或-1，-1关闭切换功能（主从复制）
+					-->
+					<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
+					<writeHost host="192.168.1.1" url="192.168.1.1:3306" user="root" password="123456"><!-- 主机名、url、后端数据库用户名、密码-->
+						<readHost host="192.168.1.2" url="192.168.1.2:3306" user="root" password="123456"><readHost><!-- 从库，可以是多个-->
+					<writeHost/><!-- 主库-->
+				<dataHost/>	
+		6、数据库架构升级之垂直分库
+			案例分析：                  写负载很大
+				APP、web（前端应用）  --------------->后端数据库MySQL（订单/用户/仓配/商品模块） ？？？ ------------->解决方法：增加内存、CPU、磁盘IO读写
+				
+				另外一种方案：
+				
+				APP、web（前端应用）  -------------->数据库中间件MyCAT（虚拟库可以与数据库保持同名、池的作用管理数据库连接数）   ------------->后端多个数据库（订单/仓配、用户、商品模块）
+			垂直分库的步骤：
+				分析业务模块之间的关系
+				复制数据库到其他实例
+				配置MyCAT垂直分库
+				通过MyCAT来访问DB
+				删除原库中已迁移的库
+			
 					
 ----------------------------------------------Linux运维相关知识篇---------------------------------------------------------------------									
 							
