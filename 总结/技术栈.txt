@@ -3630,9 +3630,26 @@
 				APP、web（前端应用）  -------------->数据库中间件MyCAT（虚拟库可以与数据库保持同名、池的作用管理数据库连接数）   ------------->后端多个数据库（订单/仓配、用户、商品模块）
 			垂直分库的步骤：
 				分析业务模块之间的关系
-				复制数据库到其他实例
-				配置MyCAT垂直分库
+					订单（冗余商品信息、API接口获取用户信息）/仓配、用户、商品模块
+				复制数据库到其他实例（主从复制，主库192.168.1.2从库3-5）
+					备份原数据库并记录相关事务日志点；（主库备份事务、存储过程、触发器、事件）
+						mysqldump --master-data=2 --single-transaction --routines --triggers --events -uroot -p imooc_db > back_immoc.sql
+					在原数据库中建立备份用户（主库）；
+						create user 'im_repl'@'192.168.1.%' identified by '123456'；（创建用户）
+						grant replication slave on *.* to  'im_repl'@'192.168.1.%'；（授权）
+					在新数据库上恢复备份数据库（从库）；
+						mysql -uroot -p order_db < back_immoc.sql
+					在新实例上配置复制链路（从库）；
+						change master to master_host='192.168.1.2',master_user='im_repl',master_password='123456',master_log_file='mysql-bin.00001',MASTER_POS_LOG='453251'；（相关事务点）
+						show slave status；（查看状态）
+						change replication filter replication_rewrite_db=((immoc_db,order_db))；（过滤重命名）
+					在新实例上启动复制；
+						start slave；
+					结论：192.168.1.2 原始库immooc；192.168.1.3 order_db（订单库）；192.168.1.4 product_db（商品库）；192.168.1.5 customer_db（用户库）；期初从库与主库数据表完全一致；
+				配置MyCAT垂直分库（主库）
+					
 				通过MyCAT来访问DB
+					
 				删除原库中已迁移的库
 			
 					
