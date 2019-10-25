@@ -3631,7 +3631,7 @@
 			垂直分库的步骤：
 				分析业务模块之间的关系
 					订单（冗余商品信息、API接口获取用户信息）/仓配、用户、商品模块
-				复制数据库到其他实例（主从复制，主库192.168.1.2从库3-5）
+				复制数据库到其他实例（主从复制，主库192.168.1.2从库192.168.1.3-5）
 					备份原数据库并记录相关事务日志点；（主库备份事务、存储过程、触发器、事件）
 						mysqldump --master-data=2 --single-transaction --routines --triggers --events -uroot -p imooc_db > back_immoc.sql
 					在原数据库中建立备份用户（主库）；
@@ -3639,7 +3639,7 @@
 						grant replication slave on *.* to  'im_repl'@'192.168.1.%'；（授权）
 					在新数据库上恢复备份数据库（从库）；
 						mysql -uroot -p order_db < back_immoc.sql
-					在新实例上配置复制链路（从库）；
+					在新数据库实例上配置复制链路（从库）；
 						change master to master_host='192.168.1.2',master_user='im_repl',master_password='123456',master_log_file='mysql-bin.00001',MASTER_POS_LOG='453251'；（相关事务点）
 						show slave status；（查看状态）
 						change replication filter replication_rewrite_db=((immoc_db,order_db))；（过滤重命名）
