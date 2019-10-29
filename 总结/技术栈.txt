@@ -3472,23 +3472,23 @@
 				 如何解决这个问题？？？
 				 可以利用MySQL的主从复制同步数据，具体产品有：MHA（Master High Availability）、MMM (MySQL Master-Master Replication Manager) 等
 				 当写的负载大后，怎么解决？？？
-				 对业务数据库进行垂直拆分，将Master（主库）按业务拆分成多个数据库（如：用户库、商品库）；
+				 对业务数据库进行垂直拆分，将Master（主库）按业务拆分成多个数据库（如：用户库、商品库、订单库）；
 				 APP----------->中间层（MyCAT/虚拟的数据DB又称逻辑库，它的作用管理拆分好的多个数据库）---------->多个拆分好的库；
-				 对业务数据库进行水平拆分（基于垂直拆分基础上），对于某个已拆分好的数据库进行水平拆分（基于某种规则F（c））；
+				 对业务数据库进行水平拆分（基于垂直拆分基础上），对于某个已拆分好的数据库（如：订单库）进行水平拆分（基于某种规则F（c））；
 		3、MyCAT基本元素：
 			逻辑库：对于应用来说相当于MySQL中的数据库，逻辑库对应后端多个物理数据库，当中并不保存数据；
 			逻辑表：对于应用来说相当于MySQL中的数据表，逻辑库对应后端多个物理数据库中的表，当中并不保存数据；分类：按是否分片分为：分片表（按水平拆分的，表结构相同，存储数据不同，汇总在一起才是真正的数据表）与非分片表、
 			 全局表：所有分片都存在的表（通常是字典表）、ER关系表；
 		4、MyCAT安装：	
-				1）下载解压安装包；
+				1）下载解压安装包XXXXX.tar.gz；
 				2）安装好JDK1.7+；
 				3）为新建的MyCAT新建系统运行账户（权限控制）；
 				4）为MyCAT与JDK配置好系统环境变量，便于后期使用；
 		5、	MyCAT配置文件
-				1）种类：server.xml：系统参数、用户权限配置；scheme.xml：逻辑库与逻辑表配置；rule.xml：水平切分时配置一些规则；log4j2.xml：配置日志格式以及级别；
+				1）种类：server.xml：系统参数、用户名/密码权限配置；scheme.xml：逻辑库与逻辑表配置；rule.xml：水平切分时配置一些规则；log4j2.xml：配置日志格式以及级别；
 			2）详细说明：
 			   server.xml配置文件说明
-			   用途：系统参数配置、用户权限控制、配置SQL防火墙以及SQL拦截功能；
+			   用途：系统参数配置、用户名/密码权限控制、配置SQL防火墙以及SQL拦截功能；
 			   <system>系统参数： 
 			   如：
 			   <system>
@@ -3502,7 +3502,7 @@
 					<property name="processors">8</property><!-- 进程数->
 					<property name="idleTimeOut">18000000</property><!-- 空闲超时数，单位毫秒->
 					<property name="sqlExecuteTimeOut">300</property><!-- SQL执行的超时时间，单位秒->
-					<property name="useSqlStat">0</property><!-- 1为开启实时统计、0为关闭 -->
+					<property name="useSqlStat">0</property><!--使用SQL统计 1为开启实时统计、0为关闭 -->
 					<property name="useGlobalTableCheck">0</property>
 					<property name="sequnceHandleType">2</property>
 					<property name="defaultMaxLimit">100</property><!-- 返回数据集大小限制，行数->
@@ -3514,15 +3514,15 @@
 					<!-- <property name="password">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</property>-><!-- 加密密码，通过java -cp Mycat-server-1.6.5-release.jar io.mycat.util.DecryptUtil 0:root:123456 ->
 					<property name="password">123456</property><!-- 明文密码->
 					<property name="schemas">db1,db2</property><!-- 当前用户访问的逻辑库，可以配置多个->
-					<property name="readOnly">false</property><!-- 是否只读用户->
+					<property name="readOnly">false</property><!-- 用户权限：是否只读用户->
 			   </user>
 				<user name="test">
-					<privileges check="true"><!-- 权限->
+					<privileges check="true"><!-- 开启权限->
 						<schema name="db1" dml="0110"><!-- 逻辑库的权限，dml表示insert、update、select、delete权限，0不具有，1具有->
 							<table name="tb1" dml="0000"></table><!-- 逻辑表的权限->
 							<table name="tb2" dml="1111"></table>
 						</schema>
-					</privileges><!-- 权限->
+					</privileges><!-- 权限控制->
 			   </user> 
 			 log4j2.xml（Apache）配置文件说明
 			   用途：输出日志格式配置；日志级别控制；
@@ -3535,14 +3535,14 @@
 			   rule.xml配置文件说明
 			   用途：配置水平分片的分片规则；配置水平分片的分片规则对应的分片函数；
 			   如：
-			   <tableRule name="hash-mod-4_id"><!-- 分片规则，名称->
+			   <tableRule name="hash-mod-4_id"><!-- 逻辑表分片规则，名称->
 					<rule>
 						<columns>id</columns><!-- 分片规则，列值->
 						<algorithm>hash-mod-4</algorithm><!-- 分片规则，算法，取<function>的name属性->
 					</rule>
 			   </tableRule>
 			   <function name="hash-mod-4"
-						class="io.mycat.route.function.PartitionByHashMod">
+						class="io.mycat.route.function.PartitionByHashMod"><!-- 对应的Java类，哈希取模分片 -->
 						<property name="count">4</property><!-- 将表分4分->
 			   </function>
 			   常用的分片算法：
@@ -3579,7 +3579,7 @@
 						</rule>
 					  </tableRule>
 					<function name="mod-long" class="io.mycat.route.function.PartitionByFileMap">
-						<property name="mapFile">partion-hash-init.txt</property><!-- 指定分片枚举值与节点关系，具体的节点由scheme.xml指定->
+						<property name="mapFile">partion-file-map.txt</property><!-- 指定分片枚举值与节点关系，如：100001=0，具体的节点由scheme.xml指定->
 						<property name="type">0</property><!-- 数据类型：0整型，非0字符串->
 						<property name="defaultNode">0</property><!-- 默认分片节点，>=0启动默认节点->
 					</function>
@@ -3593,7 +3593,7 @@
 						</rule>
 					  </tableRule>
 					<function name="partition-prefix-pattern" class="io.mycat.route.function.PartitionByPrefixPattern">
-						<property name="mapFile">partition-prefix-pattern.txt</property><!-- 指定分片范围值与节点关系，具体的节点由scheme.xml指定->
+						<property name="mapFile">partition-prefix-pattern.txt</property><!-- 指定分片范围值与节点关系，如：0~100=0，具体的节点由scheme.xml指定->
 						<property name="patternValue">128</property><!-- 取模基数->
 						<property name="prefixPattern">2</property><!-- 字符串前缀->
 					</function>
@@ -3605,13 +3605,13 @@
 				<table>标签-定义逻辑表
 				如：<table name="customer_login" primaryKey="customer_id" dataNode="db01,db02" rule="customer_login"/><!-- 逻辑表名称（与后端物理表名保持一致）、逻辑表主键、数据节点（后端物理数据库）、分片规则，对应rule.xml中的tableRule->
 				<dataNode>标签-定义逻辑表所对应的存储物理数据库	
-				如：<dataNode name="db01" dataHost="mysql01" database="db1"/><!-- 数据节点名称、分片所在的物理主机、物理数据库名称->
+				如：<dataNode name="db01" dataHost="mysql01" database="db1"/><!-- 数据节点名称、数据节点所在的物理主机信息、物理数据库名称->
 				<dataHost>标签-定义后端数据库主机信息
 				如：<dataHost name="mysql01" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1" >
 					<!-- 物理主机名称
 						 最大/最小连接数（池作用）
-						 balance：0不开启读写分离机制（都在主库），1全部的readHost与stand by writeHost参与select语句的负载均衡（双主双从），2全部的readHost与writeHost参与select语句的负载均衡（写压力不大）,3全部的readHost参与select语句的负载均衡（一主多从）
-					     写类型，取值0或1，一般为0
+						 balance：0不开启读写分离机制（都在主库），1全部的readHost与stand by writeHost参与select语句的负载均衡（多主多从），2全部的readHost与writeHost参与select语句的负载均衡（写压力不大）,3全部的readHost参与select语句的负载均衡（一主多从）
+					            写类型，取值0或1，一般为0
 						 数据库类型，如：mysql、mongodb
 						 数据库驱动，取值有：native原生的，jdbc
 						 切换类型，值有1或-1，-1关闭切换功能（主从复制）
@@ -3623,7 +3623,7 @@
 				<dataHost/>	
 		6、数据库架构升级之垂直分库
 			案例分析：                  写负载很大
-				APP、web（前端应用）  --------------->后端数据库MySQL（订单/用户/仓配/商品模块） ？？？ ------------->解决方法：增加内存、CPU、磁盘IO读写
+				APP、web（前端应用）  --------------->后端数据库MySQL（订单/用户/仓配/商品模块） ？？？ ------------->解决方法：增加内存、CPU、SSID磁盘IO读写
 				
 				另外一种方案：
 				
@@ -3631,23 +3631,27 @@
 			垂直分库的步骤：
 				分析业务模块之间的关系
 					订单（冗余商品信息、API接口获取用户信息）/仓配、用户、商品模块
-				复制数据库到其他实例（主从复制，主库192.168.1.2从库192.168.1.3-5）
-					备份原数据库并记录相关事务日志点；（主库备份事务、存储过程、触发器、事件）
+				复制数据库到其他数据库实例（主从复制，主库192.168.1.2从库192.168.1.3-5）
+					备份原数据库并记录相关事务日志点；（主库.2备份事务、存储过程、触发器、事件）
 						mysqldump --master-data=2 --single-transaction --routines --triggers --events -uroot -p imooc_db > back_immoc.sql
-					在原数据库中建立备份用户（主库）；
+					在原数据库中建立备份用户（主库.2）；
 						create user 'im_repl'@'192.168.1.%' identified by '123456'；（创建用户）
 						grant replication slave on *.* to  'im_repl'@'192.168.1.%'；（授权）
-					在新数据库上恢复备份数据库（从库）；
-						mysql -uroot -p order_db < back_immoc.sql
-					在新数据库实例上配置复制链路（从库）；
-						change master to master_host='192.168.1.2',master_user='im_repl',master_password='123456',master_log_file='mysql-bin.00001',MASTER_POS_LOG='453251'；（相关事务点）
+					在新数据库（.3-5）上恢复备份数据库（从库）；
+						mysql -uroot -p order_db < back_immoc.sql （订单库）
+						mysql -uroot -p customer_db < back_immoc.sql （用户库）
+						mysql -uroot -p product_db < back_immoc.sql （商品库）
+					在新数据库实例上配置复制链路（.3-5从库）；
+						change master to master_host='192.168.1.2',master_user='im_repl',master_password='123456',master_log_file='mysql-bin.00001',MASTER_POS_LOG='453251'；（相关事务日志点）
 						show slave status；（查看状态）
 						change replication filter replication_rewrite_db=((immoc_db,order_db))；（过滤重命名）
-					在新实例上启动复制；
+						change replication filter replication_rewrite_db=((immoc_db,customer_db))；
+						change replication filter replication_rewrite_db=((immoc_db,product_db))；
+					在新实例（.3-5从库）上启动复制；
 						start slave；
-					结论：192.168.1.2 原始库immooc；192.168.1.3 order_db（订单库）；192.168.1.4 product_db（商品库）；192.168.1.5 customer_db（用户库）；期初从库与主库数据表完全一致；
-				配置MyCAT垂直分库（主库）
-					配置scheme：
+					结论：192.168.1.2 原始库immooc_db；192.168.1.3 order_db（订单库）；192.168.1.4 product_db（商品库）；192.168.1.5 customer_db（用户库）；起初从库与主库数据表完全一致；
+				配置MyCAT垂直分库（主库.2）
+					配置scheme.xml：配置逻辑库、逻辑表
 						
 				通过MyCAT来访问DB
 					
