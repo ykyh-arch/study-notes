@@ -3643,17 +3643,17 @@
 						mysql -uroot -p product_db < back_immoc.sql （商品库）
 					在新数据库实例上配置复制链路（.3-5从库）；
 						change master to master_host='192.168.1.2',master_user='im_repl',master_password='123456',master_log_file='mysql-bin.00001',MASTER_POS_LOG='453251'；（相关事务日志点）
-						show slave status；（查看状态）
+						show slave status；（查看从库状态）
 						change replication filter replication_rewrite_db=((immoc_db,order_db))；（过滤重命名）
 						change replication filter replication_rewrite_db=((immoc_db,customer_db))；
 						change replication filter replication_rewrite_db=((immoc_db,product_db))；
-					在新实例（.3-5从库）上启动复制；
+					在新数据库实例（.3-5从库）上启动复制；
 						start slave；
-					结论：192.168.1.2 原始库immooc_db；192.168.1.3 order_db（订单库）；192.168.1.4 product_db（商品库）；192.168.1.5 customer_db（用户库）；起初从库与主库数据表完全一致；
+					结论：192.168.1.2 原始库immooc_db；192.168.1.3 order_db（订单库）；192.168.1.4 product_db（商品库）；192.168.1.5 customer_db（用户库）；起初从库与主库数据结构、表完全一致；
 				配置MyCAT垂直分库（主库.2）
 					配置scheme.xml：配置逻辑库、逻辑表
 						<!--逻辑库配置-->
-						<scheme name="imooc_db" checkSQLscheme="false" sqlMaxLimit="1000">
+						<scheme name="imooc_db" checkSQLscheme="false" sqlMaxLimit="1000"><!-- 逻辑库与原后端数据库保持同名 -->
 							<!--逻辑表配置-->
 							<table name="order_master" primaryKey="order_id" dataNode="ordb"/><!-- 订单表 -->
 							<table name="order_detail" primaryKey="order_detail_id" dataNode="ordb"/>
@@ -3689,7 +3689,7 @@
 							<property name="managerPort">9066</property><!-- 管理端口->
 							<property name="nonePasswordLogin">0</property><!-- 密码登陆，0需要密码；1不需要密码，默认0->
 							<property name="bindIp">0.0.0.0</property><!-- 绑定Ip，0.0.0.0允许所有Ip->
-							<property name="frontWriteQueueSize">2048</property><!-- 前端允许队列大小->
+							<property name="frontWriteQueueSize">2048</property><!-- 前端允许写队列大小->
 							<property name="charset">utf-8</property><!-- 字符集编码->
 							<property name="txIsolation">2</property><!-- 事务隔离， repeatable可重复读read可读commited已提交->
 							<property name="processors">8</property><!-- 进程数->
@@ -3701,7 +3701,7 @@
 							<property name="defaultMaxLimit">100</property><!-- 返回数据集大小限制，行数->
 							<property name="maxPacketSize">104857600</property><!-- 最大包大小->
 					   </system> 
-						<user name="app_imooc" defaultAccount="true"><!-- 默认用户->
+						<user name="app_imooc" defaultAccount="true"><!-- 默认用户，前端用户登录MyCAT账户->
 							<property name="usingDecrypt">1</property><!-- 是否加密，1加密->
 							<!-- <property name="password">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</property>-><!-- 加密密码，通过java -cp Mycat-server-1.6.5-release.jar io.mycat.util.DecryptUtil 0:root:123456 ->
 							<property name="password">123456</property><!-- 明文密码->
@@ -3709,9 +3709,9 @@
 					   </user>
 					测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库）
 				通过MyCAT来访问DB
-					mycat start （启动服务）
-				删除原库中已迁移的库
-			
+					mycat start （启动服务），查看服务是否启动（观察日志文件）：$MyCAT/conf目录下查看wrapper.log文件
+				删除原库中已迁移的表
+					
 					
 ----------------------------------------------Linux运维相关知识篇---------------------------------------------------------------------									
 							
