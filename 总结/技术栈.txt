@@ -3641,7 +3641,7 @@
 						mysql -uroot -p order_db < back_immoc.sql （订单库）
 						mysql -uroot -p customer_db < back_immoc.sql （用户库）
 						mysql -uroot -p product_db < back_immoc.sql （商品库）
-					在新数据库实例上配置复制链路（.3-5从库）；
+					在新数据库实例上配置复制链路（.3-5从库，主从复制）；
 						change master to master_host='192.168.1.2',master_user='im_repl',master_password='123456',master_log_file='mysql-bin.00001',MASTER_POS_LOG='453251'；（相关事务日志点）
 						show slave status；（查看从库状态）
 						change replication filter replication_rewrite_db=((immoc_db,order_db))；（过滤重命名）
@@ -3657,6 +3657,7 @@
 							<!--逻辑表配置-->
 							<table name="order_master" primaryKey="order_id" dataNode="ordb"/><!-- 订单表 -->
 							<table name="order_detail" primaryKey="order_detail_id" dataNode="ordb"/>
+							<table name="region_info" primaryKey="region_id" dataNode="ordb,prodb,custdb" type="global"/><!-- 区域表，全局表 -->
 							...
 							<table name="product_brand_infos" primaryKey="product_brand_id" dataNode="prodb"/><!-- 商品表 -->
 							<table name="customer_inf" primaryKey="customer_inf_id" dataNode="custdb"/><!-- 用户表 -->
@@ -3710,9 +3711,41 @@
 					测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库）
 				通过MyCAT来访问DB
 					mycat start （启动服务），查看服务是否启动（观察日志文件）：$MyCAT/conf目录下查看wrapper.log文件
-				删除原库中已迁移的表
-					
-					
+					mycat stop （停止服务）
+				删除（.3-5）原库中已迁移的表
+					#清理多余数据（.3-5），使其成为独立的库
+						stop slave；
+						reset slaves all；#停止主从复制
+					    #删除.3-5（order_db、customer_db、product_db）中不属于该库的相关表
+					#跨分片（跨库）查询？？？解决方案：全局表（字典表）代替了数据冗余与API接口提供的方式；本例中涉及的表region_info（区域表）为全局表；
+						使用步骤（全局表存在每个分片节点上）：
+							#备份（.3）
+							mysqldump -uroot -p order_db region_info > region_info
+							#拷贝到（.4-5）并导入库中
+							scp region_info root@192.168.1.4:/root；
+							mysql -uroot -p product_db < region_info；
+							scp region_info root@192.168.1.5:/root；
+							mysql -uroot -p customer_db < region_info；
+							#配置文件scheme.xml声明全局表（多写）
+							<table name="region_info" primaryKey="region_id" dataNode="ordb,prodb,custdb" type="global"/><!-- 区域表，全局表 -->
+					#后续工作		
+						垂直切分的优点：拆分简洁明了，拆分规则明确；应用程序模块清晰，整合容易；方便维护，容易定位；
+								  缺点：部分表关联查询无法在数据库级别中完成，需要在程序中完成；（解决方案：全局表、数据冗余、使用API获取数据）
+										数据量大访问频繁的表仍然存在性能瓶颈；
+										切分到一定程度后，扩展性受到限制；
+		7、数据库架构升级之水平分库
+			案例说明：
+				App--------->MyCAT（imooc_db）------>订单/仓配（order_db）、用户（customer_db）、商品（product_db）
+				
+				水平切分                      分片规则（F（n））
+				App--------->MyCAT（imooc_db）------------------>order01、order02、order03
+			分片原则：
+				能不切分尽量不要切分；选择合适的分片规则与分片键；尽量避免跨分片JOIN操作；
+				
+				
+						
+						
+						
 ----------------------------------------------Linux运维相关知识篇---------------------------------------------------------------------									
 							
 	方向：运维工程师、嵌入式工程师
