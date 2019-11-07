@@ -3673,7 +3673,8 @@
 							<!-- 创建im_mycat用户
 								mysql -uroot -p；
 								create user 'im_mycat'@'192.168.1.%' identified by '123456'；（创建用户）
-								grant select,update,insert,delete on *.* to  'im_mycat'@'192.168.1.%'；（授权）
+								grant select,update,insert,delete on *.* to  'im_mycat'@'192.168.1.%'；（授权增删改查）
+								grant execute on *.* to  'im_mycat'@'192.168.1.%'；（授权执行）
 							-->							
 						<dataHost/>
 						<dataHost name="mysql0104" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1">
@@ -3710,7 +3711,7 @@
 					   </user>
 					测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库）
 				通过MyCAT来访问DB
-					mycat start （启动服务），查看服务是否启动（观察日志文件）：$MyCAT/conf目录下查看wrapper.log文件
+					mycat start （启动服务），查看服务是否启动（观察日志文件）：$MyCAT/conf目录下查看wrapper.log文件tail -f $MyCAT/conf/wrapper.log #动态查看日志
 					mycat stop （停止服务）
 				删除（.3-5）原库中已迁移的表
 					#清理多余数据（.3-5），使其成为独立的库
@@ -3760,6 +3761,7 @@
 						<dataNode name="orderdb02" dataHost="mysql0103" database="orderdb02"/>
 						<dataNode name="orderdb03" dataHost="mysql0104" database="orderdb03"/>
 						<dataNode name="orderdb04" dataHost="mysql0104" database="orderdb04"/>
+						四个节点中都建立好order_master表
 						#配置（修改）逻辑库/逻辑表
 						<table name="order_master" primaryKey="order_id" dataNode="orderdb01,orderdb02,orderdb03,orderdb04" rule="order_master"/><!-- 订单表 -->
 					配置分片表的分片规则（rule.xml）；
@@ -3773,6 +3775,45 @@
 								<property name="count">4</property><!-- 将表分4分->
 					   </function>
 					配置用户访问以及权限（server.xml）；
+						测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库，然后进行查询操作数据）
+						问题？？？各个节点里面的order_master订单表中的order_id主键自增，存在重复；
+						解决方案：利用MyCAT提供的全局自增ID
+							使用：
+								1、在一个主机节点上（.2安装了MySQL服务）创建一个数据库如mycat，执行脚本：mysql -uroot -p mycat < $conf/dbseq.sql #MyCAT安装目录下
+								进入数据库mycat查看表MYCAT_SEQUENCE
+								2、修改server.xml文件
+								<!--
+									0、本地文件
+									1、数据库
+									2、时间戳
+									3、利用Zookeer方式
+								-->
+								<property name="sequnceHandleType">1</property><!-- 序列号生成类型-->
+								#添加数据节点
+										<dataNode name="mycat" dataHost="mysql0102" database="mycat"/>
+										#添加数据主机
+										<dataHost name="mysql0102" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1">
+											<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
+											<writeHost host="192.168.1.2" url="192.168.1.2:3306" user="im_mycat" password="123456"/>					
+										<dataHost/>
+								3、修改配置文件：sequence_db_conf.properties
+										#添加两行行
+										GLOBAL=mycat #数据节点
+										ORDER_MASTER=mycat #全局自增ID逻辑表表名=数据节点
+								4、添加数据库mycat表记录：
+									insert into MYCAT_SEQUENCE values ('ORDER_MASTER',1,1)；
+								5、开启全局自增（scheme.xml）
+									<table name="order_master" primaryKey="order_id" dataNode="orderdb01,orderdb02,orderdb03,orderdb04" rule="order_master" autoIncrement="true"/><!-- 订单表 -->
+						问题？？？跨分片查询，如order_master与order_detail表的join查询
+						解决方案：ER分片表
+							步骤：
+								1，在4个节点（orderdb01、orderdb02、orderdb03、orderdb04）中创建好order_detail表；
+								2，修改scheme.xml配置文件定义ER分片表
+								<table name="order_master" primaryKey="order_id" dataNode="orderdb01,orderdb02,orderdb03,orderdb04" rule="order_master" autoIncrement="true">
+									<childTable name="order_detail" primaryKey="order_detail_id" joinKey="order_id" parentKey="order_id" autoIncrement="true"/>
+								</table>
+								3、配置order_detail表全局自增ID
+								
 				测试分片集群
 				业务及数据迁移
 			
