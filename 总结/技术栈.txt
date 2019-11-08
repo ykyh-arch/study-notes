@@ -5933,8 +5933,8 @@
 	四、Kafka
 		简介：
 		
-----------------------------------------------Java高级运用技术篇----------------------------------------------------------------------------------		
-	java特性：
+----------------------------------------------Java高级运用技术篇之高并发多线程-------------------------------------------------------------------------------------------------------		
+	JAVA特性：
 		封装性：为了数据的安全，避免用户直接接触到数据，增加程序的安全性。封装隐藏类的内部属性，并且对用户隐藏了数据的访问方式，这样可以保护类的内部状态。封装可以防止类中的方法访问属性，防止对象间的交互，提高Java程序的安全性。
 		继承性：继承可以减少代码量，方法重写。
 		多态性：三个必要条件是存在继承、重写、父类对象引用子类对象，如：Animal animal = new Cat()。
@@ -6731,8 +6731,11 @@
 							return left.join() + right.join();
 						}
 					}					
-				}		
-	三、泛型，参考：https://blog.csdn.net/tyrroo/article/details/80930938
+				}
+
+----------------------------------------------Java高级运用技术篇之泛型-------------------------------------------------------------------------------------------------------
+				
+	泛型，参考：https://blog.csdn.net/tyrroo/article/details/80930938
 		含义：
 			泛型，即“参数化类型”。顾名思义，就是将类型由原来的具体的类型参数化，类似于方法中的变量参数，此时类型也定义成参数形式（可以称之为类型形参），然后在使用/调用时传入具体的类型（类型实参）。
 				  这种参数类型可以用在类、接口和方法中，分别被称为泛型类、泛型接口、泛型方法。在面向对象编程及各种设计模式中有非常广泛的应用。
@@ -7018,8 +7021,11 @@
 							return test;
 						}				
 					
-				结论：泛型的上下边界添加，必须与泛型的声明在一起。					
-	四、设计模式
+				结论：泛型的上下边界添加，必须与泛型的声明在一起。	
+
+----------------------------------------------Java高级运用技术篇之设计模式-------------------------------------------------------------------------------------------------------
+				
+	设计模式
 		重要性：设计模式不依赖于语言，对普遍存在的各种问题，所提出的解决方案，思想来源于建筑学。
 				项目的后期维护扩展，有新需求，都需要设计模式。
 				在软件中的运用：面向对象(oo)->功能模块[设计模式+算法/数据结构]->框架[多种设计模式]->架构[服务器集群]
@@ -9244,8 +9250,171 @@
 					优缺点：在不改变目标对象功能前提下，通过代理对目标功能进行了扩展；一旦接口增加了方法，目标对象与代理对象都要维护；
 				动态代理：
 					含义：
-						
-----------------------------------------------网络编程技术篇--------------------------------------------------------------------------------------------------------------	
+					
+----------------------------------------------Java高级运用技术篇之Java8新特性--------------------------------------------------------------------------------------------------------------------------------
+	一、初识Lambda表达式		
+		示例：
+			#匿名内部类形式，比较字符串长度
+			@Test
+			public void test1(){
+				Comparator<String> com = new Comparator<String>(){
+					@Override
+					public int compare(String o1, String o2) {
+						return Integer.compare(o1.length(), o2.length());
+					}
+				};				
+				TreeSet<String> ts1 = new TreeSet<>(com);				
+				TreeSet<String> ts2 = new TreeSet<>(new Comparator<String>(){
+					@Override
+					public int compare(String o1, String o2) {
+						return Integer.compare(o1.length(), o2.length());
+					}					
+				});
+			}			
+			//Lambda表达式改进版
+			@Test
+			public void test2(){
+				Comparator<String> com = (x, y) -> Integer.compare(x.length(), y.length());
+				TreeSet<String> ts = new TreeSet<>(com);
+			}
+			#案例分析：
+			#员工表
+			public class Employee {
+				private int id;
+				private String name;
+				private int age;
+				private double salary;
+				...
+			}
+			#模拟数据
+			List<Employee> emps = Arrays.asList(
+			new Employee(101, "张三", 18, 9999.99),
+			new Employee(102, "李四", 59, 6666.66),
+			new Employee(103, "王五", 28, 3333.33),
+			new Employee(104, "赵六", 8, 7777.77),
+			new Employee(105, "田七", 38, 5555.55)
+			);
+			#需求：获取公司中年龄小于35的员工信息
+			public List<Employee> filterEmployeeAge(List<Employee> emps){
+				List<Employee> list = new ArrayList<>();				
+				for (Employee emp : emps) {
+					if(emp.getAge() <= 35){
+						list.add(emp);
+					}
+				}				
+				return list;
+			}
+			#需求：获取公司中工资大于5000员工信息
+			public List<Employee> filterEmployeeSalary(List<Employee> emps){
+				List<Employee> list = new ArrayList<>();				
+				for (Employee emp : emps) {
+					if(emp.getSalary() >= 5000){
+						list.add(emp);
+					}
+				}				
+				return list;
+			}
+			#客户端测试
+			@Test
+			public void test3(){
+				List<Employee> list = filterEmployeeAge(emps);
+				//List<Employee> list = filterEmployeeSalary(emps);
+				for (Employee employee : list) {
+					System.out.println(employee);
+				}
+			}
+			#优化方式一策略设计模式
+			#接口
+			@FunctionalInterface
+			public interface MyPredicate<T> {
+				public boolean test(T t);				
+			}
+			#实现
+			public class FilterEmployeeForAge implements MyPredicate<Employee>{
+				@Override
+				public boolean test(Employee t) {
+					return t.getAge() <= 35;
+				}
+			}
+			public class FilterEmployeeForSalary implements MyPredicate<Employee> {
+				@Override
+				public boolean test(Employee t) {
+					return t.getSalary() >= 5000;
+				}
+			}			
+			public List<Employee> filterEmployee(List<Employee> emps, MyPredicate<Employee> mp){
+				List<Employee> list = new ArrayList<>();				
+				for (Employee employee : emps) {
+					if(mp.test(employee)){
+						list.add(employee);
+					}
+				}				
+				return list;
+			}
+			#客户端
+			@Test
+			public void test4(){
+				List<Employee> list = filterEmployee(emps, new FilterEmployeeForAge());
+				for (Employee employee : list) {
+					System.out.println(employee);
+				}								
+				List<Employee> list2 = filterEmployee(emps, new FilterEmployeeForSalary());
+				for (Employee employee : list2) {
+					System.out.println(employee);
+				}
+			}
+			#优化方式二匿名内部类
+			@Test
+			public void test5(){
+				List<Employee> list = filterEmployee(emps, new MyPredicate<Employee>() {
+					@Override
+					public boolean test(Employee t) {
+						return t.getId() <= 103;
+					}
+				});				
+				for (Employee employee : list) {
+					System.out.println(employee);
+				}
+			}
+			#优化方式三Lambda表达式
+			@Test
+			public void test6(){
+				List<Employee> list = filterEmployee(emps, (e) -> e.getAge() <= 35);
+				list.forEach(System.out::println);								
+				List<Employee> list2 = filterEmployee(emps, (e) -> e.getSalary() >= 5000);
+				list2.forEach(System.out::println);
+			}
+			#优化方式四StreamAPI
+			@Test
+			public void test7(){
+				emps.stream()
+					.filter((e) -> e.getAge() <= 35) //Predicate
+					.forEach(System.out::println);								
+				emps.stream()
+					.map(Employee::getName) //Function
+					.limit(3)
+					.sorted()
+					.forEach(System.out::println);
+			}
+	二、Lambda的基础语法
+		1、概念：
+		   Java8中引入了一个新的操作符 "->" 该操作符称为箭头操作符或Lambda操作符， 箭头操作符将Lambda表达式拆分成两部分：左侧：Lambda表达式的参数列表，右侧：Lambda表达式中所需执行的功能，即Lambda体；
+		2、语法：
+		   语法格式一：无参数，无返回值；如：() -> System.out.println("Hello Lambda!");
+		   语法格式二：有一个参数，并且无返回值；如：(x) -> System.out.println(x)；
+		   语法格式三：若只有一个参数，小括号可以省略不写；如：x -> System.out.println(x)；
+		   语法格式四：有两个以上的参数，有返回值，并且Lambda体中有多条语句；如：
+			   Comparator<Integer> com = (x, y) -> {
+		 			System.out.println("函数式接口");
+		 			return Integer.compare(x, y);
+		 	   };
+		   语法格式五：若Lambda体中只有一条语句，return和大括号都可以省略不写；如：Comparator<Integer> com = (x, y) -> Integer.compare(x, y);
+		   语法格式六：Lambda表达式的参数列表的数据类型可以省略不写，因为JVM编译器通过上下文推断出，数据类型，即“类型推断”；如：(Integer x, Integer y) -> Integer.compare(x, y);
+		   总结：上联：左右遇一括号省；下联：左侧推断类型省；横批：能省则省；
+		3、函数式接口：
+		   含义：接口中只有一个抽象方法的接口，称为函数式接口。 可以使用注解@FunctionalInterface修饰
+	
+----------------------------------------------Java高级篇之网络编程技术---------------------------------------------------------------------------------------------------------------------------------------	
 	一、网络编程基础知识
 		1、注意区分MQ与网络通讯的区别：
 			MQ的目的是为了缓解服务器的压力，在消息生产者与消费者之间添加了一层，使系统解耦，接收的消息可以延迟，不要求完全实时性；
@@ -11169,10 +11338,10 @@
 					response.headers().set(CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
 				}
 			}			  
-----------------------------------------------Java数据结构与算法---------------------------------------------------------------------------------------------------------
+----------------------------------------------Java高级篇之数据结构与算法---------------------------------------------------------------------------------------------------------
 		一、	
 			
-----------------------------------------------JVM虚拟机优化篇----------------------------------------------------------------------------------------------------------		
+----------------------------------------------Java高级篇之JVM虚拟机优化篇----------------------------------------------------------------------------------------------------------		
 	一、VM含义：
 		虚拟机：虚拟的机器，是一款软件，用于执行虚拟计算机指令，可以分为系统虚拟机与程序虚拟机。
 				系统虚拟机有：Visual Box、VMare，使用时注意三种网络适配器的模式（主机模式（JVM不能访问外网）、NAT网络地址转化模式（宿主机与主机在不同的网段）、桥接模式（同一网段））
