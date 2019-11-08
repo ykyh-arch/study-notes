@@ -3744,15 +3744,15 @@
 				能不切分尽量不要切分；选择合适的分片规则（分片方法）与分片键；尽量避免跨分片（跨库）JOIN操作；
 			分片后如何查询：根据分片键与分片方法路由选择后端物理数据库（节点）进行查询
 			水平分片步骤：
-				根据业务状态确定水平分片的表（订单表）
+				根据业务状态确定水平分片的表（订单表order_master、order_detail）
 				分析业务模块选择分片键与分片算法
-					如何选择分片键？？？
+					如何选择分片键？？？主键ID？？
 						尽可能的比较均匀分布数据到各个后端物理数据库（节点）；根据业务设置字段是最频繁或最重要的查询条件；
 					业务模型的分片键与分片算法分析：
 						对订单相关的表进行水平分片：以customer_id为分片键，采用简单取模分片算法；
 				使用MyCAT部署分片集群
 					演示环境说明：
-						（原始库imooc_db）192.168.1.2 MyCAT 
+						（原始库imooc_db）192.168.1.2 MyCAT MySQL
 						（库order_db）192.168.1.3 MySQL orderdb01、orderdb02
 						（库product_db）192.168.1.4 MySQL orderdb03、orderdb04
 					配置逻辑库与逻辑表（scheme.xml）；
@@ -3761,8 +3761,7 @@
 						<dataNode name="orderdb02" dataHost="mysql0103" database="orderdb02"/>
 						<dataNode name="orderdb03" dataHost="mysql0104" database="orderdb03"/>
 						<dataNode name="orderdb04" dataHost="mysql0104" database="orderdb04"/>
-						四个节点中都建立好order_master表
-						#配置（修改）逻辑库/逻辑表
+						#配置（修改）逻辑库/逻辑表，四个节点中（orderdb01、orderdb02、orderdb03、orderdb04）都建立好order_master表
 						<table name="order_master" primaryKey="order_id" dataNode="orderdb01,orderdb02,orderdb03,orderdb04" rule="order_master"/><!-- 订单表 -->
 					配置分片表的分片规则（rule.xml）；
 						<tableRule name="order_master"><!-- 逻辑表分片规则，名称->
@@ -3775,12 +3774,12 @@
 								<property name="count">4</property><!-- 将表分4分->
 					   </function>
 					配置用户访问以及权限（server.xml）；
-						测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库，然后进行查询操作数据）
+						测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库，然后进行新增查询操作数据）
 						问题？？？各个节点里面的order_master订单表中的order_id主键自增，存在重复；
 						解决方案：利用MyCAT提供的全局自增ID
 							使用：
 								1、在一个主机节点上（.2安装了MySQL服务）创建一个数据库如mycat，执行脚本：mysql -uroot -p mycat < $conf/dbseq.sql #MyCAT安装目录下
-								进入数据库mycat查看表MYCAT_SEQUENCE
+								进入数据库mycat查看表仅存在一张表MYCAT_SEQUENCE
 								2、修改server.xml文件
 								<!--
 									0、本地文件
@@ -3790,14 +3789,14 @@
 								-->
 								<property name="sequnceHandleType">1</property><!-- 序列号生成类型-->
 								#添加数据节点
-										<dataNode name="mycat" dataHost="mysql0102" database="mycat"/>
-										#添加数据主机
-										<dataHost name="mysql0102" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1">
-											<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
-											<writeHost host="192.168.1.2" url="192.168.1.2:3306" user="im_mycat" password="123456"/>					
-										<dataHost/>
+								<dataNode name="mycat" dataHost="mysql0102" database="mycat"/>
+								#添加数据主机
+								<dataHost name="mysql0102" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1">
+									<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
+									<writeHost host="192.168.1.2" url="192.168.1.2:3306" user="im_mycat" password="123456"/>					
+								<dataHost/>
 								3、修改配置文件：sequence_db_conf.properties
-										#添加两行行
+										#添加两行
 										GLOBAL=mycat #数据节点
 										ORDER_MASTER=mycat #全局自增ID逻辑表表名=数据节点
 								4、添加数据库mycat表记录：
@@ -3813,7 +3812,11 @@
 									<childTable name="order_detail" primaryKey="order_detail_id" joinKey="order_id" parentKey="order_id" autoIncrement="true"/>
 								</table>
 								3、配置order_detail表全局自增ID
-								
+									#修改配置文件：sequence_db_conf.properties
+											#添加一行
+											ORDER_DETAIL=mycat #全局自增ID逻辑表表名=数据节点
+									#添加数据库mycat表记录：
+										insert into MYCAT_SEQUENCE values ('ORDER_DETAIL',1,1)；
 				测试分片集群
 				业务及数据迁移
 			
