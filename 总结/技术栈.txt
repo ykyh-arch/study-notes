@@ -3817,12 +3817,92 @@
 											ORDER_DETAIL=mycat #全局自增ID逻辑表表名=数据节点
 									#添加数据库mycat表记录：
 										insert into MYCAT_SEQUENCE values ('ORDER_DETAIL',1,1)；
+								4、测试
+									在MyCAT进行测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库，然后进行新增查询操作数据）
+									select order_id,order_sn,cunstomer_id,mod(cunstomer_id,4) from order_master；#查看在4个节点的分片情况
+						SQL拦截（事后）：
+							作用：监控数据库记录写入操作；SQL审计（查看SQL文件）；#MySQL也提供了记录日志的方式，如：slow_log、general_log（读写，所有信息），但不利于分析；
+							使用：配置scheme.xml文件；
+								<system>
+								  <property name="sqlInterceptor">org.opencloudb.interceptor.impl.DefaultSqlInterceptor</property>
+								  <property name="sqlInterceptorType">update,insert,delete</property><!-- SQL拦截类型 -->
+								  <property name="sqlInterceptorFile">/temp/sql.txt</property> <!-- SQL保存文件路径 -->
+								</system>
+						SQL防火墙（事前）：
+							作用：控制哪些用户通过哪些主机访问后端数据库；
+								  屏蔽一些SQL语句，加强安全控制；
+							使用：配置scheme.xml文件；  
+								<firewall>
+									<whitehost> 
+										<host user="immoc_db" host="192.168.1.5"></host>
+									</whitehost><!-- ip白名单，用户允许访问的ip地址-->  
+									<blacklist check="true"> 
+										<property name="noneBaseStatementAllow">false</property><!-- 黑名单，是否允许DDL操作-->  
+										<property name="deleteWhereNoneCheck">false</property><!-- 检查DELETE语句是否无where条件-->  
+									</blacklist> 
+							    </firewall>							
 				测试分片集群
 				业务及数据迁移
-			
+		8、MyCAT高可用架构
+			问题：
+				如何使用Zookeeper启动MyCAT???
+				主从高可用架构：MyCAT + ZK（同步、启动MyCAT） + Haproxy（代理、负载均衡） + Keepalived（高可用） + MySQL
+			高可用系统的要求：
+				不存在单点问题；最大限度的保证服务的可用性；
+			示意图：
 				
-						
-						
+				APP------|-Haproxy（代理、负载均衡）------MyCAT ------------------------|订单库（水平切分）、用户库、商品库
+						 |    |								|                           |
+				App------|  Keepalived（高可用）          Zookeeper（同步MyCAT配置、启动MyCAT）    |
+				         |    |								|                           |
+				APP------|-Haproxy（代理、负载均衡）------MyCAT ------------------------|订单库（水平切分）、用户库、商品库
+			步骤：
+				演示环境说明：
+					192.168.1.2 MyCAT MySQL ZK
+					192.168.1.3 MySQL ZK
+					192.168.1.4 MySQL ZK
+					192.168.1.5 MyCAT MySQL
+				1、使用ZK记录MyCAT配置（192.168.1.2-4，MyCAT数据同步）
+					建立ZK集群
+						1、安装JDK（ZK基于Java环境）；
+						2、下载ZK并解压安装；wget http：//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX；
+						3、修改配置文件：
+							cd $ZK/conf；cp zoo_sample.cfg zoo.cfg 
+							#zoo.cfg添加配置
+								server.0=192.168.1.2:2888:3888
+								server.1=192.168.1.3:2888:3888
+								server.2=192.168.1.4:2888:3888
+						4、	新建目录data并建立节点文件；
+							echo 0 > $ZK/data/myid #192.168.1.2
+						    echo 1 > $ZK/data/myid #192.168.1.3
+							echo 2 > $ZK/data/myid #192.168.1.4
+						5、启动：
+							$ZK/bin/zkServer.sh start							
+					初始化MyCAT配置在ZK集群中同步数据
+						1、MyCAT安装目录下拷贝文件：cp $MyCAT/conf/server.xml $MyCAT/conf/rule.xml $MyCAT/conf/schema.xml $MyCAT/conf/sequence_db_conf.properties zkconf/
+						2、执行脚本：$MyCAT/bin/init_zk_data.sh #初始化MyCAT在ZK中的数据
+						   登陆并查看：
+							   $ZK/bin/zkCli.sh
+							   ls /mycat/mycat-cluster-1
+							   get /mycat/mycat-cluster-1/schema/dataHost #查看schema.xml中dataHost节点信息
+					配置MyCAT支持以ZK方式启动（192.168.1.2、192.168.1.4）
+						1、配置myid.properties文件：
+						   vim $MyCAT/conf/myid.properties
+						   #修改配置
+						   loadZK=true
+						   zkURL=192.168.1.2:2181，192.168.1.3:2181，192.168.1.4:2181
+						   clusterId=mycat-cluster-1
+						   myid=mycat_01
+						   clusterSize=2
+						   clusterNodes=mycat_01，mycat_04						   
+					启动MyCAT
+						mycat start（192.168.1.2、192.168.1.4）
+				2、	使用Haproxy对MyCAT负载均衡
+						步骤：
+							
+				
+			
+						 
 						
 ----------------------------------------------Linux运维相关知识篇---------------------------------------------------------------------									
 							
