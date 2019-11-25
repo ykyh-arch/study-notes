@@ -280,7 +280,7 @@
 			配置文件：YAML 的基本使用-支持文档块
 			配置文件值的注入：
 				方式一：@ConfigurationProperties
-					格式：
+				格式：
 				javaBean 
 					@Component
 					@ConfigurationProperties(prefix = "person")
@@ -296,7 +296,6 @@
 						private Map<String,Object> maps;
 						private List<Object> lists;
 						private Dog dog;
-						...
 					}
 				配置文件：
 					person:
@@ -310,8 +309,7 @@
 						  - zhaoliu
 						dog:
 						  name: 小狗
-						  age: 12
-						  
+						  age: 12						  
 				方式二：@Value
 				区别：
 					|            	| @ConfigurationProperties | @Value 	 |
@@ -320,20 +318,16 @@
 					| SpEL       	| 不支持                      | 支持     |
 					| JSR303数据校验| 支持                       | 不支持    |
 					| 复杂类型封装  | 支持                       | 不支持    |
-			配置文件加载：@PropertySource
+			加载配置文件：@PropertySource
 				格式：
 					@PropertySource(value = {"classpath:person.properties"})
 					@Component
 					@ConfigurationProperties(prefix = "person")
 					public class Person {
-						//@Value("#{11*2}")
 						private Integer age;
-						//@Value("true")
 						private Boolean boss;
-
-					```
 					}
-			配置文件读取：@ImportResource
+			读取配置文件：@ImportResource
 				格式：
 					java文件
 						@ImportResource(locations = {"classpath:beans.xml"})
@@ -342,15 +336,12 @@
 					<beans xmlns="http://www.springframework.org/schema/beans"
 						   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 						   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-
-
 						<bean id="helloService" class="com.atguigu.springboot.service.HelloService"></bean>
 					</beans>	
-			配置文件添加：	
+			添加配置文件：
 				推荐使用全注解的方式
 				1、配置类@Configuration------>Spring配置文件
 				2、使用@Bean给容器中添加组件
-
 				```java
 				@Configuration
 				public class MyAppConfig {
@@ -365,8 +356,7 @@
 			配置文件占位符:
 				如：*.properties 配置文件中
 					person.last-name=张三${random.uuid}
-					person.dog.name=${person.hello:hello}_dog
-					
+					person.dog.name=${person.hello:hello}_dog				
 			配置文件Profile:		
 				激活指定profile的方式：
 				1、配置文件中指定  spring.profiles.active=dev	
