@@ -79,4 +79,35 @@
     	如：*.properties 配置文件中
     		person.last-name=张三${random.uuid}
     		person.dog.name=${person.hello:hello}_dog
-    		
+    配置文件Profile:
+			激活指定profile的方式：
+			1、配置文件中指定  spring.profiles.active=dev	
+			2、命令行方式 java -jar **-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev；
+			3、虚拟机参数 -Dspring.profiles.active=dev
+			配置文件加载位置：
+				springboot启动会扫描以下位置的application.properties或者application.yml文件作为Spring boot的默认配置文件
+				–file:./config/
+				–file:./
+				–classpath:/config/
+				–classpath:/    #优先级由高到底，高优先级的配置会覆盖低优先级的配置；SpringBoot会从这四个位置全部加载主配置文件；互补配置；				
+				java -jar **-0.0.1-SNAPSHOT.jar --spring.config.location=G:/application.properties #用户指定加载位置：
+			外部配置加载顺序：
+				SpringBoot也可以从以下位置加载配置； 优先级从高到低；高优先级的配置覆盖低优先级的配置，所有的配置会形成互补配置
+				1.命令行参数
+					java -jar **-02-0.0.1-SNAPSHOT.jar --server.port=8087  --server.context-path=/abc #多个配置用空格分开；--配置项=值
+				2.来自java:comp/env的JNDI属性
+				3.Java系统属性（System.getProperties()）
+				4.操作系统环境变量
+				5.RandomValuePropertySource配置的random.*属性值
+				6.由jar包外向jar包内进行寻找，优先加载带profile
+					jar包外部的application-{profile}.properties或application.yml(带spring.profile)配置文件
+					jar包内部的application-{profile}.properties或application.yml(带spring.profile)配置文件
+				10.@Configuration注解类上的@PropertySource
+				11.通过SpringApplication.setDefaultProperties指定的默认属性
+			自动配置原理：
+				xxxxAutoConfigurartion：自动配置类；
+				xxxxProperties:封装配置文件中相关属性；
+			检测自动配置类是否生效：debug=true
+二、日志框架：
+	默认：springBoot底层也是使用slf4j+logback的方式进行日志记录；
+	
