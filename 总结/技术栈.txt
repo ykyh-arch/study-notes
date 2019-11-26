@@ -963,7 +963,7 @@
 				使用：
 					•1、引入spring-boot-starter-cache模块
 					•2、开启缓存：@EnableCaching
-					•3、使用缓存注解				
+					•3、使用缓存注解
 			Spring-data-redis：参考：https://blog.csdn.net/qq_26545305/article/details/80559902
 				使用:
 					1、引入依赖（2.0以后的版本）：
