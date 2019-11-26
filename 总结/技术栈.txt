@@ -400,37 +400,36 @@
 				由低到高   trace<debug<info<warn<error
 			springBoot修改默认日志配置：
 				1、指定级别：logging.level.XX包名=trace
-				2、logging.path=  #不指定路径在当前项目下生成springboot.log日志
+				2、logging.path=  #若不指定路径在当前项目下生成springboot.log日志
 				   logging.path=/spring/log #在当前磁盘的根路径下创建spring文件夹和里面的log文件夹；使用 spring.log 作为默认文件
 				3、logging.file=G:/springboot.log
 				输出格式：
 				4、logging.pattern.console=%d{yyyy-MM-dd} [%thread] %-5level %logger{50} - %msg%n #控制台
 				5、logging.pattern.file=%d{yyyy-MM-dd} [%thread] %-5level %logger{50} - %msg%n #指定文件中
-			指定具体的日志实现配置：类路径下放上每个日志框架自己的配置文件即可
+			指定具体的日志实现配置：类路径下（classpath:）放上每个日志框架自己的配置文件即可
 				如：logback.xml：直接就被日志框架识别了；
-					logback-spring.xml：日志框架就不直接加载日志的配置项，由SpringBoot解析日志配置，可以使用SpringBoot的高级Profile功能
-					
+					logback-spring.xml：日志框架就不直接加载日志的配置项，由SpringBoot解析日志配置，可以使用SpringBoot的高级Profile功能					
 					xml文件：
 					<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
-							<!--
-							日志输出格式：
-								%d表示日期时间，
-								%thread表示线程名，
-								%-5level：级别从左显示5个字符宽度
-								%logger{50} 表示logger名字最长50个字符，否则按照句点分割。 
-								%msg：日志消息，
-								%n是换行符
-							-->
-							<layout class="ch.qos.logback.classic.PatternLayout">
-								<springProfile name="dev">
-									<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} ----> [%thread] ---> %-5level %logger{50} - %msg%n</pattern>
-								</springProfile>
-								<springProfile name="!dev">
-									<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} $$$$$$ [%thread] $$$$$$ %-5level %logger{50} - %msg%n</pattern>
-								</springProfile>
-							</layout>
-						</appender>	
-	二、Web模块：				
+						<!--
+						日志输出格式：
+							%d表示日期时间，
+							%thread表示线程名，
+							%-5level：级别从左显示5个字符宽度
+							%logger{50} 表示logger名字最长50个字符，否则按照句点分割。 
+							%msg：日志消息，
+							%n是换行符
+						-->
+						<layout class="ch.qos.logback.classic.PatternLayout">
+							<springProfile name="dev">
+								<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} ----> [%thread] ---> %-5level %logger{50} - %msg%n</pattern>
+							</springProfile>
+							<springProfile name="!dev">
+								<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} $$$$$$ [%thread] $$$$$$ %-5level %logger{50} - %msg%n</pattern>
+							</springProfile>
+						</layout>
+					</appender>	
+	三、Web模块：				
 			静态资源映射：
 				1、（以Jar包的方式引入静态资源）/webjars/**，都去 classpath:/META-INF/resources/webjars/找资源；如：localhost:8080/webjars/jquery/3.3.1/jquery.js
 					引入如：
@@ -447,14 +446,14 @@
 					"classpath:/public/" 
 					"/"：当前项目的根路径	
 				3、	欢迎页：静态资源文件夹下的所有index.html页面；被"/**"映射；
-				4、 所有的 **/favicon.ico  都是在静态资源文件下找	
-			模板引擎：JSP、Velocity、Freemarker、Thymeleaf，SpringBoot推荐的Thymeleaf
+				4、 所有的 **/favicon.ico 都是在静态资源文件下找	
+			模板引擎：JSP、Velocity、Freemarker、Thymeleaf，SpringBoot推荐的Thymeleaf；
 				Thymeleaf使用：
 					1、引入：POM.xml
 						<dependency>
 							<groupId>org.springframework.boot</groupId>
 							<artifactId>spring-boot-starter-thymeleaf</artifactId>
-							2.1.6
+							<version>2.1.6</version>
 						</dependency>
 				<properties>
 						<thymeleaf.version>3.0.9.RELEASE</thymeleaf.version>
@@ -535,8 +534,41 @@
 										If-then-else: (if) ? (then) : (else)
 										Default: (value) ?: (defaultvalue)
 									Special tokens:
-										No-Operation: _ 
-				禁用Thymeleaf缓存：spring.thymeleaf.cache=false 
+										No-Operation: _
+				禁用Thymeleaf缓存：spring.thymeleaf.cache=false
+				Thymeleaf模板抽取：
+					1、抽取公共片段
+					<div th:fragment="copy">
+						&copy; 2011 The Good Thymes Virtual Grocery
+					</div>
+					2、引入公共片段
+					<div th:insert="~{footer :: copy}"></div> // ~{templatename::selector}：模板名::选择器;~{templatename::fragmentname}:模板名::片段名									
+					3、默认效果：
+					如果使用th:insert等属性进行引入，可以不用写~{}：行内写法可以加上：[[~{}]];[(~{})]；
+					三种引入公共片段的th属性：
+					th:insert：将公共片段整个插入到声明引入的元素中
+					th:replace：将声明引入的元素替换为公共片段
+					th:include：将被引入的片段的内容包含进这个标签中
+					如：
+						<footer th:fragment="copy">
+							&copy; 2011 The Good Thymes Virtual Grocery
+						</footer>
+						引入方式
+						<div th:insert="footer :: copy"></div>
+						<div th:replace="footer :: copy"></div>
+						<div th:include="footer :: copy"></div>
+						效果
+						<div>
+							<footer>
+							&copy; 2011 The Good Thymes Virtual Grocery
+							</footer>
+						</div>						
+						<footer>
+							&copy; 2011 The Good Thymes Virtual Grocery
+						</footer>						
+						<div>
+							&copy; 2011 The Good Thymes Virtual Grocery
+						</div>
 			SpringMVC自动配置：
 					SpringBoot对SpringMVC的默认配置，WebMvcAutoConfiguration
 					做的主要几件事：
@@ -544,7 +576,7 @@
 							2、支持静态资源文件夹路径,webjars
 							3、支持静态首页访问
 							4、支持favicon.ico系统图标
-							5、自动注册了Converte转换器Formatter格式化器
+							5、自动注册了Converter转换器Formatter格式化器
 			扩展SpringMVC：
 					Bean.XML 参考：
 						 <mvc:view-controller path="/hello" view-name="success"/>
@@ -564,15 +596,14 @@
 								registry.addViewController("/atguigu").setViewName("success");
 							}
 						}
-			全面接管SpringMVC：需要在自定义的配置类中添加@EnableWebMvc即可		
-					原理：底层有@ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
-						WebMvcConfigurationSupport只是保留SpringMVC最基本的功能
-			国际化：
-				使用步骤：	1）、编写国际化配置文件
+			全面接管SpringMVC：需要在自定义的配置类中添加@EnableWebMvc即可	
+					原理：底层有@ConditionalOnMissingBean(WebMvcConfigurationSupport.class)，WebMvcConfigurationSupport只是保留SpringMVC最基本的功能						
+			国际化i18n：
+				使用步骤：	1）、编写国际化配置文件messages_zh_CN.properties、messages_en_US.properties
 							2）、使用ResourceBundleMessageSource管理国际化资源文件
 							3）、在页面使用fmt:message取出国际化内容
 				结论：根据浏览器语言设置的信息切换了国际化
-				原理：国际化Locale（区域信息对象）；LocaleResolver（获取区域信息对象）；	
+				原理：国际化Locale（区域信息对象）；LocaleResolver（获取区域信息对象解析器）；	
 						@Bean
 						@ConditionalOnMissingBean
 						@ConditionalOnProperty(prefix = "spring.mvc", name = "locale")
@@ -599,7 +630,6 @@
 								}
 								return locale;
 							}
-
 							@Override
 							public void setLocale(HttpServletRequest request, HttpServletResponse response, Locale locale) {
 
@@ -612,42 +642,7 @@
 						}
 			Rest风格:
 					URI：/资源名称/资源标识（主表Id），以HTTP请求方式（GET、POST、PUT、DELETE）区分对资源CRUD操作；
-					注意要点：如果添加/修改页面（二合一版），页面创建一个input项，name="_method";值就是我们指定的请求方式，原理：SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置好的）
-			模板抽取：
-					1、抽取公共片段
-					<div th:fragment="copy">
-						&copy; 2011 The Good Thymes Virtual Grocery
-					</div>
-					2、引入公共片段
-					<div th:insert="~{footer :: copy}"></div> // ~{templatename::selector}：模板名::选择器;~{templatename::fragmentname}:模板名::片段名									
-					3、默认效果：
-					如果使用th:insert等属性进行引入，可以不用写~{}：行内写法可以加上：[[~{}]];[(~{})]；
-					三种引入公共片段的th属性：
-					th:insert：将公共片段整个插入到声明引入的元素中
-					th:replace：将声明引入的元素替换为公共片段
-					th:include：将被引入的片段的内容包含进这个标签中
-					如：
-						<footer th:fragment="copy">
-							&copy; 2011 The Good Thymes Virtual Grocery
-						</footer>
-						引入方式
-						<div th:insert="footer :: copy"></div>
-						<div th:replace="footer :: copy"></div>
-						<div th:include="footer :: copy"></div>
-						效果
-						<div>
-							<footer>
-							&copy; 2011 The Good Thymes Virtual Grocery
-							</footer>
-						</div>
-						
-						<footer>
-							&copy; 2011 The Good Thymes Virtual Grocery
-						</footer>
-						
-						<div>
-							&copy; 2011 The Good Thymes Virtual Grocery
-						</div>
+					注意要点：如果添加/修改页面（二合一版），页面创建一个input项，name="_method";值就是我们指定的请求方式，原理：SpringMVC中配置HiddenHttpMethodFilter;（SpringBoot自动配置）			
 			错误处理：
 				效果：1、浏览器：返回一个默认的错误页面；2、其他客户端，默认响应一个json数据
 				原理：ErrorMvcAutoConfiguration；错误处理的自动配置类
@@ -675,25 +670,24 @@
 				结论：SpringBoot默认使用Tomcat作为嵌入式的Servlet容器
 				定制：
 					1、ServerProperties方式，在配置文件中配置
-					//通用的Servlet容器设置，server.xxx
-					  如：server.port=8081 server.context-path=/crud
-					//Tomcat的设置，server.tomcat.xxx
-					  如：server.tomcat.uri-encoding=UTF-8
+					   通用的Servlet容器设置，server.xxx，如：server.port=8081 server.context-path=/crud 
+					   Tomcat的设置，server.tomcat.xxx
+					   如：server.tomcat.uri-encoding=UTF-8
 					2、EmbeddedServletContainerCustomizer方式，在java代码中配置
-					  如：
-						@Bean  //一定要将这个定制器加入到容器中
-						public EmbeddedServletContainerCustomizer embeddedServletContainerCustomizer(){
-							return new EmbeddedServletContainerCustomizer() {
-								//定制嵌入式的Servlet容器相关的规则
-								@Override
-								public void customize(ConfigurableEmbeddedServletContainer container) {
-									container.setPort(8083);
-								}
-							};
-						}
+					如：
+					@Bean  //注入到容器中
+					public EmbeddedServletContainerCustomizer embeddedServletContainerCustomizer(){
+						return new EmbeddedServletContainerCustomizer() {
+							//定制嵌入式的Servlet容器相关的规则
+							@Override
+							public void customize(ConfigurableEmbeddedServletContainer container) {
+								container.setPort(8083);
+							}
+						};
+					}
 				注册Servlet三大组件：Servlet、Filter、Listener 替代在web.xml中的配置	
-				自动的注册前端控制器：DispatcherServletAutoConfiguration	
-				修改配置：server.servletPath修改默认拦截的请求路径		
+				自动的注册前端控制器：DispatcherServletAutoConfiguration
+				修改配置：server.servletPath修改默认拦截的请求路径	
 				修改为其他的servlet容器：
 					支持Tomcat Undertow Jetty
 					如：
@@ -715,8 +709,8 @@
 						</dependency>
 				各自区别：
 					Tomcat 是Apache下的一款重量级的基于HTTP协议的服务器
-					Undertow 基于NIO（非阻塞式输入输出，相对于BIO（Blocking I/O，阻塞IO））实现的高并发轻量级的服务器 支持JSP
-					Jetty 基于NIO（非阻塞式输入输出，相对于BIO（Blocking I/O，阻塞IO））实现的高并发轻量级的服务器 支持长链接
+					Undertow 基于NIO（非阻塞式输入输出，相对于BIO（Blocking I/O，阻塞IO））实现的高并发轻量级的服务器，支持JSP
+					Jetty 基于NIO（非阻塞式输入输出，相对于BIO（Blocking I/O，阻塞IO））实现的高并发轻量级的服务器，支持长链接
 					Netty是一款基于NIO（Nonblocking I/O，非阻塞IO）开发的网络通信框架，客户端服务器框架
 				嵌入式Servlet容器自动配置原理：EmbeddedServletContainerAutoConfiguration
 					步骤：
@@ -751,14 +745,12 @@
 					}
 					4）、启动服务器就可以使用；
 				原理：
-					jar包：执行SpringBoot主类的main方法，启动ioc容器，创建嵌入式的Servlet容器；
-					war包：启动服务器，服务器启动SpringBoot应用【SpringBootServletInitializer】，启动ioc容器；
+					jar包：执行SpringBoot主类的main方法，启动IOC容器，创建嵌入式的Servlet容器；
+					war包：启动服务器，服务器启动SpringBoot应用[SpringBootServletInitializer]，启动IOC容器；
 	三、springboot与docker：
-			详情参考docker技术；
-			Docker是一个开源的应用容器引擎；是一个轻量级容器技术；
-				
+			详情参考docker技术；Docker是一个开源的应用容器引擎；是一个轻量级容器技术；							
 	四、springboot与数据访问：
-			链接JDBC:
+			连接JDBC:
 				1、导入依赖：
 					<dependency>
 						<groupId>org.springframework.boot</groupId>
