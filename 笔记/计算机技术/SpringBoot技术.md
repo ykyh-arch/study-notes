@@ -468,4 +468,194 @@
 				jar包：执行SpringBoot主类的main方法，启动IOC容器，创建嵌入式的Servlet容器；
 				war包：启动服务器，服务器启动SpringBoot应用[SpringBootServletInitializer]，启动IOC容器；
 四、数据访问：
-    
+    连接JDBC:
+	1、导入依赖：
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+	2、添加配置参数：
+		spring:
+		  datasource:
+			username: root
+			password: 123456
+			url: jdbc:mysql://192.168.15.22:3306/jdbc
+			driver-class-name: com.mysql.jdbc.Driver
+			schema:
+			- classpath:department.sql #指定位置
+	3、申明使用
+			相关结论：
+				默认是用org.apache.tomcat.jdbc.pool.DataSource作为数据源，数据源的相关配置都在DataSourceProperties里面
+				DataSourceInitializer：ApplicationListener 可以运行建表与运行数据插入（runSchemaScripts();运行建表语句；runDataScripts();运行插入数据的sql语句；）
+				默认只需要将文件重命名为：schema-*.sql、data-*.sql 默认规则：schema.sql，schema-all.sql；
+				可以使用
+				schema:
+					- classpath:department.sql #指定位置
+				自动配置了JdbcTemplate操作数据库；
+			整合：Druid数据源，参考：https://blog.csdn.net/weixin_41404773/article/details/82592719
+				1、导入依赖：
+					<dependency>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-starter-jdbc</artifactId>
+					</dependency>
+					<!--引入druid-->
+					<!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
+					<dependency>
+						<groupId>com.alibaba</groupId>
+						<artifactId>druid</artifactId>
+						<version>1.1.8</version>
+					</dependency>
+				2、添加配置参数：在aplication.yml或aplication.properties
+					spring:
+					  datasource:
+						username: root
+						password: 123456
+						url: jdbc:mysql://localhost:3306/testwkn
+						driver-class-name: com.mysql.jdbc.Driver
+						type: com.alibaba.druid.pool.DruidDataSource
+						initialSize: 5
+						minIdle: 5
+						maxActive: 20
+						maxWait: 60000
+						timeBetweenEvictionRunsMillis: 60000
+						minEvictableIdleTimeMillis: 300000
+						validationQuery: SELECT 1 FROM DUAL
+						testWhileIdle: true
+						testOnBorrow: false
+						testOnReturn: false
+						poolPreparedStatements: true
+					#   配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+						filters: stat,wall,log4j
+						maxPoolPreparedStatementPerConnectionSize: 20
+						useGlobalDataSourceStat: true
+						connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=500
+					#   schema:
+					#     - classpath:department.sql
+				3、	读取配置
+					@Configuration
+					public class DruidConfig {
+						@ConfigurationProperties(prefix = "spring.datasource")
+						@Bean
+						public DataSource druid(){
+						   return  new DruidDataSource();
+						}
+						//配置Druid的监控
+						//1、配置一个管理后台的Servlet
+						@Bean
+						public ServletRegistrationBean statViewServlet(){
+							ServletRegistrationBean bean = new ServletRegistrationBean(new StatViewServlet(), "/druid/*");
+							Map<String,String> initParams = new HashMap<>();
+							initParams.put("loginUsername","admin");
+							initParams.put("loginPassword","123456");
+							initParams.put("allow","");//默认就是允许所有访问
+							initParams.put("deny","192.168.15.21");
+							bean.setInitParameters(initParams);
+							return bean;
+						}
+						//2、配置一个web监控的filter
+						@Bean
+						public FilterRegistrationBean webStatFilter(){
+							FilterRegistrationBean bean = new FilterRegistrationBean();
+							bean.setFilter(new WebStatFilter());
+							Map<String,String> initParams = new HashMap<>();
+							initParams.put("exclusions","*.js,*.css,/druid/*");
+							bean.setInitParameters(initParams);
+							bean.setUrlPatterns(Arrays.asList("/*"));
+							return  bean;
+						}
+					}
+	整合Mybatis:
+    	1、导入依赖：
+    		<dependency>
+    			<groupId>org.mybatis.spring.boot</groupId>
+    			<artifactId>mybatis-spring-boot-starter</artifactId>
+    			<version>1.3.1</version>
+    		</dependency>
+    	2、申明使用：
+    		1、注解版-写好提供的接口，程序的入口添加@MapperScan
+    		2、配置文件版
+			mybatis:
+			  config-location: classpath:mybatis/mybatis-config.xml #指定全局配置文件的位置
+			  mapper-locations: classpath:mybatis/mapper/*.xml  #指定sql映射文件的位置
+	整合Jpa（Java Persistence API，通过注解或者XML描述[对象-关系表]之间的映射关系，并将实体对象持久化到数据库中）:
+		Jpa特点：ORM映射元数据：JPA支持XML和注解两种元数据的形式，元数据描述对象和表之间的映射关系，框架据此将实体对象持久化到数据库表中；如：@Entity、@Table、@Column、@Transient等注解
+				 JPA 提供API：用来操作实体对象，执行CRUD操作，框架在后台替我们完成所有的事情，开发者从繁琐的JDBC和SQL代码中解脱出来；如：entityManager.merge(T t)；
+				 JPQL查询语言：通过面向对象而非面向数据库的查询语言查询数据，避免程序的SQL语句紧密耦合；如：from Student s where s.name = ?
+				 JPA仅仅是一种规范，也就是说JPA仅仅定义了一些接口，而接口是需要实现才能工作的。Hibernate就是实现了JPA接口的ORM框架。
+		Spirng data jpa：是spring提供的一套简化JPA开发的框架，按照约定好的[方法命名规则]写dao层接口，就可以在不写接口实现的情况下，实现对数据库的访问和操作。同时提供了很多除了CRUD之外的功能，如分页、排序、复杂查询等等。Spring Data JPA 可以理解为 JPA 规范的再次封装抽象，底层还是使用了 Hibernate 的 JPA 技术实现。
+					接口约定命名规则：如：findByNameAndPwd xxAndxx
+					使用：
+						1、导入依赖：
+						<dependency>
+							<groupId>org.springframework.boot/groupId>
+							<artifactId>spring-boot-starter-data-jpa</artifactId>
+						</dependency>
+						2、添加配置：
+						spring:
+							jpa:
+								hibernate:
+							# 更新或者创建数据表结构
+									ddl-auto: update
+							#控制台显示SQL
+								show-sql: true
+								database: mysql
+						3、使用：
+						编写一个实体类（bean）和数据表进行映射，并且配置好映射关系；
+						编写一个Dao接口来操作实体类对应的数据表（Repository）；
+						如：
+						//使用JPA注解配置映射关系
+						@Entity //实体类（和数据表映射的类）
+						@Table(name = "tbl_user") //@Table来指定和哪个数据表对应;如果省略默认表名就是user；
+						public class User {
+							@Id //主键
+							@GeneratedValue(strategy = GenerationType.IDENTITY)//自增主键
+							private Integer id;
+							@Column(name = "last_name",length = 50) //这是和数据表对应的一个列
+							private String lastName;
+							@Column //省略默认列名就是属性名
+							private String email;
+						}
+						public interface UserRepository extends JpaRepository<User,Integer> {
+						}
+	Springboot启动配置：
+		构造过程（initialize(sources)）
+			ApplicationContextInitializer，应用程序初始化器，做一些初始化的工作，	
+			ApplicationListener，应用程序事件(ApplicationEvent)监听器，
+			默认情况下，initialize方法从spring.factories文件中找出对应的key为ApplicationContextInitializer的类与ApplicationListener的类；
+		SpringApplication执行
+			SpringApplication构造完成之后调用run方法，启动SpringApplication，run方法执行的时候会做以下几件事
+			构造Spring容器、刷新Spring容器、从Spring容器中找出ApplicationRunner和CommandLineRunner接口的实现类并排序后依次执行！
+五、缓存：
+    JSR107标准：
+       Java Caching定义了5个核心接口，分别是CachingProvider, CacheManager, Cache, Entry和Expiry
+		CachingProvider定义了创建、配置、获取、管理和控制多个CacheManager。
+		CacheManager定义了创建、配置、获取、管理和控制多个唯一命名的Cache。
+		Cache是一个类似Map的数据结构并临时存储以Key为索引的值。
+		Entry是一个存储在Cache中的key-value对。Expiry 每一个存储在Cache中的条目有一个定义的有效期。
+	使用：
+    	<dependency>
+    		<groupId>javax.cache</groupId>
+    		<artifactId>cache-api</artifactId>
+    	</dependency>
+	Spring缓存抽象：
+		简介：Spring从3.1开始定义了org.springframework.cache.Cache和org.springframework.cache.CacheManager接口来统一不同的缓存技术；并支持使用JCache（JSR-107）注解简化开发；
+		特点：
+		Cache接口为缓存的组件规范定义，包含缓存的各种操作集合；
+		Cache接口下Spring提供了各种xxxCache的实现；如RedisCache，EhCacheCache , ConcurrentMapCache等；
+		每次调用需要缓存功能的方法时，Spring会检查检查指定参数的指定的目标方法是否已经被调用过；如果有就直接从缓存中获取方法调用后的结果，如果没有就调用方法并缓存结果后返回给用户。下次调用直接从缓存中获取。
+		使用Spring缓存抽象时我们需要关注以下两点；
+			确定方法需要被缓存以及他们的缓存策略
+			从缓存中读取之前缓存存储的数据
+	    注解：
+		@Cacheable - 主要针对方法配置，能够根据方法的请求参数对其结果进行缓存
+		@CacheEvict - 清空缓存（删除）
+		@CachePut - 保证方法被调用，又希望结果被缓存（更新）
+		@EnableCaching	- 开启基于注解的缓存
+		keyGenerator - 缓存数据时key生成策略
+		serialize - 缓存数据时value序列化策略
+	    

@@ -1,5 +1,5 @@
 ----------------------------------------------容器虚拟化技术之Docker技术------------------------------------------------------- 
-	一、容器虚拟化技术Docker
+	一、容器虚拟化技术Docker，参考：https://blog.csdn.net/qq_43371556/article/details/102631158#_565
 		定义：解决了运行环境和配置问题软件容器，方便做持续集成并有助于整体发布的容器虚拟化技术。
 		特点:一次构建、随处运行，DevOps，内核虚拟化，依赖于宿主机内核（不同于传统的虚拟机技术VM）
 		基本组成：镜像、容器、仓库
@@ -799,8 +799,7 @@
 						password: 123456
 						url: jdbc:mysql://localhost:3306/testwkn
 						driver-class-name: com.mysql.jdbc.Driver
-						type: com.alibaba.druid.pool.DruidDataSource
-					 
+						type: com.alibaba.druid.pool.DruidDataSource					 
 						initialSize: 5
 						minIdle: 5
 						maxActive: 20
@@ -822,44 +821,34 @@
 
 				3、	读取配置
 					@Configuration
-					public class DruidConfig {
-					 
+					public class DruidConfig {					 
 						@ConfigurationProperties(prefix = "spring.datasource")
 						@Bean
 						public DataSource druid(){
 						   return  new DruidDataSource();
-						}
-					 
+						}					 
 						//配置Druid的监控
 						//1、配置一个管理后台的Servlet
 						@Bean
 						public ServletRegistrationBean statViewServlet(){
 							ServletRegistrationBean bean = new ServletRegistrationBean(new StatViewServlet(), "/druid/*");
-							Map<String,String> initParams = new HashMap<>();
-					 
+							Map<String,String> initParams = new HashMap<>();					 
 							initParams.put("loginUsername","admin");
 							initParams.put("loginPassword","123456");
 							initParams.put("allow","");//默认就是允许所有访问
-							initParams.put("deny","192.168.15.21");
-					 
+							initParams.put("deny","192.168.15.21");					 
 							bean.setInitParameters(initParams);
 							return bean;
-						}
-					 
-					 
+						}					 					 
 						//2、配置一个web监控的filter
 						@Bean
 						public FilterRegistrationBean webStatFilter(){
 							FilterRegistrationBean bean = new FilterRegistrationBean();
-							bean.setFilter(new WebStatFilter());
-					 
+							bean.setFilter(new WebStatFilter());					 
 							Map<String,String> initParams = new HashMap<>();
-							initParams.put("exclusions","*.js,*.css,/druid/*");
-					 
-							bean.setInitParameters(initParams);
-					 
-							bean.setUrlPatterns(Arrays.asList("/*"));
-					 
+							initParams.put("exclusions","*.js,*.css,/druid/*");					 
+							bean.setInitParameters(initParams);					 
+							bean.setUrlPatterns(Arrays.asList("/*"));					 
 							return  bean;
 						}
 					}
@@ -874,15 +863,15 @@
 					1、注解版-写好提供的接口，程序的入口添加@MapperScan
 					2、配置文件版
 						mybatis:
-						  config-location: classpath:mybatis/mybatis-config.xml 指定全局配置文件的位置
-						  mapper-locations: classpath:mybatis/mapper/*.xml  指定sql映射文件的位置
-			整合Jpa（Java Persistence API，通过注解或者XML描述【对象-关系表】之间的映射关系，并将实体对象持久化到数据库中）:
+						  config-location: classpath:mybatis/mybatis-config.xml #指定全局配置文件的位置
+						  mapper-locations: classpath:mybatis/mapper/*.xml  #指定sql映射文件的位置
+			整合Jpa（Java Persistence API，通过注解或者XML描述[对象-关系表]之间的映射关系，并将实体对象持久化到数据库中）:
 				Jpa特点：ORM映射元数据：JPA支持XML和注解两种元数据的形式，元数据描述对象和表之间的映射关系，框架据此将实体对象持久化到数据库表中；如：@Entity、@Table、@Column、@Transient等注解
 						 JPA 提供API：用来操作实体对象，执行CRUD操作，框架在后台替我们完成所有的事情，开发者从繁琐的JDBC和SQL代码中解脱出来；如：entityManager.merge(T t)；
 						 JPQL查询语言：通过面向对象而非面向数据库的查询语言查询数据，避免程序的SQL语句紧密耦合；如：from Student s where s.name = ?
 						 JPA仅仅是一种规范，也就是说JPA仅仅定义了一些接口，而接口是需要实现才能工作的。Hibernate就是实现了JPA接口的ORM框架。
 				spirng data jpa：
-					是spring提供的一套简化JPA开发的框架，按照约定好的【方法命名规则】写dao层接口，就可以在不写接口实现的情况下，实现对数据库的访问和操作。同时提供了很多除了CRUD之外的功能，如分页、排序、复杂查询等等。		 
+					是spring提供的一套简化JPA开发的框架，按照约定好的[方法命名规则]写dao层接口，就可以在不写接口实现的情况下，实现对数据库的访问和操作。同时提供了很多除了CRUD之外的功能，如分页、排序、复杂查询等等。		 
 					Spring Data JPA 可以理解为 JPA 规范的再次封装抽象，底层还是使用了 Hibernate 的 JPA 技术实现。
 					接口约定命名规则：如：findByNameAndPwd xxAndxx
 					使用：
@@ -905,21 +894,17 @@
 							编写一个Dao接口来操作实体类对应的数据表（Repository）；
 							如：
 								//使用JPA注解配置映射关系
-								@Entity //告诉JPA这是一个实体类（和数据表映射的类）
+								@Entity //实体类（和数据表映射的类）
 								@Table(name = "tbl_user") //@Table来指定和哪个数据表对应;如果省略默认表名就是user；
 								public class User {
-
-									@Id //这是一个主键
+									@Id //主键
 									@GeneratedValue(strategy = GenerationType.IDENTITY)//自增主键
 									private Integer id;
-
 									@Column(name = "last_name",length = 50) //这是和数据表对应的一个列
 									private String lastName;
 									@Column //省略默认列名就是属性名
 									private String email;
-									...
-								}
-								
+								}								
 								public interface UserRepository extends JpaRepository<User,Integer> {
 								}
 			Springboot启动配置：
@@ -929,8 +914,7 @@
 					默认情况下，initialize方法从spring.factories文件中找出对应的key为ApplicationContextInitializer的类与ApplicationListener的类；
 				SpringApplication执行
 					SpringApplication构造完成之后调用run方法，启动SpringApplication，run方法执行的时候会做以下几件事
-					构造Spring容器、刷新Spring容器、从Spring容器中找出ApplicationRunner和CommandLineRunner接口的实现类并排序后依次执行！
-					
+					构造Spring容器、刷新Spring容器、从Spring容器中找出ApplicationRunner和CommandLineRunner接口的实现类并排序后依次执行！					
 	五、Springboot与缓存：
 			JSR107标准：
 				Java Caching定义了5个核心接口，分别是CachingProvider, CacheManager, Cache, Entry和Expiry
@@ -944,8 +928,7 @@
 					<artifactId>cache-api</artifactId>
 				</dependency>
 			Spring缓存抽象：
-				简介：Spring从3.1开始定义了org.springframework.cache.Cache和org.springframework.cache.CacheManager接口来统一不同的缓存技术；
-					并支持使用JCache（JSR-107）注解简化开发；
+				简介：Spring从3.1开始定义了org.springframework.cache.Cache和org.springframework.cache.CacheManager接口来统一不同的缓存技术；并支持使用JCache（JSR-107）注解简化开发；					
 				特点：
 					Cache接口为缓存的组件规范定义，包含缓存的各种操作集合；
 					Cache接口下Spring提供了各种xxxCache的实现；如RedisCache，EhCacheCache , ConcurrentMapCache等；
@@ -980,8 +963,7 @@
 				使用：
 					•1、引入spring-boot-starter-cache模块
 					•2、开启缓存：@EnableCaching
-					•3、使用缓存注解
-				
+					•3、使用缓存注解				
 			Spring-data-redis：参考：https://blog.csdn.net/qq_26545305/article/details/80559902
 				使用:
 					1、引入依赖（2.0以后的版本）：
@@ -1021,8 +1003,7 @@
 								//设置缓存过期时间
 						       // redisCacheManager.setDefaultExpiration(60);//秒
 								return redisCacheManager;
-							}
-						 
+							}						 
 							/**
 							 * 重写缓存key生成策略，可根据自身业务需要进行自己的配置生成条件
 							 * @return
@@ -1044,16 +1025,14 @@
 								};
 							}
 						 
-						}
-					
+						}					
 				操作: spring data redis中用来操作redis的一是采用注解的方式，常用两个注解@Cacheable、@CacheEvit，二是采用RedisTemplate的方式；
 					  对应于redis的5中结构，RedisTemplate中定义了对应5种数据结构的操作
 					  redisTemplate.opsForValue();//操作字符串
 					  redisTemplate.opsForHash();//操作hash
 					  redisTemplate.opsForList();//操作list
 					  redisTemplate.opsForSet();//操作set
-					  redisTemplate.opsForZSet();//操作有序Zset
-			
+					  redisTemplate.opsForZSet();//操作有序Zset			
 			Ace-Cache：参考：https://gitee.com/geek_qi/ace-cache
 				基于spring boot上的注解缓存，自带轻量级缓存管理页面。@Cache比spring cache更轻量的缓存，支持单个缓存设置过期时间，可以根据前缀移除缓存。采用fastjson序列化与反序列化，以json串存于缓存之中。
 				使用：
@@ -1092,8 +1071,7 @@
 									key	字符串	清除某个key缓存
 									keys	字符串数组	清除某些前缀key缓存
 									generator	Class<? extends IKeyGenerator>	缓存键值自定义生成类
-					轻量管理端：访问地址：http://IP:PORT/cache					
-						
+					轻量管理端：访问地址：http://IP:PORT/cache						
 	六、Springboot与消息：（异步通信、系统解耦、流量削峰填谷）
 				消息的使用：利用消息中间件来提升系统异步通信、扩展解耦能力；
 				基本概念：
