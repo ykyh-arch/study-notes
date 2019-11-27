@@ -945,9 +945,9 @@
 					serialize - 缓存数据时value序列化策略
 				主要参数：
 					cacheNames - 缓存的名称 如：@Cacheable(cacheNames={"emp"})
-					value - 缓存的名称 如：@Cacheable(value=”cache0”) 或者 @Cacheable(value={”cache1”,”cache2”}
+					value - 缓存的名称 如：@Cacheable(value=”cache0”) 或者 @Cacheable(value={”cache1”,”cache2”})
 					key - 缓存的key，可以为空，如果指定要按照 SpEL 表达式编写，如果不指定，则缺省按照方法的所有参数进行组合，如：@Cacheable(value=”cache0”,key=”#userName”)
-					condition - 缓存的条件，可以为空，使用 SpEL 编写，返回 true 或者 false，只有为 true 才进行缓存/清除缓存，在调用方法之前之后都能判断，如：@Cacheable(value=”cache0”,condition=”#userName.length()>2”)
+					condition - 缓存的条件，可以为空，使用SpEL编写，返回 true 或者 false，只有为 true 才进行缓存/清除缓存，在调用方法之前之后都能判断，如：@Cacheable(value=”cache0”,condition=”#userName.length()>2”)
 					allEntries -是否清空所有缓存内容，缺省为 false，如果指定为 true，则方法调用后将立即清空所有缓存，如：@CachEvict(value=”cache0”,allEntries=true)
 					beforeInvocation - 是否在方法执行前就清空，缺省为 false，如果指定为 true，则在方法还没有执行的时候就清空缓存，缺省情况下，如果方法执行抛出异常，则不会清空缓存，如：@CachEvict(value=”cache01”，beforeInvocation=true)
 					unless - 用于否决缓存的，条件为true不会缓存，fasle才缓存（与condition恰恰相反），如：@Cacheable(value=”cache01”,unless=”#result == null”)
@@ -974,12 +974,12 @@
 					2、application.yml配置文件配置redis的相关信息
 					spring:
 					  redis:
-						host: 192.168.224.225
+						host: 192.168.1.225
 						port: 6379
 						password:
 					3、配置redis整入spring的缓存框架
 						@Configuration
-						@EnableCaching  //继承CachingConfigurerSupport并重写方法，配合该注解实现spring缓存框架的使用
+						@EnableCaching  //继承CachingConfigurerSupport并重写方法
 						public class RedisConfig extends CachingConfigurerSupport {
 							/**载入配置文件配置的连接工厂**/
 							@Autowired
@@ -987,15 +987,13 @@
 							/*不提示警告信息*/
 							@SuppressWarnings("rawtypes")
 							@Autowired
-							RedisTemplate redisTemplate;
-						 
+							RedisTemplate redisTemplate;						 
 							@Bean
 							RedisTemplate<String,Object> objectRedisTemplate(){
 								RedisTemplate<String,Object> redisTemplate=new RedisTemplate<>();
 								redisTemplate.setConnectionFactory(redisConnectionFactory);
 								return redisTemplate;
-							}
-						 
+							}						 
 							@Bean 
 							@Override
 							public CacheManager cacheManager(){
@@ -1023,8 +1021,7 @@
 										return sb.toString();
 									}
 								};
-							}
-						 
+							}						 
 						}					
 				操作: spring data redis中用来操作redis的一是采用注解的方式，常用两个注解@Cacheable、@CacheEvit，二是采用RedisTemplate的方式；
 					  对应于redis的5中结构，RedisTemplate中定义了对应5种数据结构的操作
@@ -1087,7 +1084,7 @@
 					JMS（Java Message Service） JAVA消息服务：基于JVM消息代理的规范。 ActiveMQ、 HornetMQ是JMS实现
 					AMQP（Advanced Message Queuing Protocol）：高级消息队列协议，也是一个消息代理的规范，兼容JMS；RabbitMQ是AMQP的实现
 				JMS与AMQP区别：
-					AMQP网络线级协议，跨语言跨平台，支持5种消息模型；（1）direct exchange（2）、fanout exchange（3）、topic change（4）、headers exchange（5）、system exchange
+					AMQP网络线级协议，跨语言跨平台，支持5种消息模型；（1）direct exchange（2）、fanout exchange（3）、topic exchange（4）、headers exchange（5）、system exchange
 				Springboot的支持：
 					– spring-jms提供了对JMS的支持
 					– spring-rabbit提供了对AMQP的支持
@@ -1145,8 +1142,7 @@
 							spring.rabbitmq.password=guest
 					3、申明使用：
 						AmqpTemplate - 发送消息
-						@RabbitListener(queues="") - 监听消息
-						
+						@RabbitListener(queues="") - 监听消息						
 		七、Springboot与检索ElasticSearch：
 				简介：ElasticSearch是一个分布式搜索服务，提供Restful API，底层基于Apache Lucene，采用多shard（分片）的方式保证数据安全，并且提供自动resharding的功能，
 					  github等大型的站点也是采用了ElasticSearch作为其搜索服务。
@@ -1173,10 +1169,9 @@
 						spring.data.elasticsearch.cluster-nodes=192.168.11.24:9300
 						#是否开启本地存储
 						spring.data.elasticsearch.repositories.enable=true
-					3、申明使用：
+					3、申明使用：（类似于JPA的模式）
 						参考：https://blog.csdn.net/linzhiqiang0316/article/details/80343401	
-						ElasticsearchRepository、 ElasticsearchTemplate、 JestClient
-						
+						ElasticsearchRepository、 ElasticsearchTemplate、 JestClient						
 		八、Springboot与任务：
 				异步：与第三方系统交互的时候，往往采用异步任务。在Spring 3.x之后，就已经内置了@Async来完美解决这个问题。使用@EnableAysnc、 @Aysnc即可；
 				定时：Spring为我们提供了异步执行任务调度的方式，提供TaskExecutor、TaskScheduler接口。@EnableScheduling（开启）、@Scheduled（定时）
@@ -1188,7 +1183,6 @@
 						秒（0-59） 分（0-59） 小时（0-23） 日期或天（1-31） 月份（1-12） 星期（0-7或SUN-SAT 0,7是SUN）
 						特殊字符的含义：,（枚举）-（区间）*（任意）/（步长）？（日/星期冲突匹配）L（最后）W（工作日）C（和calendar联系后计算过的值）#（星期，4#2，第2个星期四）
 						举例："0 0 12 * * ?" 每天中午12点触发
-		
 		九、Springboot与邮件任务：				
 				参考：https://www.cnblogs.com/zhangyinhua/p/9277684.html
 				自动装配类JavaMailSender.send();//发送邮件
@@ -1203,8 +1197,7 @@
 					核心概念：
 					   “认证”（Authentication）和“授权”（Authorization或者访问控制）两大目标
 					web/http与安全：
-						1. 登陆/注销
-						– HttpSecurity配置登陆、注销功能
+						1. 登陆/注销，– HttpSecurity配置登陆、注销功能						
 						2. Thymeleaf提供的SpringSecurity标签支持，需要引入thymeleaf-extras-springsecurity4						
 						– sec:authentication=“” 获得当前用户的用户名
 						– sec:authorize=“hasRole(‘ADMIN’)” 当前用户必须拥有ADMIN权限时才会显示标签内容
@@ -1212,15 +1205,13 @@
 						– 表单添加remember-me的checkbox
 						– 配置启用remember-me功能
 						4. CSRF（Cross-site request forgery）跨站请求伪造
-						– HttpSecurity启用csrf功能，会为表单添加_csrf的值，提交携带来预防CSRF；
-					
-					
+						– HttpSecurity启用csrf功能，会为表单添加_csrf的值，提交携带来预防CSRF；参考：https://www.cnblogs.com/qmfsun/p/5779469.html
 					与shiro的区别：
 						Shiro是Apache 的Java的一个安全框架。
 						Shiro的特点 易于理解的 Java Security API；
 									简单的身份认证（登录），支持多种数据源；
 									对角色的简单的签权（访问控制），支持细粒度的签权；
-									支持一级缓存，以提升应用程序的性能；
+									支持一级缓存，以提升应用程序的性能；（一级缓存：作用域是SqlSession范围的,当在同一个sqlSession中执行两次相同的sql语句时,第一次执行完毕会将数据库中查询的数据写到缓存(内存),第二次查询时会从缓存中获取数据,不再去底层数据库查询,从而提高查询效率。需要注意的是,如果SqlSession执行了DML操作（增删改），并且提交到数据库，MyBatis则会清空SqlSession中的一级缓存，这样做的目的是为了保证缓存中存储的是最新的信息，避免出现脏读现象。二级缓存的作用域是mapper的同一个namespace。不同的sqlSession两次执行相同的namespace下的sql语句，且向sql中传递的参数也相同，即最终执行相同的sql语句，则第一次执行完毕会将数据库中查询的数据写到缓存，第二次查询会从缓存中获取数据，不再去底层数据库查询，从而提高效率。）
 									内置的基于POJO企业会话管理，适用于Web以及Web的环境；
 									非常简单的加密 API；
 									异构客户端会话访问；
@@ -1234,8 +1225,7 @@
 									Concurrency：shiro支持多线程应用的并发验证，即如在一个线程中开启另一个线程，能把权限自动传播过去；
 									Testing：提供测试支持；
 									Run As：允许一个用户假装为另一个用户（如果他们允许）的身份进行访问；
-									Remember Me：记住我，即一次登录后，下次再来的话不用登录了
-						
+									Remember Me：记住我，即一次登录后，下次再来的话不用登录了						
 						Shiro四大核心功能：Authentication,Authorization,Cryptography,Session Management
 						Shiro三个核心组件：Subject, SecurityManager 和 Realms.
 							Subject：主体，代表了当前“用户”，这个用户不一定是一个具体的人，与当前应用交互的任何东西都是Subject，如网络爬虫，机器人等；
@@ -1243,8 +1233,7 @@
 							SecurityManager：安全管理器；即所有与安全有关的操作都会与SecurityManager交互；且它管理着所有Subject；
 											 可以看出它是Shiro的核心，它负责与后边介绍的其他组件进行交互，如果学习过SpringMVC，你可以把它看成DispatcherServlet前端控制器；
 							Realms：域，Shiro从从Realm获取安全数据（如用户、角色、权限），就是说SecurityManager要验证用户身份，那么它需要从Realm获取相应的用户进行比较以确定用户身份是否合法；
-									也需要从Realm得到用户相应的角色/权限进行验证用户是否能进行操作；可以把Realm看成DataSource，即安全数据源。
-						
+									也需要从Realm得到用户相应的角色/权限进行验证用户是否能进行操作；可以把Realm看成DataSource，即安全数据源。						
 						Security：基于Spring的企业应用系统提供声明式的安全访问控制解决方案的安全框架。
 							      在Spring应用上下文中配置的Bean，充分利用了Spring IoC，DI（IoC：Inversion of Control控制反转,DI:Dependency Injection依赖注入）和AOP（面向切面编程）功能，
 								  为应用系统提供声明式的安全访问控制功能，减少了为企业系统安全控制编写大量重复代码的工作。
@@ -1252,10 +1241,8 @@
 								  AuthenticationManager：处理来自于框架其他部分的认证请求。
 								  AccessDecisionManager：为 Web 或方法的安全提供访问决策。
 								  AuthenticationProvider：AuthenticationManager 是通过它来认证用户的。
-								  UserDetailsService：跟 AuthenticationProvider 关系密切，用来获取用户信息的。
-						
-							授权含义：OAuth2.0（三方授权登录）授权协议
-								
+								  UserDetailsService：跟 AuthenticationProvider 关系密切，用来获取用户信息的。						
+							授权含义：OAuth2.0（三方授权登录）授权协议							
 													OAuth2.0 内部回调先获取token，再用token（令牌，权限范围
 													和有效期）授权登录，获取用户信息
 								客户端（豆瓣）  ----------------------------------------------------->   授权层、服务提供商（QQ认证服务器）
@@ -1268,30 +1255,25 @@
 											2. 你有了这个帐号之后，就可以在任何一个其他支持OpenID验证的网站，并且用你上面申请的OpenID进行登录
 											3. 因为这个网站并不知道你的身份是否正确，所以它会请求你的验证服务器对你的身份进行验证。
 											4. 验证服务器告诉网站说，你是合法用户
-											5. 网站接受你的身份，让你进入。
- 
-								区别：OAuth关注的是authorization；而OpenID侧重的是authentication
-							
+											5. 网站接受你的身份，让你进入。 
+								区别：OAuth关注的是authorization；而OpenID侧重的是authentication							
 		十一、Springboot与分布式：				
 				常见的分布式：zookeeper+dubbo组合，springCloud全栈技术以及spring Cloud Alibaba分布式解决方案
 				架构演变：
 					单一应用架构（all in one）：流量1~10，用于简化增删改查工作量的数据访问框架(ORM)是关键
 					垂直应用架构：流量10~1000，将应用拆成互不相干的几个应用，以提升效率。此时，出现用于加速前端页面开发的Web框架(MVC)是关键
 					分布式服务架构：流量1000~10000 ，当垂直应用越来越多，应用之间交互不可避免，将核心业务抽取出来，作为独立的服务，逐渐形成稳定的服务中心。此时，
-									用于提高业务复用及整合的分布式服务框架(RPC)是关键
+									用于提高业务复用及整合的分布式服务框架(RPC)是关键；
 					流动计算架构：流量10000+，当服务越来越多，容量的评估，此时需增加一个调度中心基于访问压力实时管理集群容量，
-								  提高集群利用率。此时，用于提高机器利用率的资源调度和治理中心(SOA)是关键
-				
+								  提高集群利用率。此时，用于提高机器利用率的资源调度和治理中心(SOA)是关键；				
 				zookeeper：（服务的注册中心）ZooKeeper 是一个分布式的，开放源码的分布式应用程序协调服务。它是
 						   一个为分布式应用提供一致性服务的软件，提供的功能包括：配置维护、域名服务、分布式同步、组服务等
 						   压力较小，zk 将全量数据存储在内存，高性能，而且支持集群。
 				dubbo：（服务的治理）Dubbo是Alibaba开源的分布式服务框架，特点分层架构解耦，从服务的模型分为服务的提供者与消费者。- DubboX当当网
-				使用参考：https://blog.csdn.net/zhengzhaoyang122/article/details/81877595	   
-								
+				使用参考：https://blog.csdn.net/zhengzhaoyang122/article/details/81877595								
 				SpringCloud：是一个分布式的整体解决方案。Spring Cloud为开发者提供了在分布式系统（配置管理，服务发现，熔断，路由，微代理，控制总线，
 							 一次性token，全局琐，leader选举，分布式session，集群状态）中快速构建的工具，使用Spring Cloud的开发者可以快速的启动服务
 							 或构建应用、同时能够快速和云平台资源进行对接。（详情参考SpringCloud技术栈）
-		
 		十二、Springboot与热部署：	
 				1、禁用模板引擎的cache，使用ctrl+F9重新编译页面
 				2、官方提供的Spring Loaded
@@ -1317,8 +1299,7 @@
 					#spring.devtools.restart.additional-paths: src/main/java
 					#classpath目录下的WEB-INF文件夹内容修改不重启
 					spring.devtools.restart.exclude: WEB-INF/**
-					IDEA配置，修改了Java类后，IDEA默认是不自动编译的。自动编译：（1）File-Settings-Compiler-Build Project automatically
-																				（2）ctrl + shift + alt + /,选择Registry,勾上 Compiler autoMake allow when app running
+					IDEA配置，修改了Java类后，IDEA默认是不自动编译的。自动编译：（1）File-Settings-Compiler-Build Project automatically																				（2）ctrl + shift + alt + /,选择Registry,勾上 Compiler autoMake allow when app running
 				4、JRebel热部署插件
 				    安装：
 						点击File -> Settings -> Plugins,如下图：搜索JRebel安装，重启IDEA工具即可
@@ -1330,12 +1311,9 @@
 						<artifactId>spring-boot-starter-actuator</artifactId>
 					</dependency>
 				监控端点分类：
-					应用配置类：/autoconfig /configprops /beans /env /mappings /info
-					
-					度量指标类：/metrics /health /dump /trace /auditevents
-					
-					操作控制类：/shutdown（关闭应用，默认关闭的） 可以在application.properties中配置开启：endpoints.shutdown.enabled=true
-				
+					应用配置类：/autoconfig /configprops /beans /env /mappings /info					
+					度量指标类：/metrics /health /dump /trace /auditevents					
+					操作控制类：/shutdown（关闭应用，默认关闭的） 可以在application.properties中配置开启：endpoints.shutdown.enabled=true				
 				通过http方式访问监控端点
 				定制端点信息：endpoints+端点名+属性名进行设置，如：
 					修改端点id（endpoints.beans.id=mybeans）
@@ -1348,8 +1326,7 @@
 					• management.context-path=/manage
 					• management.port=20001
 					– 关闭http端点
-					• management.port=-1		
-					
+					• management.port=-1			
 ----------------------------------------------SpringCloud技术栈篇---------------------------------------------------------						  
 	基础概念：
 	    微服务：强调的是服务的大小，它关注的是某一个点，是具体解决某一个问题/提供落地对应服务的一个服务应用
