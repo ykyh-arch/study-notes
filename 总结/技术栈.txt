@@ -1303,7 +1303,7 @@
 				4、JRebel热部署插件
 				    安装：
 						点击File -> Settings -> Plugins,如下图：搜索JRebel安装，重启IDEA工具即可
-		十三、Springboot与监控：		
+		十三、Springboot与监控：
 				使用：
 					添加依赖
 					<dependency>
@@ -1346,8 +1346,7 @@
 			   系统部署依赖
 			   服务间通信成本、数据一致性、系统集成测试、性能监控……
 		微服务技术栈：
-			微服务条目			落地技术											备注			               
-			
+			微服务条目			落地技术											备注			               			
 			服务开发			Springboot、Spring、SpringMVC
 			服务配置与管理		Netflix公司的Archaius、阿里Diamond等
 			服务注册与发现		Eureka、Consul、Zookeeper、AliBabaNacos等
@@ -1367,7 +1366,7 @@
 			......
     SpringCloud入门介绍：
 		含义：SpringCloud=分布式微服务架构下的一站式解决方案，是各个微服务架构落地技术的集合体，俗称微服务全家桶
-		与springboot之间关系：SpringBoot可以离开SpringCloud独立使用开发项目，
+		与springboot的比较：SpringBoot可以离开SpringCloud独立使用开发项目，
 							  但是SpringCloud离不开SpringBoot，属于依赖的关系.
 							  SpringBoot专注于快速、方便的开发单个微服务个体，SpringCloud关注全局的服务治理框架。
 		与Dubbo的比较： 最大区别：SpringCloud抛弃了Dubbo的RPC通信，采用的是基于HTTP的REST方式。
@@ -1386,7 +1385,7 @@
 			如：@Configuration
 				public class ConfigBean
 				{
-				 @Bean
+				@Bean
 				public RestTemplate getRestTemplate()
 					{
 				return new RestTemplate();
@@ -1394,17 +1393,15 @@
 				}
 			2，声明使用：
 			@Autowired
-			private RestTemplate restTemplate;
-			
+			private RestTemplate restTemplate;			
 			方法中：
 			restTemplate.postForObject(REST_URL_PREFIX+"/dept/add", dept, Boolean.class); - 参数：REST请求地址、请求参数、HTTP响应转换被转换成的对象类型
-
 	服务注册与发现：
 			-Eureka(C/S)：
-				简介：Netflix公司的子模块，是一个基于REST的服务，用于定位服务，以实现云端中间层服务发现和故障转移。Netflix在设计Eureka时遵守的就是AP原则
+				简介：Netflix公司的子模块，是一个基于REST的服务，用于定位服务，以实现云端中间层服务发现和故障转移。Netflix在设计Eureka时遵守的就是AP原则；
 				CAP原则：CAP原则又称CAP定理，指的是在一个分布式系统中，Consistency（一致性）、 Availability（可用性）、Partition tolerance（分区容错性），三者不可兼得
-				三大角色：1、Eureka Server 提供服务注册和发现；2、Service Provider服务提供方将自身服务注册到Eureka，从而使服务消费方能够找到；3、Service Consumer服务消费方从Eureka获取注册服务列表，从而能够消费服务
-			使用注册：
+				三大角色：1、Eureka Server 提供服务注册和发现；2、Service Provider服务提供方将自身服务注册到Eureka，从而使服务消费方能够找到；3、Service Consumer服务消费方从Eureka获取注册服务列表，从而能够消费服务；
+			使用注册中心：
 				服务端：
 				1,引用模块：POM.XML
 					<dependency>
@@ -1436,9 +1433,9 @@
 							service-url: 
 							  defaultZone: http://localhost:7001/eureka
 							  instance:
-								instance-id: 服务实例名（设置后可以隐藏主机名）
+								instance-id: 服务实例名 #设置后可以隐藏主机名
 							  prefer-ip-address: true #访问路径可以显示IP地址
-							  #点击显示
+							  #链接点击显示
 							  info:
 								  app.name: 服务程序名
 								  company.name: 公司名
@@ -1446,11 +1443,11 @@
 								  build.version: $project.version$
 							  
 				3,申明使用：主类上添加@EnableEurekaClient注解以实现Eureka中的DiscoveryClient实现，可以使用@EnableDiscoveryClient代替
-			使用发现：
+			使用服务发现：
 				申明使用，主启动类添加@EnableDiscoveryClient
 			    使用时注入， @Autowired
-							 private DiscoveryClient client;即可使用，注：DiscoveryClient是spring clould 对治理体系的一个抽象
-			自我保护机制：某时刻某一个微服务不可用了，eureka不会立刻清理，依旧会对该微服务的信息进行保存
+							 private DiscoveryClient client; //注：DiscoveryClient是spring clould对治理体系的一个抽象；
+			自我保护机制：某时刻某一个微服务不可用了，eureka不会立刻清理，依旧会对该微服务的信息进行保存！
 			集群处理：
 				在Eureka服务器中添加配置：
 				eureka: 
@@ -1465,7 +1462,6 @@
 			与Dubbo的Zookeeper的比较：
 				著名的CAP理论指出，一个分布式系统不可能同时满足C(一致性)、A(可用性)和P(分区容错性)。由于分区容错性P在是分布式系统中必须要保证的，因此我们只能在A和C之间进行权衡。
 				因此,Zookeeper保证的是CP,Eureka则是AP。因此，Eureka可以很好的应对因网络故障导致部分节点失去联系的情况，而不会像zookeeper那样使整个注册服务瘫痪。
-
 			-Consul：
 				简介：Spring Cloud Consul是分布式的、高可用、横向扩展(AP原则)，它包含多个组件，但是作为一个整体，在微服务架构中为我们的基础设施提供服务发现和服务配置的工具。它包含了下面几个特性：
 					  服务发现（service discovery）
@@ -1485,18 +1481,15 @@
 	
 				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理
 				注意：consul不需要创建类似eureka-server的服务端吗？由于Consul自身提供了服务端，所以我们不需要像之前实现Eureka的时候创建服务注册中心，直接通过下载consul的服务端程序就可以使用。
-				启动consul服务：$consul agent -dev
-				
+				启动consul服务：$consul agent -dev				
 			-Nocas：
-				参考Spring Cloud Alibaba 技术站的Nocas相关内容；
-				
+				参考Spring Cloud Alibaba 技术站的Nocas相关内容；		
 				详情参考：https://blog.csdn.net/qq_38765404/article/details/89521124
-
 	负载均衡：
 			-Ribbon（结合Eureka使用）：
 			 简介：基于Netflix实现的一套客户端负载均衡的工具，主要功能是提供客户端的软件负载均衡算法。
-			 负载均衡：将用户的请求基于某种规则平摊的分配到多个服务上，从而达到系统的HA，常见的负载均衡有软件Nginx，LVS，硬件F5等
-				分类：集中式LB-即在服务的消费方和提供方之间使用独立的LB设施(可以是硬件，如F5, 也可以是软件，如nginx), 由该设施负责把访问请求通过某种策略转发至服务的提供方；
+			 负载均衡：将用户的请求基于某种规则平摊的分配到多个服务上，从而达到系统的HA，常见的负载均衡有软件Nginx，LVS，Haproxy，硬件F5等
+				分类：集中式LB-即在服务的消费方和提供方之间使用独立的LB设施(可以是硬件，如F5, 也可以是软件，如nginx), 由该设施负责把访问请求通过某种策略转发至服务的消费方；
 					  进程内LB-将LB逻辑集成到消费方，消费方从服务注册中心获知有哪些地址可用，然后自己再从这些地址中选择出一个合适的服务器。Ribbon就属于进程内LB。
 			 使用：
 				1,引用模块：POM.XML
@@ -1516,16 +1509,14 @@
 							client:
 							register-with-eureka: false
 							service-url: 
-							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
-	
+							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/	
 				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；2、在配置文件ConfigBean 中添加@LoadBalanced注解
 				  -》结论：Ribbon和Eureka整合后服务消费方可以直接调用服务而不用再关心地址和端口号
 			    4,策略IRule：简单轮询负载均衡RoundRobinRule，区别于RetryRule，随机负载均衡，加权响应时间负载均衡 ，区域感知轮询负载均衡
 			 自定义Ribbon：	
 				主启动类添加@RibbonClient注解，格式：@RibbonClient(name="MICROSERVICECLOUD",configuration=MySelfRule.class)，注意：这个自定义配置类不能放在@ComponentScan所扫描的当前包下以及子包下，
 					否则我们自定义的这个配置类就会被所有的Ribbon客户端所共享，也就是说我们达不到特殊化定制的目的了。
-				在配置文件ConfigBean中添加@LoadBalanced注解
-			
+				在配置文件ConfigBean中添加@LoadBalanced注解			
 			-Feign（声明式服务调用，WebService客户端）：它的使用方法是定义一个接口，然后在上面添加注解，同时也支持JAX-RS（Java API for RESTful Web Services）标准的注解。
 			 特性：
 				可插拔式的注解支持，包括Feign注解和JAX-RS注解;
@@ -1552,8 +1543,7 @@
 							client:
 							register-with-eureka: false
 							service-url: 
-							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
-	
+							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/	
 				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；同时添加@EnableFeignClients 来开启feign
 			                2, 定义接口：
 							   格式：value=“服务名称”,configuration = xxx.class 这个类配置Hystrix的一些精确属性
@@ -1568,8 +1558,7 @@
 								@Override
 								public String method1() {
 									return "error";
-								}
-								
+								}								
 	服务熔断器（断路器）：		 
 			-Hystrix：
 			 概念来源：服务雪崩：
@@ -1613,8 +1602,7 @@
 										return new Dept().setDeptno(id)
 											   .setDname("该ID："+id+"没有没有对应的信息,null--@HystrixCommand")
 											   .setDb_source("no this database in MySQL");
-									}
-			 
+									}			 
 			 服务降级Fallback
 				使用： 
 					概念：整体资源快不够了，忍痛将某些服务先关掉，待渡过难关，再开启回来。
@@ -1639,8 +1627,7 @@
 						注意：在application.properties或YML文件的配置添加一行配置
 						      feign: 
 								hystrix: 
-									enabled: true //开启   
-			 
+									enabled: true //开启			 
 			 服务监控HystrixDashboard
 			    使用：
 				    概念：Hystrix还提供了准实时的监控（Hystrix Dashboard），Spring Cloud也提供了Hystrix Dashboard的整合，对监控内容转化成可视化界面。
@@ -1662,10 +1649,8 @@
 					2,配置参数：application.properties或YML文件的配置
 					格式：
 						server:
-							port: 9901
-		
-					3,申明使用：1、程序main入口，添加@EnableHystrixDashboard注解，开启熔断监控的支持；
-	
+							port: 9901		
+					3,申明使用：1、程序main入口，添加@EnableHystrixDashboard注解，开启熔断监控的支持；	
 	路由网关：
 			-Zuul：
 			 概念：代理+路由+过滤三大功能，可以与Eureka整合并注册到注册中心里面
