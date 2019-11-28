@@ -1673,11 +1673,7 @@
 							serverName.path: /serverName/**
 							serverName.serviceId: 服务名 //给微服务起别名
 							//或使用：serverName.url: http://${IP}:${PORT}/  //这种基于未使用服务注册中心的
-						
-
 				3,申明使用：1、程序main入口，添加@EnableZuulProxy注解，开启Zuul的支持；
-				
-	
 	分布式配置中心：
 				 -SpringCloud Config（与Git整合使用）
 				 概念来源：分布式系统面临的---配置问题
