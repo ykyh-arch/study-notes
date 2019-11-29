@@ -1672,7 +1672,7 @@
 						routes: 
 							serverName.path: /serverName/**
 							serverName.serviceId: 服务名 //给微服务起别名
-							//或使用：serverName.url: http://${IP}:${PORT}/  //这种基于未使用服务注册中心的
+							//或使用：serverName.url: http://${IP}:${PORT}/  //基于未使用服务注册中心的
 				3,申明使用：1、程序main入口，添加@EnableZuulProxy注解，开启Zuul的支持；
 	分布式配置中心：
 				 -SpringCloud Config（与Git整合使用）
@@ -1747,7 +1747,7 @@
 												defaultZone: http://eureka-dev.com:7001/eureka/   
 									---
 									server: 
-										ort: 8202 
+										port: 8202 
 									spring:
 										profiles: test
 										application: 
@@ -1756,7 +1756,6 @@
 										client: 
 											service-url: 
 												defaultZone: http://eureka-test.com:7001/eureka/
-
 						  1,引用模块：POM.XML
 							<dependency>
 								<groupId>org.springframework.cloud</groupId>
@@ -1772,11 +1771,10 @@
 												label: master   
 												uri: http://config-3344.com:3344  #本微服务启动后先去找3344号服务（链接Config服务端），通过SpringCloudConfig获取GitHub的服务地址
 						  3,申明使用：
-									测试：在控制层使用，如：@Value("${spring.application.name}")
-															 private String applicationName;
-						  
-----------------------------------------------Spring Cloud Alibaba 技术篇---------------------------------------------------------						  
-					 
+									测试：在控制层使用，如：
+									@Value("${spring.application.name}")
+									private String applicationName;						  
+----------------------------------------------Spring Cloud Alibaba 技术篇---------------------------------------------------------						  					 
 	基本介绍：Spring Cloud Alibaba 致力于提供微服务开发的一站式解决方案，依托 Spring Cloud Alibaba，只需要添加一些注解和少量配置，就可以将 Spring Cloud 应用接入阿里微服务解决方案，
 			  通过阿里中间件来迅速搭建分布式应用系统。
     基本技术栈：
@@ -1787,16 +1785,15 @@
 			  5、分布式事务：使用 @GlobalTransactional 注解， 高效并且对业务零侵入地解决分布式事务问题
 			  6、阿里云对象存储：阿里云提供的海量、安全、低成本、高可靠的云存储服务。支持在任何应用、任何时间、任何地点存储和访问任意类型的数据
 			  7、分布式任务调度：提供秒级、精准、高可靠、高可用的定时（基于 Cron 表达式）任务调度服务
-			  8、阿里云短信服务：覆盖全球的短信服务，友好、高效、智能的互联化通讯能力，帮助企业迅速搭建客户触达通道
-					  
-	1、服务注册与发现
+			  8、阿里云短信服务：覆盖全球的短信服务，友好、高效、智能的互联化通讯能力，帮助企业迅速搭建客户触达通道					  
+	1、服务注册与发现（配置中心）
 		-Nocas（= Spring Cloud Eureka + Spring Cloud Config）：
 				简介：Spring Cloud Alibaba 项目中开发分布式应用微服务的子组件，致力于服务发现、配置和管理微服务，基于 DNS 和基于 RPC 的服务发现。
 				关键特性：
 					1、服务发现和服务健康监测；
 					2、动态配置服务（通过 Nacos Server 和 spring-cloud-starter-alibaba-nacos-config 实现配置的动态变更）；
 					3、动态DNS服务与服务及其元数据管理（通过 Nacos Server 和 spring-cloud-starter-alibaba-nacos-discovery 实现服务的注册与发现）
-				使用-客户端（服务注册与发现）：
+				使用（服务注册与发现、提供方与消费方）：
 				1,引用模块：POM.XML
 					<!--Nacos的服务注册与发现模块-->
 					<dependency>
@@ -1834,9 +1831,7 @@
 									metadata: # 元数据管理
 									  name1: healthy1 
 									  name2: healthy2
-
-				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现
-				
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现				
 				使用-客户端（动态配置，相当于SpringCloud Config）：
 				1,引用模块：POM.XML	
 				<!--Nacos分布式配置模块-->
@@ -1863,7 +1858,6 @@
 							</dependency>
 					</dependencies>
 				</dependencyManagement>
-
 				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
 				格式：
 					spring:
@@ -1877,10 +1871,10 @@
 					server:
 					  port: 9094 
 				3、准备外部的统一配置文件：
-							本地仓库新建配置文件yml（properties）并提交到git仓库里，如：nacos-config-client.properties或nacos-config-client.yml								
+							新建配置文件yml（properties）并提交到ACM，如：nacos-config-client.properties或nacos-config-client.yml								
 							# nacos默认加载的是nacos-config-client.properties文件，如果需要加载yml，需要在yml增加一行配置：file-extension: yml
-				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现	  
-					  ACM （应用配置管理）配置加载规则说明：
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现；	  
+					  ACM（应用配置管理）配置加载规则说明：
 						参考文档：https://www.alibabacloud.com/help/zh/doc-detail/94708.htm?spm=a2c63.p38356.b99.56.547b66ae7aDsVW
 							# Nacos Spring Cloud 中，dataId 的完整格式如下：
 							${prefix}-${spring.profile.active}.${file-extension}
@@ -1888,8 +1882,7 @@
 							spring.profile.active 即为当前环境对应的 profile，详情可以参考 Spring Boot文档。
 							注意：当 spring.profile.active 为空时，对应的连接符 - 也将不存在，dataId 的拼接格式变成 ${prefix}.${file-extension}
 							file-exetension 为配置内容的数据格式，可以通过配置项 spring.cloud.nacos.config.file-extension 来配置。目前只支持 properties 和 yaml 类型。
-							# @RefreshScope 实现配置自动更新
-							
+							# @RefreshScope 实现配置自动更新							
 							采用默认值的应用要加载的配置规则就是：
 							Data ID=${spring.application.name}.properties，Group=DEFAULT_GROUP。
 	2、服务调用：
@@ -1925,7 +1918,6 @@
 							</dependency>
 					</dependencies>
 				</dependencyManagement>
-
 				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
 				格式：
 					spring:
@@ -1944,10 +1936,9 @@
 							@GetMapping("/m1")
 							String m1(@RequestParam(name = "name") String name);
 						}
-
 	3、其他：
-		 -Webflux：替换了旧的Servlet线程模型。
-		 - Spring Cloud Gateway ：网关配置，目标是替代Netflix ZUUL，其不仅提供统一的路由方式，并且基于Filter链的方式提供了网关基本的功能，例如：安全，监控/埋点，和限流等。
+		 - Webflux：替换了旧的Servlet线程模型。用少量的线程处理request和response io操作，这些线程称为Loop线程，而业务交给响应式编程框架处理，响应式编程是非常灵活的，用户可以将业务中阻塞的操作提交到响应式框架的work线程中执行，而不阻塞的操作依然可以在Loop线程中进行处理，大大提高了Loop线程的利用率。反应堆式编程reactor。
+		 - Spring Cloud Gateway：网关配置，目标是替代Netflix ZUUL，其不仅提供统一的路由方式，并且基于Filter链的方式提供了网关基本的功能，例如：安全，监控/埋点，和限流等。
 				使用-客户端：
 				1,引用模块：POM.XML	
 				<!--gateway依赖-->
@@ -1979,7 +1970,6 @@
 							</dependency>
 					</dependencies>
 				</dependencyManagement>
-
 				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
 				格式：
 					spring:
@@ -2005,11 +1995,9 @@
 								  enabled: true  #表明gateway开启服务注册和发现的功能，并且spring cloud gateway自动根据服务发现为每一个服务创建了一个router，这个router将以服务名开头的请求路径转发到对应的服务。
 								  lowerCaseServiceId: true   #是将请求路径上的服务名配置为小写（因为服务注册的时候，向注册中心注册时将服务名转成大写的了），比如以/service-hi/*的请求路径被路由转发到服务名为service-hi的服务上。
 								  filters:
-									- StripPrefix=1
-									
+									- StripPrefix=1									
 						server:
 						  port: 9093
-
 				3、申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务调用
 						使用示例：http://localhost:9093/provider/hello?name=zhansan
 		 -Sentinel：
@@ -2028,11 +2016,10 @@
 							启动(默认端口：8080)：
 							java -jar sentinel-dashboard-1.6.0.jar
 							java -jar -Dserver.port=8888 sentinel-dashboard-1.6.0.jar
-							默认用户名密码：sentinel
-							
+							默认用户名密码：sentinel					
 						 2、核心库的配置使用：
 							1,引用模块：POM.XML	
-							<!--gateway依赖-->
+							<!--Sentinel依赖-->
 							<dependency>
 								<groupId>org.springframework.cloud</groupId>
 								  <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
@@ -2061,7 +2048,6 @@
 										</dependency>
 								</dependencies>
 							</dependencyManagement>
-
 							2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
 							格式：
 								spring:
@@ -2080,16 +2066,14 @@
 											ruleType: flow
 								server:
 								  port: 9095
-
 							3、申明使用：访问sentinel服务列表并限流；通过nacos配置流控规则；
 							   # 注意
 								 Sentinel控制台中修改规则：仅存在于服务的内存中，不会修改Nacos中的配置值，重启后恢复原来的值。
 								 Nacos控制台中修改规则：服务的内存中规则会更新，Nacos中持久化规则也会更新，重启后依然保持。
 							4、优点:
 									1、sentinel配置变动后通知非常的迅速, 秒杀springcloud原来的config几条街,
-									   毕竟原来的config是基于git, 不提供可视化界面, 动态变更还需要依赖bus来通过所有的客户端变化
-									2、与hystrix相比，sentinel更加的轻量级,并且支持动态的限流调整,更加友好的界面ui														
-					
+									   毕竟原来的config是基于git, 不提供可视化界面, 动态变更还需要依赖bus来通过所有的客户端变化；
+									2、与hystrix相比，sentinel更加的轻量级,并且支持动态的限流调整,更加友好的界面ui。																			
 ----------------------------------------------NoSQL缓存技术Redis技术篇----------------------------------------------------------------------------------								
 	一、NoSQL入门：
 			时代背景[架构演变]：
@@ -2752,8 +2736,7 @@
 				# '|' 或，如：p1|p2|p3表示匹配 p1 或 p2 或 p3；g|food 匹配g或food；(g|f)ood 匹配good或food
 				# '[^字符集合]' 匹配不在指定集合中的任何字符，如： '[^abc]' 可以匹配不在abc内的任意字符
 				# '{n,}'或'{n,m}'，如：“字符串{n,}”表示前面的字符串至少匹配n次；“字符串{n,m}”表示匹配前面的字符串不少于n次，不多于m次
-				  示例：'a{5,8}'匹配5-8个a；'123{3}'匹配结果12333；'(456){2}'匹配结果456456
-			  
+				  示例：'a{5,8}'匹配5-8个a；'123{3}'匹配结果12333；'(456){2}'匹配结果456456			  
 		逻辑运算符：
 			逻辑与：AND 或&&；逻辑或 OR或||
 				如：
@@ -2763,8 +2746,7 @@
 				当任意一个操作数为NULL时，返回值为NULL;对于非NULL的操作数，
 				如果两个操作数都是非0值或者都是0值，则返回结果为0，反之为1，
 				XOR等同于a AND (NOT b))或者NOT a AND (b)
-				如：SELECT 1 XOR 1, 0 XOR 0,1 XOR 0,1 XOR NULL,1 XOR 1 XOR 1;					-0,0,1,null,1
-		
+				如：SELECT 1 XOR 1, 0 XOR 0,1 XOR 0,1 XOR NULL,1 XOR 1 XOR 1;					-0,0,1,null,1		
 	二、Mysql事务管理：
 			Mysql事务是必须满足4个条件（ACID）：
 				原子性（Atomicity，或称不可分割性）、一致性（Consistency）、隔离性（Isolation，又称独立性）、持久性（Durability）
@@ -2789,8 +2771,7 @@
 				如：
 					BEGIN;
 					SQL insert,update,delete 语句；
-					COMMIT/ROLLBACK;					-数据库表有改变/数据库表没有改变
-		
+					COMMIT/ROLLBACK;					-数据库表有改变/数据库表没有改变		
 	三、Mysql视图[虚表]：
 			含义：视图（view）是一种虚拟存在的表，是一个逻辑表，本身并不包含数据，而是由一个SELECT语句保存在数据字典中的。
 				  通过视图，可以展现基表的部分数据；视图数据来自定义视图的查询中使用的表，使用视图动态生成。
@@ -2876,8 +2857,7 @@
 					# [RESTRICT | CASCADE]
 					如：
 					DROP VIEW IF EXISTS stu_class; 
-					-- SHOW CREATE VIEW stu_class; 														-- Table '[库名].stu_class' doesn't exist
-		
+					-- SHOW CREATE VIEW stu_class; 														-- Table '[库名].stu_class' doesn't exist		
 	四、Mysql触发器：
 			含义：触发器是与表有关的数据库对象，在满足定义条件时触发，并执行触发器中定义的语句集合。
 			特点：
@@ -2973,8 +2953,7 @@
 				
 				-- 删除触发器，注意：基表删除后，触发器不复存在
 				# 语法：DROP TRIGGER [schema_name.]trigger_name
-				DROP TRIGGER `db1`.`ins_sum`;				  
-				  
+				DROP TRIGGER `db1`.`ins_sum`;				  				  
 	五、Mysql存储过程[函数]：
 			含义：存储过程简称过程，Stored Procedure，是一种在数据库中存储复杂程序，以便外部程序调用的一种数据库对象。
 				  简单点，可以将其理解为没有返回值的函数，一般存储过程并不显示结果，而是把结果返回给你指定的变量。

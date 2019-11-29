@@ -330,4 +330,134 @@
 	3,申明使用：1、程序main入口，添加@EnableHystrixDashboard注解，开启熔断监控的支持；
 * 路由网关:
   **Zuul**
-  
+  + 概念：代理+路由+过滤三大功能，可以与Eureka整合并注册到注册中心里面
+  + 基本使用：
+	1,引用模块：POM.XML
+	```xml
+	<dependency>
+    	<groupId>org.springframework.cloud</groupId>
+    	<artifactId>spring-cloud-starter-eureka</artifactId>
+    </dependency>
+    <dependency>
+    	<groupId>org.springframework.cloud</groupId>
+    	<artifactId>spring-cloud-starter-zuul</artifactId>
+    </dependency>
+	```
+	2,配置参数：application.properties或YML文件的配置
+	```yml
+	zuul:
+	    prefix: /pre //前缀
+		ignored-services: 服务名  //多个指定微服务以半角逗号分隔，所有可以用"*"通配符代替
+		routes:
+			serverName.path: /serverName/**
+			serverName.serviceId: 服务名 //微服务别名，或使用：serverName.url: http://${IP}:${PORT}/  //基于未使用服务注册中心的
+	```
+	3,申明使用：1、程序main入口，添加@EnableZuulProxy注解，开启Zuul的支持；
+* 分布式配置中心：
+  **SpringCloud Config（与Git整合使用）**
+  + 概念来源：分布式系统面临的---配置问题；
+  + 概念：为微服务架构中的微服务提供集中化的外部配置支持，配置服务器为各个不同微服务应用的所有环境提供了一个中心化的外部配置；
+  + 分类：服务端和客户端
+  服务端也称为分布式配置中心，它是一个独立的微服务应用，用来连接配置服务器并为客户端提供获取配置信息，加密/解密信息等访问接口；
+  客户端则是通过指定的配置中心来管理应用资源，以及与业务相关的配置内容，并在启动的时候从配置中心获取和加载配置信息配置服务器默认采用git来存储配置信息，这样就有助于对环境配置进行版本管理，并且可以通过git客户端工具来方便的管理和访问配置内容。
+  + 规则：1、不同环境不同配置，动态化的配置更新；
+		  2、运行期间动态调整配置，不再需要在每个服务部署的机器上编写配置文件，服务会向配置中心统一拉取配置自己的信息；
+		  3、当配置发生变动时，服务不需要重启即可感知到配置的变化并应用新的配置；
+		  4、将配置信息以REST接口的形式暴露。
+  + 具体用法：
+  1、用自己的Github账户建一个统一配置中心仓库，并克隆到本地；
+  2、新建配置文件application.yml（保存格式必须为UTF-8）；
+  ```yml
+    spring:
+      profiles:
+    	active:
+    	- dev
+    ---
+    spring:
+      profiles: dev     #开发环境
+      application:
+    	name: microservicecloud-config-dev
+    ---
+    spring:
+      profiles: test   #测试环境
+      application:
+    	name: microservicecloud-config-test
+    	#请保存为UTF-8格式
+  ```
+  3、push到git仓库
+  *服务端配置：*
+  1,引用模块：POM.XML
+  ```xml
+  <dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-config-server</artifactId>
+  </dependency>
+  ```
+  2,配置参数：application.properties或YML文件的配置
+  ```yml
+  spring:
+	application:
+		name: microservicecloud-config
+	cloud:
+		config:
+			server:
+				git:
+					uri: git@github.com***.git #GitHub上面的git仓库名字
+  ```
+  3,申明使用：1、程序main入口，添加@EnableConfigServer注解，开启Config的支持；
+  配置读取规则：
+    1、/{application}-{profile}.yml 如：http://config-3344.com:3344/application-dev.yml
+    2、/{application}/{profile}[/{label}] 如：http://config-3344.com:3344/application/dev/master
+    3、/{label}/{application}-{profile}.yml 如：http://config-3344.com:3344/master/application-dev.yml
+  *客户端配置:*
+  前提准备：
+  本地仓库新建配置文件yml并提交到git仓库里，如：microservicecloud-config-client.yml
+  ```yml
+  spring:
+		profiles:
+			active:
+				- dev
+	---
+	server:
+		port: 8201
+	spring:
+		profiles: dev
+		application:
+			name: microservicecloud-config-client
+	eureka:
+		client:
+			service-url:
+				defaultZone: http://eureka-dev.com:7001/eureka/
+	---
+	server:
+		port: 8202
+	spring:
+		profiles: test
+		application:
+			name: microservicecloud-config-client
+	eureka:
+		client:
+			service-url:
+				defaultZone: http://eureka-test.com:7001/eureka/
+  ```
+  1,引用模块：POM.XML
+  ```xml
+  <dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-config</artifactId>
+  </dependency>
+  ```
+  2,配置参数：bootstrap.yml配置文件的配置（系统级），而application.yml是用户级
+  ```yml
+  spring:
+		cloud:
+			config:
+				name: microservicecloud-config-client #需要从github上读取的资源名称，注意没有yml后缀名
+				profile: dev #本次访问的配置项
+				label: master
+				uri: http://config-3344.com:3344  #本微服务启动后先去找3344号服务（链接Config服务端），通过SpringCloudConfig获取GitHub的服务地址
+  ```
+  3,申明使用：
+  测试：在控制层使用，如：
+  @Value("${spring.application.name}")
+  private String applicationName；
