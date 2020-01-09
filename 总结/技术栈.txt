@@ -3500,7 +3500,7 @@
 							<table name="customer_inf" primaryKey="customer_inf_id" dataNode="custdb"/><!-- 用户表 -->
 						</scheme>
 						<!-- 数据节点配置-->
-						<dataNode name="ordb" dataHost="mysql0103" database="order_db"/>
+						<dataNode name="ordb" dataHost="mysql0103" database="order_db"/><!-- 数据主机信息、后端数据库 -->
 						<dataNode name="prodb" dataHost="mysql0104" database="product_db"/>
 						<dataNode name="custdb" dataHost="mysql0105" database="customer_db"/>
 						<!-- 数据主机配置 -->
