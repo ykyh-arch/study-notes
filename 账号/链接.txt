@@ -38,3 +38,12 @@ https://juejin.im/entry/5ac6effd518825555e5e150e --掘金内网穿透环境搭建
 https://www.eyoucms.com/ -易优CMS
 https://www.17sucai.com -17素材网
 
+
+#开源项目参考
+https://github.com/wuyouzhuguli/FEBS-Vue --FEBS权限管理系统 stars 1700+
+https://github.com/elunez/eladmin --eladmin权限管理系统 stars 3500+
+https://gitee.com/y_project/RuoYi --若依 stars 8000+
+https://github.com/whvcse/easyweb-jwt --stars 600+
+https://github.com/lenve/VBlog --微博客 stars 3000+
+https://github.com/lenve/vhr --微人事 stars 9000+
+
