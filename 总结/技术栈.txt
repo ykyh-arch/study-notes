@@ -1204,7 +1204,7 @@
 						3. remember me
 						– 表单添加remember-me的checkbox
 						– 配置启用remember-me功能
-						4. CSRF（Cross-site request forgery）跨站请求伪造
+						4. CSRF（Cross-site request forgery）跨站请求伪造，防止三方网站恶意攻击；
 						– HttpSecurity启用csrf功能，会为表单添加_csrf的值，提交携带来预防CSRF；参考：https://www.cnblogs.com/qmfsun/p/5779469.html
 					与shiro的区别：
 						Shiro是Apache 的Java的一个安全框架。
@@ -1510,9 +1510,9 @@
 							register-with-eureka: false
 							service-url: 
 							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/	
-				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；2、在配置文件ConfigBean 中添加@LoadBalanced注解
+				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；2、在配置文件ConfigBean中添加@LoadBalanced注解
 				  -》结论：Ribbon和Eureka整合后服务消费方可以直接调用服务而不用再关心地址和端口号
-			    4,策略IRule：简单轮询负载均衡RoundRobinRule，区别于RetryRule，随机负载均衡，加权响应时间负载均衡 ，区域感知轮询负载均衡
+			    4,策略IRule：简单轮询负载均衡RoundRobinRule，区别于RetryRule，随机负载均衡，加权响应时间负载均衡，区域感知轮询负载均衡
 			 自定义Ribbon：	
 				主启动类添加@RibbonClient注解，格式：@RibbonClient(name="MICROSERVICECLOUD",configuration=MySelfRule.class)，注意：这个自定义配置类不能放在@ComponentScan所扫描的当前包下以及子包下，
 					否则我们自定义的这个配置类就会被所有的Ribbon客户端所共享，也就是说我们达不到特殊化定制的目的了。
@@ -1605,8 +1605,7 @@
 									}			 
 			 服务降级Fallback
 				使用： 
-					概念：整体资源快不够了，忍痛将某些服务先关掉，待渡过难关，再开启回来。
-						  服务降级处理是在客户端实现完成的，与服务端没有关系。
+					概念：整体资源快不够了，忍痛将某些服务先关掉，待渡过难关，再开启回来。服务降级处理是在客户端实现完成的，与服务端没有关系。
 				    申明使用（与Feign结合使用）：	
 						格式示例：
 						@FeignClient(value = "MICROSERVICECLOUD",fallbackFactory=DeptClientServiceFallbackFactory.class)
@@ -1614,7 +1613,6 @@
 							@RequestMapping(value = "/dept/get/{id}",method = RequestMethod.GET)
 							public Dept get(@PathVariable("id") long id);
 			            }
-						
 						@Component
 						public class DeptClientServiceFallbackFactory implements FallbackFactory{
 						
@@ -1623,7 +1621,6 @@
 								...
 							}  
 						}
-						
 						注意：在application.properties或YML文件的配置添加一行配置
 						      feign: 
 								hystrix: 
@@ -1639,9 +1636,8 @@
 						<dependency>
 							<groupId>org.springframework.cloud</groupId>
 							<artifactId>spring-boot-starter-actuator</artifactId>
-						</dependency>
-						
-						在服务的监控一方添加如下配置
+						</dependency>						
+						#在服务的监控一方添加如下配置
 						<dependency>
 							<groupId>org.springframework.cloud</groupId>
 							<artifactId>spring-cloud-starter-hystrix-dashboard</artifactId>
@@ -1858,7 +1854,7 @@
 							</dependency>
 					</dependencies>
 				</dependencyManagement>
-				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
+				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件（系统级别）
 				格式：
 					spring:
 					  application:
@@ -1886,7 +1882,7 @@
 							采用默认值的应用要加载的配置规则就是：
 							Data ID=${spring.application.name}.properties，Group=DEFAULT_GROUP。
 	2、服务调用：
-		 -Feign：声明式服务调用，与Netflix Feign 功能相似
+		 -Feign：声明式服务调用，与Netflix Feign 功能相似；
 				使用-客户端：
 				1,引用模块：POM.XML	
 				<!--openfeign依赖-->
