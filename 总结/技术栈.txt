@@ -3303,7 +3303,7 @@
 					<property name="bindIp">0.0.0.0</property><!-- 绑定Ip，0.0.0.0允许所有Ip->
 					<property name="frontWriteQueueSize">2048</property><!-- 前端允许队列大小->
 					<property name="charset">utf-8</property><!-- 字符集编码->
-					<property name="txIsolation">2</property><!-- 事务隔离， repeatable可重复读read可读commited已提交->
+					<property name="txIsolation">2</property><!-- 事务隔离， repeatable可重复读read commited可读已提交->
 					<!-- 事务隔离，READ UNCOMMITTED、READ COMMITTED、REPEATABLE READ 和 SERIALIZABLE->
 					<property name="processors">8</property><!-- 进程数->
 					<property name="idleTimeOut">18000000</property><!-- 空闲超时数，单位毫秒->
@@ -3349,7 +3349,7 @@
 			   </tableRule>
 			   <function name="hash-mod-4"
 						class="io.mycat.route.function.PartitionByHashMod"><!-- 对应的Java类，哈希取模分片 -->
-						<property name="count">4</property><!-- 将表分4分->
+						<property name="count">4</property><!-- 将表分4份->
 			   </function>
 			   常用的分片算法：
 					简单取模-PartitionByMod （对分片列取模）
@@ -3499,7 +3499,7 @@
 							<property name="bindIp">0.0.0.0</property><!-- 绑定Ip，0.0.0.0允许所有Ip->
 							<property name="frontWriteQueueSize">2048</property><!-- 前端允许写队列大小->
 							<property name="charset">utf-8</property><!-- 字符集编码->
-							<property name="txIsolation">2</property><!-- 事务隔离， repeatable可重复读read可读commited已提交->
+							<property name="txIsolation">2</property><!-- 事务隔离， repeatable可重复读read commited 可读已提交->
 							<property name="processors">8</property><!-- 进程数->
 							<property name="idleTimeOut">18000000</property><!-- 空闲超时数，单位毫秒->
 							<property name="sqlExecuteTimeOut">300</property><!-- SQL执行的超时时间，单位秒->
@@ -3652,7 +3652,7 @@
 		8、MyCAT高可用架构
 			问题：
 				如何使用Zookeeper启动MyCAT???
-				主从高可用架构：MyCAT + ZK（同步、启动MyCAT） + Haproxy（代理、负载均衡） + Keepalived（高可用） + MySQL
+				主从高可用架构：MyCAT + ZK（配置同步、启动MyCAT） + Haproxy（代理、负载均衡） + Keepalived（高可用） + MySQL
 			高可用系统的要求：
 				不存在单点问题；最大限度的保证服务的可用性；
 			示意图：
