@@ -4086,16 +4086,14 @@
 						  -h 带计量单位
 						  -a 含文件 
 						  --max-depth=1 子目录深度
-						  -c 列出明细的同时，增加汇总值
-					
+						  -c 列出明细的同时，增加汇总值					
 			        如：查询/opt目录的磁盘占用情况，深度为 1，du -ach --max-depth=1 /opt
 				常用指令：
 					1、查询/home目录下的文件个数：ls -l /home | grep "^-" | wc -l
 					2、查询/home目录下的目录个数：ls -l /home | grep "^d" | wc -l
 					3、查询/home目录下的文件个数（包括子文件夹）：ls -lR /home | grep "^-" | wc -l
 					4、查询/home目录下的目录个数（包括子文件夹）：ls -lR /home | grep "^d" | wc -l	
-				目录结构：tree
-		
+				目录结构：tree		
 		Linux 网络配置
 			查看网络：ifconfig
 			查看当下服务器是否连接通目标主机：ping，如： ping www.baidu.com
@@ -4103,17 +4101,15 @@
 			获取网络：
 				1、自动获取：IP不固定
 				2、固定网络：直接修改置文件指定IP,并可以连接到外网，编辑vim /etc/sysconfig/network-scripts/ifcfg-eth0
-							 修改后，一定要重启服务（reboot重启系统/service network restart）
-							 
+							 修改后，一定要重启服务（reboot重启系统/service network restart）							 
 			查看系统网络情况：
 				netstat [选项]，如：netstat -anp | grep sshd
 				选项参数：
 					-an 按一定顺序排列输出
-					-p	显示哪个进程在调用
-		
+					-p	显示哪个进程在调用		
 		进程管理：
 			含义：
-				1)在 LINUX 中，每个执行的程序（代码）都称为一个进程。每一个进程都分配一个 ID 号
+				1)在 LINUX 中，每个执行的程序（代码）都称为一个进程。每一个进程都分配一个 ID号
 				2)每一个进程，都会对应一个父进程，而这个父进程可以复制多个子进程
 				3)每个进程都可能以两种方式存在的。前台与后台，前台进程就是用户目前的屏幕上可以进
 				  行操作的。后台进程则是实际在操作，但由于屏幕上无法看到的进程，通常使用后台方式执行
@@ -4136,8 +4132,7 @@
 							   级更低的优先级，R-正在运行，D-短期等待（不可被唤醒的睡眠状态 , 通常进程可能在等待 I/O 的情况），Z-僵死进程，T-被跟踪或者被停止等等
 						•STARTED：进程的启动时间
 						•TIME：CPU 时间，即进程使用 CPU 的总时间
-						•COMMAND：启动进程所用的命令和参数，如果过长会被截断显示
-				
+						•COMMAND：启动进程所用的命令和参数，如果过长会被截断显示				
 				显示所有进程信息（全格式）：ps -ef 
 					参数说明：-e 显示所有进程 -f 全格式
 					1)指令：ps –ef|grep xxx
@@ -4150,8 +4145,7 @@
 						•STIME：进程启动的时间
 						•TTY：完整的终端名称
 						•TIME：CPU 时间
-						•CMD：启动进程所用的命令和参数
-				
+						•CMD：启动进程所用的命令和参数				
 					三种风格：
 						BSD 风格的参数，前面不加破折线
 						Unix 风格的参数，前面加单破折线
@@ -4165,8 +4159,7 @@
 				pstree [选项] ,可以更加直观的来看进程信息，如：pstree -p
 				常用选项：
 				-p :显示进程的 PID
-				-u :显示进程的所属用户
-			
+				-u :显示进程的所属用户			
 			动态监控进程：
 				指令：Top，Top 与 ps 最大的不同之处，在于 top 在执行一段时间可以更新正在运行的的进程
 				top [选项]
@@ -4177,27 +4170,21 @@
 				交互说明：
 					P（以CPU使用率排序） M（以内存使用率排序） N（以PID排序） q（退出top）
 				如：监视特定用户：top 回车 输入u ，再输入用户名
-				    终止进程：top 回车 输入k ，再输入PID
-				   
-				
+				    终止进程：top 回车 输入k ，再输入PID	
 		服务管理：
 			含义：本质就是进程，但是是运行在后台的，通常都会监听某个端口，等待其它程序的请求，比如(mysql,sshd、防火墙等)，因此又称为守护进程。
 			service 服务名 [start | stop | restart | reload | status]
-			注：在 CentOS7.0 后，不再使用service ,而是 systemctl
-			如：service iptables start   			 -启动防火墙
-			
+			注：在 CentOS7.0 后，不再使用service,而是 systemctl
+			如：service iptables start   			 -启动防火墙			
 			服务自动启或服务永久关闭：ckconfig
 				查看服务名：
 					1、指令： setup -> 系统服务 就可以看到系统服务
-					2、/etc/init.d/服务名称，如： ls -l /etc/init.d/
-					
-				Linux系统开机流程：开机	-> BIOS ->/boot ->init进程名 ->运行级别 ->运行对应的服务
-				
+					2、/etc/init.d/服务名称，如： ls -l /etc/init.d/					
+				Linux系统开机流程：开机	-> BIOS ->/boot ->init进程名 ->运行级别 ->运行对应的服务				
 				chkconfig 指令：可以给每个服务的各个运行级别设置自启动/关闭，语法：chkconfig [服务名] --list|grep xxx
 					chkconfig --level 5 服务名 on/off，如：chkconfig --level 5 sshd off
-														   chkconfig [--level 5] iptables off
-					
-				注意：chkconfig重新设置服务后自启动或关闭，需要重启机器 reboot 才能生效
+														   chkconfig [--level 5] iptables off					
+				注意：chkconfig重新设置服务后自启动或关闭，需要重启机器 reboot才能生效
 		防火墙：
 			查看所有开放的端口：firewall-cmd --zone=public --list-ports
 			添加：				firewall-cmd --zone=public --add-port=80/tcp --permanent    （--permanent永久生效，没有此参数重启后失效）			
@@ -4207,10 +4194,9 @@
 			批量开放端口：
 				firewall-cmd --permanent --zone=public --add-port=100-500/tcp
 				firewall-cmd --permanent --zone=public --add-port=100-500/udp
-				firewall-cmd --reload
-					
+				firewall-cmd --reload					
 		Linux包管理：
-			rpm：一种用于互联网下载包的打包及安装工具，，它包含在某些 Linux 分发版中，它生成具有.RPM扩展名的文件。RPM 是 RedHat Package Manager（RedHat 软件包管理工具）的缩写，类似 windows
+			rpm：一种用于互联网下载包的打包及安装工具，它包含在某些 Linux 分发版中，它生成具有.RPM扩展名的文件。RPM 是 RedHat Package Manager（RedHat 软件包管理工具）的缩写，类似 windows
 				 的 setup.exe，Linux 的分发版本都有采用（suse,redhat, centos 等等），可以算是公认的行业标准了
 			    查询指令：
 					查询已安装的 rpm 列表：rpm –qa|grep xx，如：rpm –qa|grep firefox
@@ -4231,34 +4217,28 @@
 						i=install 安装
 						v=verbose 提示
 						h=hash 进度条
-			yum：是一个 Shell 前端软件包管理器。基于RPM包管理，能够从指定的服务器自动下载 RPM 包并且安装，可以自动处理依赖性关系，并且一次安装所有依赖的软件包，使用 yum 的前提是可以联网		
+			yum：是一个 Shell前端软件包管理器。基于RPM包管理，能够从指定的服务器自动下载 RPM 包并且安装，可以自动处理依赖性关系，并且一次安装所有依赖的软件包，使用 yum 的前提是可以联网		
 				基本指令：
 					查询yum服务器是否有需要安装的软件：yum list|grep xx，如：yum list|grep firefox 
-					安装指定的yum包：yum install xxx，如：yum install firefox
-					
+					安装指定的yum包：yum install xxx，如：yum install firefox					
 	三、搭建：JavaEE环境：
 			JDK：配置环境变量，vim /etc/profile
 				 JAVA_HOME=/opt/jdk1.7.0_79
 				 PATH=/opt/jdk1.7.0_79/bin:$PATH
 				 export JAVA_HOME PATH
-			注意：需要注销用户，环境变量才能生效！	 
-			
+			注意：需要注销用户，环境变量才能生效！	 			
 			Tomcat：解压[tar -zxvf apache-tomcat.tar.gz] -> 启动：bin/下执行.startup.sh
 			注意：需要开放端口，外部才能访问！
 				修改防火墙开放端口[centos7.0以下的版本]：vim /etc/sysconfig/iptables，
 				添加一行：-A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 8080:9000 -j ACCEPT，
-				重启防火墙service iptables restart
-			
-			Eclipse：解压 -> 安装目录执行./eclipse
-			
-			MySql：略
-				
+				重启防火墙service iptables restart			
+			Eclipse：解压 -> 安装目录执行./eclipse			
+			MySql：略				
 	四、大数据Shell编程：	
 		简介：
 			1)Linux 运维工程师在进行服务器集群管理时，需要编写Shell程序来进行服务器管理
 			2)对于JavaEE和Python程序员来说，工作的需要，要求编写一些Shell脚本进行程序或者是服务器的维护，比如编写一个定时备份数据库的脚本
-			3)对于大数据程序员来说，需要编写Shell程序来管理集群
-			
+			3)对于大数据程序员来说，需要编写Shell程序来管理集群			
 			Shell是一个命令行CMD解释器，它为用户提供了一个向Linux内核发送请求以便运行程序的界面系统
 			级程序，用户可以用Shell来启动、挂起、停止甚至是编写一些程序	
 		Shell入门：
@@ -4269,12 +4249,10 @@
 				4）多行注释：：<<!                        !
 			执行方式：
 				1) 输入脚本的绝对路径或相对路径，如：./1.sh
-				2) sh+脚本，不推荐，如： sh 1.sh
-				   
+				2) sh+脚本，不推荐，如： sh 1.sh				   
 		Shell变量：
 			变量分为：系统变量和用户自定义变量，系统变量：$HOME、$PWD、$SHELL、$USER 等等，如：echo "home=$HOME"
-			显示当前shell中所有变量：set
-			
+			显示当前shell中所有变量：set			
 			自定义变量：
 				规则：
 					1) 变量名称可以由字母、数字和下划线组成，但是不能以数字开头
@@ -4286,16 +4264,14 @@
 				3) 声明静态变量：readonly 变量，注意：不能 unset，如：readonly B=100 				echo "B=$B"
 				将命令的返回值赋值给变量：
 					1）A=`ls -la` 反引号，运行里面的命令，并把结果返回给变量 A
-					2）A=$(ls -la) 等价于反引号
-			
+					2）A=$(ls -la) 等价于反引号			
 			环境变量：
 				基本语法：
 				1) export 变量名=变量值 											-将shell变量输出为环境变量
 				2) source 配置文件													-让修改后的配置信息立即生效
 				3) echo $变量名														-查询环境变量的值
 			    如：配置Tomcat环境变量，vim /etc/profile 添加一行：export TOMCAT_HOME=/opt/tomcat，保存退出
-					source /etc/profile 让修改后的配置信息立即生效，使用：echo $TOMCAT_HOME
-			
+					source /etc/profile 让修改后的配置信息立即生效，使用：echo $TOMCAT_HOME			
 			位置参数变量：
 				含义：当执行一个shell脚本时，如果希望获取到命令行的参数信息，就可以使用到位置参数变量，比如 ： ./m1.sh 100 200, 	
 					  这个就是一个执行shell 的命令行，可以在 m1.sh脚本中获取到参数信息
@@ -4303,16 +4279,14 @@
 					$n  					-n为数字，$0代表命令本身，$1-$9代表第一到第九个参数，10以上的参数需要用大括号包含，如${10}
 					$* 						-*代表命令行中所有的参数，$*把所有的参数看成一个整体
 					$@						-@代表命令行中所有的参数，不过$@把每个参数区分对待
-					$#						-#代表命令行中所有参数的个数
-					
+					$#						-#代表命令行中所有参数的个数					
 			预定义变量：
 				含义： shell设计者事先已经定义好的变量，可以直接在shell脚本中使用
 				基本语法：
 					$$   				    -当前进程的进程号（PID）
 					$!						-后台运行的最后一个进程的进程号（PID）
 					$？ 					-最后一次执行的命令的返回状态。如果这个变量的值为 0，证明上一个命令正确执行；
-											 如果这个变量的值为非 0（具体是哪个数，由命令自己来决定），则证明上一个命令执行不正确了
-					
+											 如果这个变量的值为非 0（具体是哪个数，由命令自己来决定），则证明上一个命令执行不正确了					
 			运算符：
 				1) “$((运算式))”或“$[运算式]”
 				2) expr m + n 注意 expr 运算符间要有空格
