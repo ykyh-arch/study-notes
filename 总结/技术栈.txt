@@ -5080,9 +5080,80 @@
 						server 127.0.0.1:9003 id=1003 weight=20;
 					}
 				}
-			会话保持模块：通过cookie实现客户端与后端服务器的会话保持, 在一定条件下可以保证同一个客户端访问的都是同一个后端服务器；
-			
-			
+			会话保持模块：负载均衡模块，通过cookie实现客户端与后端服务器的会话保持, 在一定条件下可以保证同一个客户端访问的都是同一个后端服务器；
+			如：# 默认配置：cookie=route mode=insert fallback=on
+				upstream foo {
+				    server 192.168.0.1;
+				    server 192.168.0.2;
+				    session_sticky cookie=route mode=insert fallback=on;
+				}				
+				server {
+				    location / {
+				        proxy_pass http://foo;
+				    }
+				}
+			对后端的服务器进行主动健康检查：
+			如：http {
+					upstream cluster1 {
+						# simple round-robin
+						server 192.168.0.1:80;
+						server 192.168.0.2:80;
+						check interval=3000 rise=2 fall=5 timeout=1000 type=http; #检测间隔时间、服务器DOWN次数、服务器UP次数、超时时间、类型
+						check_http_send "HEAD / HTTP/1.0\r\n\r\n";#请求头添加
+						check_http_expect_alive http_2xx http_3xx;#HTTP回复的成功状态
+					}
+					upstream cluster2 {
+						server 192.168.0.3:80;
+						server 192.168.0.4:80;
+						check interval=3000 rise=2 fall=5 timeout=1000 type=http;
+						check_keepalive_requests 100;
+						check_http_send "HEAD / HTTP/1.1\r\nConnection: keep-alive\r\n\r\n";
+						check_http_expect_alive http_2xx http_3xx;
+					}
+					server {
+						listen 80;
+						location /1 {
+							proxy_pass http://cluster1;
+						}
+						location /2 {
+							proxy_pass http://cluster2;
+						}
+						location /status {
+							check_status;
+							access_log  off;
+							allow SOME.IP.ADD.RESS;
+							deny all;
+						}
+					}
+				}
+			动态解析域名模块：
+			upstream backend {
+				dynamic_resolve fallback=stale fail_timeout=30s;
+				server a.com;
+				server b.com;
+			}
+			server {
+				location / {
+					proxy_pass http://backend;
+				}
+			}
+			5、设置在后端失败时的重试次数；
+			如：http {
+				upstream test {
+					server 127.0.0.1:8081;
+					server 127.0.0.2:8081;
+					server 127.0.0.3:8081;
+					server 127.0.0.4:8081;
+				}
+				server {
+					proxy_upstream_tries 2; #限制proxy代理的后端尝试次数
+					proxy_set_header Host $host;					
+					location / {
+						proxy_pass test;
+					}
+				}
+			}
+			6、其他；
 ----------------------------------------------FastDfs文件存储技术篇----------------------------------------------------------------------------------	
 		技术支持：参考https://blog.csdn.net/kamroselee/article/details/80334621
 	一、简介
@@ -5118,8 +5189,7 @@
 								   tar -zxvf libfastcommonV1.0.7.tar.gz
 								   cd libfastcommon-1.0.7
 								   ./make.sh
-								   ./make.sh install --安装libfastcommon，注意：libfastcommon安装好后会自动将库文件拷贝至/usr/lib64下，由于FastDFS程序引用usr/lib目录所以需要将/usr/lib64下的库文件拷贝至/usr/lib下
-				
+								   ./make.sh install --安装libfastcommon，注意：libfastcommon安装好后会自动将库文件拷贝至/usr/lib64下，由于FastDFS程序引用usr/lib目录所以需要将/usr/lib64下的库文件拷贝至/usr/lib下；				
 				tracker
 					编译安装：[规划安装目录：/usr/local/]
 						tar -zxvf FastDFS_v5.05.tar.gz
@@ -5144,12 +5214,11 @@
 							  tracker_server=192.168.101.3:22122 #配置tracker服务器的IP
 					测试：将/home下的图片1.png上传到FastDFS中，
 						  执行指令：/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/1.png -->执行结果：192.168.101.3/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
-									对应服务器位置：/home/fastdfs/fdfs_storage/data/group1/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
-									
+									对应服务器位置：/home/fastdfs/fdfs_storage/data/group1/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png									
 		java Client API：略
 		FastDFS和nginx整合[主要是存储服务器上]
 			在tracker上安装nginx：目的是实现反向代理、负载均衡。
-			在Storage上安装nginx：[规划安装目录：/usr/local/]，目的是实现Http方式的上传于下载。
+			在Storage上安装nginx：[规划安装目录：/usr/local/]，目的是实现Http方式的上传与下载。
 				主要步骤：
 					 1）cd /usr/local
 						tar -zxvf FastDFS-nginx-module_v1.16.tar.gz
@@ -5186,8 +5255,7 @@
 					                ngx_fastdfs_module;
 					        }
 						}
-					 6）访问测试：http://192.168.101.3:8888/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
-				
+					 6）访问测试：http://192.168.101.3:8888/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png				
 		FastDFS集群环境搭建:
 			前提准备：准备6台服务器[物理节点]，如：192.168.1.173-178
 			架构规划：173是tracker1[对应的storage是175、176，group1]、174是tracker2[对应的storage是177、178，group2]
@@ -5211,8 +5279,7 @@
 							   tracker_server=192.168.1.173:22122 #配置tracker服务器的IP
 							   tracker_server=192.168.1.174:22122
 					 测试：	/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/1.png	 或 /usr/bin/fdfs_unload_file /etc/fdfs/client.conf /home/1.png
-					 结果：文件存储按上面追踪服务器指定的策略[参数：store_lookup]来存储，且同组下的数据同步；
-				
+					 结果：文件存储按上面追踪服务器指定的策略[参数：store_lookup]来存储，且同组下的数据同步；				
 				5）、整合nginx模块[存储服务器上]，便于http方式访问
 					 前提准备：在175、176、177、178四个物理节点上都安装nginx模块，同单机版；
 					 配置文件：vim /etc/fdfs/mod_FastDFS.conf，主要修改内容：同单机版，此外有group_name=group1/2，group_count=2；
@@ -5223,519 +5290,18 @@
 					 安装完成后，修改nginx.conf文件信息，主要修改：缓存配置以及负载均衡的配置信息	
 					 上传测试；http://192.168.11.173:8000/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png或http://192.168.11.174:8000/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
 				     
-				7）、整合keepalived，提供一个VIP实现整体的访问流程；					
-					 
-----------------------------------------------大数据定制技术篇----------------------------------------------------------------------------------	
-	一、大数据：
-		概念：Big Data，指的是一段时间范围内内无法使用常规的工具[JavaEE]处理数据集合，需要新的处理模式来处理海量、高增长率、多样化的信息。主要解决的是海量的数据存储与海量的数据分析计算问题。
-		数据的存储单位：
-			bit、Byte、KB、MB、GB、TB、PB、EB、ZB、YB、BB、NB、DB 
-			转化：除了1Byte=8bit，其他都是间隔1024
-		特点：4V + 4高
-			4V：Volume[海量]：人类的数据总量达到EB级别
-				Velocity[实时/高速]：如每年天猫双十一
-				Variety[多样]：结构化[数据库/文本]与非结构化[网络日志、音视频、地理位置]数据
-				Value[价值密度]：低价值密度
-			4高：
-				高可靠[高性能]：多个数据副本
-				高可扩[高扩展]：集群下任意扩展节点
-				高效率[高并发]：并行工作
-				高容错：
-				
-		运用场景：
-			物流仓储[如京东]、零售[分析用户行为]、旅游、商品的广告推荐、金融、保险、房产、人工智能AI...
-		发展前景：
-			政策支持、人才缺口、工资高
-		大数据部门的业务流程：
-			产品经理[人员]提要求[统计指标]	-------------->数据部门搭建数据平台、分析数据 ----------->数据可视化[JavaEE]
-		大数据部门的组织结构[适用于大中型企业]：
-			平台组：[技术] 															--平台搭建[hadoop、Flume[日志收集]、Spark[数据挖掘、分析]、Kafka[消息队列]、Hbase[数据存储]]、集群监控、集群调优
-			数据仓库组：[业务]													    --ETL工程师[抽取、转化、加载]：数据清洗；Hive[数据查询]工程师：数据分析、数据仓库建模
-			数据挖掘组：														    --算法、推荐系统、用户头像工程师
-			报表开发组：JavaEE
-		大数据技术生态圈体系
-			数据来源层：结构化数据[数据库]、半结构化数据[文件日志]、非结构化数据[音视频]
-			数据传输层[DTL]：Sqoop数据传递、Flume日志收集
-				Sqoop是一款开源的工具，主要用于在Hadoop、Hive(数据查询)与传统的数据库(MySql)间进行数据的传递，可以将一个关系型数据库中的数据导进到Hadoop的HDFS中，也可以将HDFS的数据导进到关系型数据库中
-				Flume是Cloudera提供的一个高可用的，高可靠的，分布式的海量日志采集、聚合和传输的系统，Flume支持在日志系统中定制各类数据发送方，用于收集数据；同时，Flume提供对数据进行简单处理，并写到各种数据接受方（可定制）的能力
-			数据存储层：HDFS文件存储、HBase非关系型数据库、Kafka消息队列
-				Kafka是一种高吞吐量的分布式发布订阅消息系统，有如下特性：
-				（1）通过O(1)的磁盘数据结构提供消息的持久化，这种结构对于即使数以TB的消息存储也能够保持长时间的稳定性能。
-				（2）高吞吐量：即使是非常普通的硬件Kafka也可以支持每秒数百万的消息。
-				（3）支持通过Kafka服务器和消费集群来分区消息。
-				（4）支持Hadoop并行数据加载。
-				HBase是一个分布式的、面向列的开源数据库。HBase不同于一般的关系数据库，它是一个适合于非结构化数据存储的数据库
-			资源管理层：Yarn资源管理
-			数据计算层：离线计算、内存计算、实时计算
-				离线计算：MapReduce[Hive数据查询、Mahout数据挖掘]
-					Hive是基于Hadoop的一个数据仓库工具，可以将结构化的数据文件映射为一张数据库表，并提供简单的SQL查询功能，可以将SQL语句转换为MapReduce任务进行运行。 
-				        其优点是学习成本低，可以通过类SQL语句快速实现简单的MapReduce统计，不必开发专门的MapReduce应用，十分适合数据仓库的统计分析
-					Apache Mahout是个可扩展的机器学习和数据挖掘库
-				内存计算：Spark[Spark Milib数据挖掘、Spark R数据分析、Spark SQL数据查询。Spark Streaming实时计算]
-					Spark是当前最流行的开源大数据内存计算框架，可以基于Hadoop上存储的大数据进行计算。
-					R是用于统计分析、绘图的语言和操作环境。R是属于GNU系统的一个自由、免费、源代码开放的软件，它是一个用于统计计算和统计制图的优秀工具。
-				实时计算：Stream
-					Storm用于“连续计算”，对数据流做连续查询，在计算时就将结果以流的形式输出给用户
-			任务调度层：Oozie任务调度、AzKaban任务调度			
-				Oozie是一个管理Hdoop作业（job）的工作流程调度管理系统
-			业务模型层[JavaEE]：业务模型、数据可视化、业务运用
-			数据平台的调度与配置：Zookeeper
-				Zookeeper是Google的Chubby一个开源的实现。它是一个针对大型分布式系统的可靠协调系统，提供的功能包括：配置维护、名字服务、 分布式同步、组服务等。
-				ZooKeeper的目标就是封装好复杂易出错的关键服务，将简单易用的接口和性能高效、功能稳定的系统提供给用户
-			
-	二、Hadoop
-			含义：Hadoop是一个由Apache基金会所开发的分布式系统基础架构，主要解决的是海量数据的存储和海量数据的分析计算问题。
-				  广义上来说，HADOOP通常是指一个更广泛的概念——HADOOP生态圈。
-			发展历史：Lucene ->Nutch -> Hadoop
-				1）Lucene--Doug Cutting开创的开源软件，用java书写代码，实现与Google类似的全文搜索功能，它提供了全文检索引擎的架构，包括完整的查询引擎和索引引擎 
-				2）2001年年底成为apache基金会的一个子项目			
-				3）对于大数量的场景，Lucene面对与Google同样的困难，存储数据困难，检索数据慢。			  
-				4）学习和模仿Google解决这些问题的办法 ：微型版Nutch				  
-				5）可以说Google是hadoop的思想之源
-					GFS --->HDFS
-					Map-Reduce --->MR
-					BigTable --->Hbase				  
-				6）2003-2004年，Google公开了部分GFS和MapReduce思想的细节，以此为基础Doug Cutting等人用了2年业余时间实现了HDFS和MapReduce机制，使Nutch性能飙升 				  
-				7）2005 年Hadoop作为Lucene的子项目Nutch的一部分正式引入Apache基金会。2006 年 3 月份，MapReduce和Nutch Distributed File System (NDFS) 分别被纳入称为 Hadoop 的项目中 				  
-				9）Hadoop就此诞生并迅速发展，标志这云计算时代来临
-			版本：
-				Apache、Cloudera、Hortonworks
-				Apache：最原始（最基础）的版本，对于入门学习最好
-				Cloudera：在大型互联网企业中用的较多，收费
-				Hortonworks：文档较好
-			组成：
-				Hadoop1.x与Hadoop2.x区别：
-					Hadoop1.x：MapReduce（计算+资源调度）、HDFS（数据存储）、Common（辅助工具）
-					Hadoop2.x：MapReduce（计/运算）Yarn（资源调度）、HDFS（数据存储）、Common（辅助工具）
-				HDFS：是一个高可靠、高吞吐量的分布式文件系统。构成：
-					NameNode[目录]：存储文件的元数据，如：文件名、文件目录名、文件属性...
-					DataNode[资源]：数据
-					Secondary NameNode：监控HDFS后台服务
-				Yarn：
-					构成：
-						1）ResourceManager(rm)：处理客户端请求、启动/监控ApplicationMaster、监控NodeManager、资源分配与调度；
-						2）NodeManager(nm)：单个节点上的资源管理、处理来自ResourceManager的命令、处理来自ApplicationMaster的命令；
-						3）ApplicationMaster：数据切分、为应用程序申请资源(CPU、硬盘...)，并分配给内部任务、任务监控与容错;
-						4）Container：对任务运行环境的抽象，封装了CPU、内存等多维资源以及环境变量、启动命令等任务运行相关的信息
-				MapReduce：
-					构成：MapReduce将计算过程分为两个阶段：Map和Reduce
-						  1）Map阶段并行处理输入数据
-					      2）Reduce阶段对Map结果进行汇总
-			环境搭建：
-				环境准备：
-					安装JDK、安装Hadoop[可以配置环境变量]
-			目录结构：
-				（1）bin目录：存放对Hadoop相关服务（HDFS，YARN）进行操作的脚本
-				（2）etc目录：Hadoop的配置文件目录，存放Hadoop的配置文件
-				（3）lib目录：存放Hadoop的本地库（对数据进行压缩解压缩功能）
-				（4）sbin目录：存放启动或停止Hadoop相关服务的脚本
-				（5）share目录：存放Hadoop的依赖jar包、文档、和官方案例
-			运行模式：
-				本地模式、伪分布式模式以及完全分布式模式
-				本地运行模式：不需要启用单独进程，直接可以运行，测试和开发时使用。
-					官方示例：
-					安装路径：opt/module/hadoop-2.7.2/
-						Grep案例：
-							1）在安装路径下创建一个input文件夹，mkdir input
-							2）将Hadoop的xml配置文件复制到input，cp ./etc/hadoop/*.xml input
-							3）执行share目录下的MapReduce程序，./bin/hadoop jar
-															   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar grep ./input/ output 'dfs[a-z.]+'
-							4）查看输出结果，cat ./output/*	
-						WordCount案例：
-							1）在安装路径下创建一个wcinput文件夹，mkdir wcinput
-							2）在wcinput文件夹下创建文件wc.iput并输入内容保存， touch wc.input
-								内容如：zhangsan lisi wangwu lisi zhaoliu 
-							3）执行share目录下的MapReduce程序，hadoop jar
-																share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount ./wcinput/ wcoutput
-							4）查看输出结果，cat wcoutput/part-r-00000，即可查看统计内容出现的次数
-				
-				伪分布式运行模式：等同于完全分布式，只有一个节点。
-					启动HDFS并运行MapReduce程序：
-						环境准备：
-							准备1台客户机[hadoop101]、安装jdk并配置环境变量、安装hadoop并配置环境变量、配置集群、
-							启动、测试集群增、删、查、执行wordcount案例
-						步骤：
-							1）配置集群
-								配置：hadoop-env.sh <!-- 修改JAVA_HOME 路径 -->
-										Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
-										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
-								      core-site.xml <!--Hadoop公用配置-->
-										<!-- 指定HDFS中NameNode的地址 -->
-										<property>
-											<name>fs.defaultFS</name>
-											<value>hdfs://hadoop101:9000</value>
-										</property>
-										<!-- 指定Hadoop运行时产生文件的存储目录 -->
-										<property>
-											<name>hadoop.tmp.dir</name>
-											<value>/opt/module/hadoop-2.7.2/data/tmp</value>
-										</property>
-									  hdfs-site.xml hdfs自定义配置
-										<!-- 指定HDFS副本的数量 -->
-										<property>
-											<name>dfs.replication</name>
-											<value>1</value>
-										</property>
-							2）启动集群
-									格式化NameNode：bin/hdfs namenode -format 注意：初次启动时格式化，以后就不要总格式化							 
-									启动NameNode：sbin/hadoop-daemon.sh start namenode									 
-									启动DataNode：sbin/hadoop-daemon.sh start datanode
-						
-							3）查看集群
-									查看是否启动成功：jps，结果如下：[注意：jps是JDK中的命令，不是Linux命令。]
-									13586 NameNode
-									13668 DataNode
-									13786 Jps
-									web端查看HDFS文件系统：http://hadoop101:50070/dfshealth.html#tab-overview
-								    查看产生的Log日志：
-										当前目录路径下会生成logs文件夹：/opt/module/hadoop-2.7.2/logs
-									思考：为什么不能一直格式化NameNode，格式化NameNode，要注意什么？？？
-										在运行的存储临时目录下：data/tmp/dfs/name/current/或data/tmp/dfs/data/current/中产生VERSION文件存储了clusterID是相同的。
-										结论：格式化NameNode，会产生新的clusterID,导致NameNode和DataNode的clusterID不一致，集群找不到已往数据。
-											  所以格式NameNode时，一定要先删除data数据和log日志，然后再格式化NameNode。
-							4）操作集群[执行wordcount案例]
-									在HDFS文件系统上创建一个input文件夹：bin/hdfs dfs -mkdir -p /user/atguigu/input
-								    将测试文件内容上传到文件系统上：bin/hdfs dfs -put wcinput/wc.input /user/atguigu/input/
-									查看上传的文件是否正确：bin/hdfs dfs -ls  /user/atguigu/input/ 或 bin/hdfs dfs -cat /user/atguigu/input/wc.input
-									运行MapReduce程序：bin/hadoop jar
-													   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount /user/atguigu/input/ /user/atguigu/output
-									查看输出结果：bin/hdfs dfs -cat /user/atguigu/output/*
-									将测试文件内容下载到本地：bin/hdfs dfs -get /user/atguigu/output/part-r-00000 ./wcoutput/
-									删除输出结果：hdfs dfs -rm -r /user/atguigu/output	
-									
-					启动YARN并运行MapReduce程序:
-						环境准备：
-							准备1台客户机、安装jdk并配置环境变量、安装hadoop并配置环境变量、配置集群在YARN上运行MR、
-							启动、测试集群增、删、查、在YARN上执行WordCount案例
-						步骤：
-							1）配置集群
-								配置：yarn-env.sh 修改JAVA_HOME 路径
-										Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
-										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
-									  yarn-site.xml <!-- yarn自定义配置 -->
-										<!-- Reducer获取数据的方式 -->
-										<property>
-												<name>yarn.nodemanager.aux-services</name>
-												<value>mapreduce_shuffle</value>
-										</property>
-										<!-- 指定YARN的ResourceManager的地址 -->
-										<property>
-											<name>yarn.resourcemanager.hostname</name>
-											<value>hadoop101</value>
-										</property>
-									  mapred-env.sh 修改JAVA_HOME 路径
-									    Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
-										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
-									  mapred-site.xml <!-- mapreduce自定义配置 -->
-										重命名：mv mapred-site.xml.template mapred-site.xml 
-										<!-- 指定MR运行在YARN上 -->
-										<property>
-												<name>mapreduce.framework.name</name>
-												<value>yarn</value>
-										</property>
-							2）启动集群
-									启动前必须保证NameNode和DataNode已经启动[HDFS服务启动]
-								    启动ResourceManager：sbin/yarn-daemon.sh start resourcemanager
-									启动NodeManager：sbin/yarn-daemon.sh start nodemanager
-							3）集群操作
-									YARN的浏览器页面查看：http://hadoop101:8088/cluster
-									删除文件系统上的output文件：bin/hdfs dfs -rm -R /user/atguigu/output
-									执行MapReduce程序：bin/hadoop jar
-													   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount /user/atguigu/input  /user/atguigu/output
-									查看运行结果：bin/hdfs dfs -cat /user/atguigu/output/*
-					
-					配置历史服务器MR：为了查看程序的历史运行情况，需要配置一下历史服务器
-						配置：mapred-site.xml <!-- mapreduce自定义配置-->
-							<!-- 历史服务器端地址 -->
-							<property>
-								<name>mapreduce.jobhistory.address</name>
-								<value>hadoop101:10020</value>
-							</property>
-							<!-- 历史服务器web端地址 -->
-							<property>
-								<name>mapreduce.jobhistory.webapp.address</name>
-								<value>hadoop101:19888</value>
-							</property>
-						启动历史服务器：sbin/mr-jobhistory-daemon.sh start historyserver
-						查看历史服务器是否启动：jps
-						查看JobHistory：http://hadoop101:19888/jobhistory
-					
-					配置日志的聚集[YARN中配置]
-						日志聚集概念：应用运行完成以后，将程序运行日志信息上传到HDFS系统上，可以方便的查看到程序运行详情，方便开发调试。
-						注意：开启日志聚集功能，需要重新启动NodeManager 、ResourceManager和HistoryManager。
-						步骤：
-							配置：yarn-site.xml 
-								<!-- 日志聚集功能使能 -->
-								<property>
-									<name>yarn.log-aggregation-enable</name>
-									<value>true</value>
-								</property>
-								<!-- 日志保留时间设置7天 -->
-								<property>
-									<name>yarn.log-aggregation.retain-seconds</name>
-									<value>604800</value>
-								</property>
-							关闭NodeManager 、ResourceManager和HistoryManager：
-								sbin/yarn-daemon.sh stop resourcemanager
-								sbin/yarn-daemon.sh stop nodemanager
-								sbin/mr-jobhistory-daemon.sh stop historyserver
-							启动NodeManager 、ResourceManager和HistoryManager：
-								sbin/yarn-daemon.sh start resourcemanager
-								sbin/yarn-daemon.sh start nodemanager
-								sbin/mr-jobhistory-daemon.sh start historyserver
-							删除HDFS上已经存在的输出文件：bin/hdfs dfs -rm -R /user/atguigu/output
-							执行WordCount程序：hadoop jar
-											   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount /user/atguigu/input /user/atguigu/output	
-							查看日志：http://hadoop101:19888/jobhistory
-				
-				配置文件说明：Hadoop配置文件分两类：默认配置文件和自定义配置文件，只有用户想修改某一默认配置值时，才需要修改自定义配置文件，更改相应属性值
-					默认配置文件：存放在hadoop相应的jar包中
-					自定义配置文件：core-site.xml、hdfs-site.xml、yarn-site.xml、mapred-site.xml四个配置文件存放在$HADOOP_HOME/etc/hadoop这个路径上，用户可以根据项目需求重新进行修改配置。
-
-				完全分布式运行模式[重点]：多个节点一起运行。	
-					环境准备：
-						准备3台客户机（关闭防火墙、静态ip、主机名称，分别为：102、103、104）、安装jdk并配置环境变量、安装hadoop并配置环境变量、
-						配置集群、单点启动、配置ssh、群起并测试集群
-							注：[学习阶段]可以从已安装好的Linux客户机copy三份来使用，主要修改的配置有：
-							vim /etc/udev/rules.d/70-persistent-net.rules                   -获取address地址
-							vim /etc/sysconfig/network-scripts/ifcfg-eth0					-修改address地址和IP地址
-							vim /etc/sysconfig/network										-添加主机名称
-							vim /etc/hosts													-添加映射
-					集群分发脚本xsync：
-						前提准备：
-							scp（secure copy）安全拷贝：
-								含义：scp可以实现服务器与服务器之间的数据拷贝[from server1 to server2]。
-								基本语法:
-								scp    -r          $pdir/$fname              $user@hadoop$host:$pdir/$fname
-								命令   递归       要拷贝的文件路径/名称    目的用户@主机:目的路径/名称
-							步骤：[hadoop101是实现准备好的客户机]								
-								在hadoop101上，将hadoop101中/opt/module目录下的软件拷贝到hadoop102上
-									scp -r /opt/module  root@hadoop102:/opt/module
-								在hadoop103上，将hadoop101服务器上的/opt/module目录下的软件拷贝到hadoop103上
-									sudo scp -r atguigu@hadoop101:/opt/module root@hadoop103:/opt/module
-								在hadoop103上操作将hadoop101中/opt/module目录下的软件拷贝到hadoop104上
-									scp -r atguigu@hadoop101:/opt/module root@hadoop104:/opt/module
-								注意：拷贝过来的/opt/module目录，别忘了在hadoop102、hadoop103、hadoop104上修改所有文件的所有者和所有者组。
-									  使用：sudo chown atguigu:atguigu -R /opt/module
-								将hadoop101中/etc/profile文件拷贝到hadoop102、hadoop103、hadoop104的/etc/profile上
-									sudo scp /etc/profile root@hadoop102:/etc/profile
-									sudo scp /etc/profile root@hadoop103:/etc/profile
-									sudo scp /etc/profile root@hadoop104:/etc/profile
-								在hadoop102、hadoop103、hadoop104 的客户机上分别执行：source /etc/profile 
-							
-							rsync 远程同步工具
-								含义：主要用于备份和镜像。具有速度快、避免复制相同内容和支持符号链接的优点。
-								rsync和scp区别：用rsync做文件的复制要比scp的速度快，rsync只对差异文件做更新。scp是把所有文件都复制过去。
-								基本语法：
-									rsync    -rvl       $pdir/$fname              $user@hadoop$host:$pdir/$fname
-									命令   选项参数   要拷贝的文件路径/名称    目的用户@主机:目的路径/名称
-									参数说明：-r：递归；-v：显示复制过程；-l：拷贝符号链接
-									如：rsync -rvl /opt/software/ root@hadoop102:/opt/software
-						集群分发脚本：
-							1）在当前用户的家目录下新建脚本，如：/home/atguigu/bin，注意：：如果将xsync放到/home/atguigu/bin目录下仍然不能实现全局使用，可以将xsync移动到/usr/local/bin目录下或添加到系统的PATH变量里去。
-								touch xsync
-							2）编辑内容，格式如下：
-								#!/bin/bash
-								#1 获取输入参数个数，如果没有参数，直接退出
-								pcount=$#
-								if((pcount==0)); then
-								echo no args;
-								exit;
-								fi
-
-								#2 获取文件名称
-								p1=$1
-								fname=`basename $p1`
-								echo fname=$fname
-
-								#3 获取上级目录到绝对路径
-								pdir=`cd -P $(dirname $p1); pwd`
-								echo pdir=$pdir
-
-								#4 获取当前用户名称
-								user=`whoami`
-
-								#5 循环
-								for((host=103; host<105; host++)); do
-										echo ------------------- hadoop$host --------------
-										rsync -rvl $pdir/$fname $user@hadoop$host:$pdir
-								done
-							3）修改脚本 xsync 具有执行权限：chmod 777 xsync
-							4）调用脚本形式：xsync 文件名称
-					集群配置：
-						集群部署规划：HDFS YARN
-							hadoop102 ：NameNode DataNode NodeManager		
-							hadoop103 ：DataNode ResourceManager NodeManager
-							hadoop104 :	SecondaryNameNode DataNode NodeManager
-							重点解释：hadoop102 配置 NameNode
-									  hadoop103 配置 ResourceManager
-									  hadoop104 配置 SecondaryNameNode
-								这三点分别配置在不同的客户机上
-						配置集群[先配置好一台服务器，如：hadoop102，再集群分发同步过去]：
-							1）配置core-site.xml <!-- 公共配置 -->
-								<!-- 指定HDFS中NameNode的地址，namenode常用的端口：9000、50070、8088、50090、19888 -->
-								<property>
-										<name>fs.defaultFS</name>
-									  <value>hdfs://hadoop102:9000</value>
-								</property>
-								<!-- 指定Hadoop运行时产生文件的存储目录 -->
-								<property>
-										<name>hadoop.tmp.dir</name>
-										<value>/opt/module/hadoop-2.7.2/data/tmp</value>
-								</property>
-							2）配置HDFS配置文件
-							   配置hadoop-env.sh  export JAVA_HOME=/opt/module/jdk1.8.0_144
-							   配置hdfs-site.xml <!-- hdfs的配置 -->
-							   <property>
-										<name>dfs.replication</name>
-										<value>3</value>
-								</property>
-								<!-- 指定Hadoop辅助名称节点主机配置 -->
-								<property>
-									  <name>dfs.namenode.secondary.http-address</name>
-									  <value>hadoop104:50090</value>
-								</property>
-							3）配置YARN配置文件
-							   配置yarn-env.sh export JAVA_HOME=/opt/module/jdk1.8.0_144
-							   配置yarn-site.xml <!-- yarn的配置 -->
-							   !-- Reducer获取数据的方式 -->
-								<property>
-										<name>yarn.nodemanager.aux-services</name>
-										<value>mapreduce_shuffle</value>
-								</property>
-								<!-- 指定YARN的ResourceManager的地址 -->
-								<property>
-										<name>yarn.resourcemanager.hostname</name>
-										<value>hadoop103</value>
-								</property>
-							4）MapReduce配置文件
-							   配置mapred-env.sh export JAVA_HOME=/opt/module/jdk1.8.0_144
-							   配置mapred-site.xml <!-- mr的配置 -->
-							   重命名：cp mapred-site.xml.template mapred-site.xml
-							   <!-- 指定MR运行在Yarn上 -->
-								<property>
-										<name>mapreduce.framework.name</name>
-										<value>yarn</value>
-								</property>
-						集群分发：
-							在hadoop102上执行：xsync /opt/module/hadoop-2.7.2/
-						查看文件分发情况：
-							如在hadoop103上面执行：cat /opt/module/hadoop-2.7.2/etc/hadoop/core-site.xml 看看文件是否与hadoop102同步
-					
-					集群单点启动
-						1）如果集群是第一次启动，需要格式化NameNode
-							[atguigu@hadoop102 hadoop-2.7.2]$ hadoop namenode -format 或 bin/hdfs namenode -format 
-						2）在hadoop102上启动NameNode
-							[atguigu@hadoop102 hadoop-2.7.2]$ hadoop-daemon.sh start namenode
-							[atguigu@hadoop102 hadoop-2.7.2]$ jps
-							3461 NameNode
-						3）在hadoop102、hadoop103以及hadoop104上分别启动DataNode
-							[atguigu@hadoop102 hadoop-2.7.2]$ hadoop-daemon.sh start datanode
-							[atguigu@hadoop102 hadoop-2.7.2]$ jps
-							[atguigu@hadoop103 hadoop-2.7.2]$ hadoop-daemon.sh start datanode
-							[atguigu@hadoop103 hadoop-2.7.2]$ jps
-							[atguigu@hadoop104 hadoop-2.7.2]$ hadoop-daemon.sh start datanode
-							[atguigu@hadoop104 hadoop-2.7.2]$ jps
-						问题：每次都一个一个节点启动，效率低下
-					
-					SSH无密登录配置
-						原理：
-										ssh访问B（数据用私钥A加密）			（B接收到数据用公钥A解密）
-						A服务器		------------------------------------------>B服务器
-				（ssh-key-gen/生成密钥对[公/私钥A]）						  （公钥A存储在Authorized_key）
-									<------------------------------------------
-				（用私钥A解密返回的数据）		采用公钥A加密数据返回A
-				
-						语法：ssh 另一台电脑的ip地址/域名
-						
-						生成公钥/私钥：在家目录的.ssh文件夹下执行：ssh-keygen -t rsa 回车三次，就会生成两个文件id_rsa（私钥）、id_rsa.pub（公钥）
-						将公钥拷贝到要免密登录的目标机器上，如：
-							ssh-copy-id hadoop102
-							ssh-copy-id hadoop103
-							ssh-copy-id hadoop104
-						注意：
-							还需要在hadoop102上采用root账号，配置一下无密登录到hadoop102、hadoop103、hadoop104；
-							还需要在hadoop103上采用atguigu账号配置一下无密登录到hadoop102、hadoop103、hadoop104服务器上。
-						
-						.ssh文件夹下文件解释：
-							known_hosts	记录ssh访问过计算机的公钥(public key)
-							id_rsa	生成的私钥
-							id_rsa.pub	生成的公钥
-							authorized_keys	存放授权过得无密登录服务器公钥
-					
-					群起集群
-						配置slaves
-						路径：/opt/module/hadoop-2.7.2/etc/hadoop/slaves下添加内容：
-							hadoop102
-							hadoop103
-							hadoop104
-						注意：该文件中添加的内容结尾不允许有空格，文件中不允许有空行。
-						同步所有节点配置文件，[atguigu@hadoop102 hadoop]$ xsync slaves
-					启动集群
-						1）如果集群是第一次启动，需要格式化NameNode（注意格式化之前，一定要先停止上次启动的所有namenode和datanode进程，然后再删除data和log数据）
-							[atguigu@hadoop102 hadoop-2.7.2]$ bin/hdfs namenode -format
-						2）启动HDFS
-							[atguigu@hadoop102 hadoop-2.7.2]$ sbin/start-dfs.sh
-							[atguigu@hadoop102 hadoop-2.7.2]$ jps
-							4166 NameNode
-							4482 Jps
-							4263 DataNode
-							[atguigu@hadoop103 hadoop-2.7.2]$ jps
-							3218 DataNode
-							3288 Jps
-							[atguigu@hadoop104 hadoop-2.7.2]$ jps
-							3221 DataNode
-							3283 SecondaryNameNode
-							3364 Jps
-						3）启动YARN
-							[atguigu@hadoop103 hadoop-2.7.2]$ sbin/start-yarn.sh
-							注意：NameNode和ResourceManger如果不是同一台机器，不能在NameNode上启动 YARN，应该在ResouceManager所在的机器上启动YARN。
-						4）Web端查看SecondaryNameNode，浏览器中输入：http://hadoop104:50090/status.html
-					
-					集群基本测试
-						1）上传文件到集群
-							上传小文件
-							[atguigu@hadoop102 hadoop-2.7.2]$ hdfs dfs -mkdir -p /user/atguigu/input
-							[atguigu@hadoop102 hadoop-2.7.2]$ hdfs dfs -put wcinput/wc.input /user/atguigu/input
-							上传大文件
-							[atguigu@hadoop102 hadoop-2.7.2]$ bin/hadoop fs -put /opt/software/hadoop-2.7.2.tar.gz  /user/atguigu/input
-						2）上传文件后查看文件存放在什么位置
-						   查看HDFS文件存储路径
-						   [atguigu@hadoop102 subdir0]$ pwd
-						   /opt/module/hadoop-2.7.2/data/tmp/dfs/data/current/BP-938951106-192.168.10.107-1495462844069/current/finalized/subdir0/subdir0
-					
-					集群启动/停止方式总结
-						1.	各个服务组件逐一启动/停止
-							（1）分别启动/停止HDFS组件
-								hadoop-daemon.sh  start / stop  namenode / datanode / secondarynamenode
-							（2）启动/停止YARN
-								yarn-daemon.sh  start / stop  resourcemanager / nodemanager
-						2.	各个模块分开启动/停止（配置ssh是前提）常用
-							（1）整体启动/停止HDFS
-								start-dfs.sh   /  stop-dfs.sh
-							（2）整体启动/停止YARN
-								start-yarn.sh  /  stop-yarn.sh
-					集群时间同步
-						
-						   
-	三、Zookeeper
-		简介：
-		
-	四、Kafka
-		简介：
+				7）、整合keepalived，提供一个VIP实现整体的访问流程；
 		
 ----------------------------------------------Java高级运用技术篇之高并发多线程-------------------------------------------------------------------------------------------------------		
 	JAVA特性：
 		封装性：为了数据的安全，避免用户直接接触到数据，增加程序的安全性。封装隐藏类的内部属性，并且对用户隐藏了数据的访问方式，这样可以保护类的内部状态。封装可以防止类中的方法访问属性，防止对象间的交互，提高Java程序的安全性。
 		继承性：继承可以减少代码量，方法重写。
-		多态性：三个必要条件是存在继承、重写、父类对象引用子类对象，如：Animal animal = new Cat()。
-	
+		多态性：三个必要条件是存在继承、重写、父类对象引用子类对象，如：Animal animal = new Cat()。	
 	一、多线程JDK1.5以前版本，参考：https://www.runoob.com/java/java-multithreading.html
 		基本概念：
 			进程：一个进程包括由操作系统分配的内存空间，包含一个或多个线程。线程不能独立的存在，它必须是进程的一部分。一个进程一直运行，直到所有的非守护线程都结束运行后才能结束，多线程-多任务并发执行；
-		作用：多线程能满足高效率的程序来达到充分利用 CPU 的目的
-		生命周期：线程是一个动态执行的过程，它也有一个从产生到死亡的过程
-		
+		作用：多线程能满足高效率的程序来达到充分利用CPU的目的；
+		生命周期：线程是一个动态执行的过程，它也有一个从产生到死亡的过程；		
 - ->使用new关键字和Thread类或其子类建立一个线程对象后	                                                                                  ---->执行run()方法					-->运行状态的线程最为复杂，它可以变为阻塞状态、就绪状态和死亡状态			
 		---------------------------------------------->	新建状态 ----------------------------------------------------------->就绪状态 -------------------------------->运行状态 -------------------------------------------------------------------> 死亡状态
 																 -->执行start()方法，就绪队列中，要等待JVM里线程调度器的调度		-->就绪状态的线程成功获取 CPU 资源			-->调用stop()或destory()函数强制终止
@@ -5745,8 +5311,7 @@
 				等待阻塞：运行状态中的线程执行 wait() 方法，使线程进入到等待阻塞状态
 				同步阻塞：线程在获取synchronized同步锁失败(因为同步锁被其他线程占用)
 				其他阻塞：通过调用线程的 sleep() 或 join() 发出了 I/O 请求时，线程就会进入到阻塞状态，当sleep() 状态超时，join() 等待线程终止或超时，或者 I/O 处理完毕，线程重新转入就绪状态
-			死亡状态:一个运行状态的线程完成任务或者其他终止条件发生时，该线程就切换到终止状态
-		
+			死亡状态:一个运行状态的线程完成任务或者其他终止条件发生时，该线程就切换到终止状态		
 		优先级：线程的优先级是一个整数，其取值范围是 1 （Thread.MIN_PRIORITY ） - 10 （Thread.MAX_PRIORITY ）
 		创建线程的方法[4种]：
 			通过继承 Thread 类本身，重写Run()方法，新建实例调用它的 start() 方法
@@ -5769,17 +5334,17 @@
 			}
 			//使用
 			new ThreadDemo2( "Thread-2").start();
-			通过 Callable 和 Future 创建线程，实现Callable接口，重写 call() 方法，创建 Callable 实现类的实例，使用 FutureTask 类来包装 Callable 对象，新建Thread实例（传入FutureTask对象）调用它的 start() 方法，注意与实现Runable的区别：多了一个接收的结果。
+			通过 Callable 和 Future 接口创建线程，实现Callable接口，重写 call() 方法，创建 Callable 实现类的实例，使用 FutureTask 类来包装 Callable 对象，新建Thread实例（传入FutureTask对象）调用它的 start() 方法，注意与实现Runable的区别：多了一个接收的结果。
 			案列说明：
 			如：public class TestCallable {
 					public static void main(String[] args) {
 						ThreadDemo td = new ThreadDemo();		
-						//1.执行 Callable 方式，需要 FutureTask 实现类的支持，用于接收运算结果。
+						//1.执行 Callable 方式，需要 FutureTask实现类的支持，用于接收运算结果。
 						FutureTask<Integer> result = new FutureTask<>(td);		
 						new Thread(result).start();		
 						//2.接收线程运算后的结果
 						try {
-							Integer sum = result.get();  //FutureTask 可用于闭锁
+							Integer sum = result.get();  //FutureTask可用于闭锁
 							System.out.println(sum);
 							System.out.println("------------------------------------");
 						} catch (InterruptedException | ExecutionException e) {
@@ -5863,16 +5428,23 @@
 		关键类：Thread
 		接口：Runable
 		主要方法：start()，run()，sleep()，destory()，setName()，setPriority()，setDaemon(true)，yield()（暂停）...
-		关键字：synchronized，同步代码块，同步是一种高开销的操作，因此应该尽量减少同步的内容    
-		
-	二、JUC[java.utils.current]多线程高级JDK1.5以后版本
+		关键字：synchronized，同步代码块，同步是一种高开销的操作，因此应该尽量减少同步的内容；
+		线程死锁：
+			含义：线程死锁是指两个或两个以上的线程互相持有对方所需要的资源，由于synchronized的特性，一个线程持有一个资源，
+				  或者说获得一个锁，在该线程释放这个锁之前，其它线程是获取不到这个锁的，而且会一直死等下去，因此这便造成了死锁；
+			产生条件：
+				互斥条件：一个资源，或者说一个锁只能被一个线程所占用；
+				占有且等待：一个线程已经获取到一个锁，再获取另一个锁的过程中，即使获取不到也不会释放已经获得的锁；
+				不可剥夺条件：任何一个线程都无法强制获取别的线程已经占有的锁；
+				循环等待条件：线程A拿着线程B的锁，线程B拿着线程A的锁；
+		如何避免死锁：加锁顺序；加锁时限；
+	二、JUC[java.utils.current]多线程高级JDK1.5以后版本。
 		内存可见性：
 			含义：当多个线程共享内存数据时，彼此不可见。
 			解决办法：
 				1、同步锁，使用synchronized关键字。但是缺点是效率低，加锁每次线程进来需要先判断锁的状态。
 				2、使用volatile关键字。即当多个线程操作共享内存数据时，保证内存中的数据可见，相对于synchronized较为轻量级的同步策略。
-				   但是它不能保证"互斥性"以及变量的"原子性"。
-		
+				   但是它不能保证"互斥性"以及变量的"原子性"。		
 			JVM线程原理：
 													1线程一[main线程]、JVM分配一些缓存；读的是FLAG=false[变量不同步]
 				假设主存[堆]一变量FLAG=false	--------------->
@@ -11656,6 +11228,786 @@
 					分区算法：分区概念类似于磁盘分区，将整个内存空间分成独立的N块小空间，每个空间都可以独立使用，GC时只需对某一块内存空间进行GC，提高性能，减少GC停顿时间
 			垃圾回收停顿想象：
 				在GC的时候，会要求系统进入一个停顿的状态，此时程序会终止所有的线程，此刻程序是不会产生新的垃圾，也有利于更好的标记垃圾对象
+				
+----------------------------------------------VUE核心基础知识----------------------------------------------------------------------------------	
+	一、基本认识：渐进式JavaScript框架；作者: 尤雨溪(一位华裔前Google工程师)；作用: 动态构建用户界面
+		英文官网: https://vuejs.org/；中文官网: https://cn.vuejs.org/
+		特点：
+			1) 遵循MVVM模式
+			2) 编码简洁, 体积小, 运行效率高, 适合移动/PC 端开发
+			3) 它本身只关注UI, 可以轻松引入 vue 插件或其它第三库开发项目
+		与其它前端JS框架的关联：
+			借鉴angular的模板和数据绑定技术；借鉴react的组件化和虚拟DOM技术；
+		Vue扩展插件：
+			1) vue-cli: vue 脚手架
+			2) vue-resource(axios): ajax 请求
+			3) vue-router: 路由
+			4) vuex: 状态管理
+			5) vue-lazyload: 图片懒加载
+			6) vue-scroller: 页面滑动相关
+			7) mint-ui: 基于 vue 的 UI 组件库(移动端)
+			8) element-ui: 基于 vue 的 UI 组件库(PC 端)
+		基本使用：
+			如：<div id="app">
+					<input type="text" v-model="username">
+					<p>Hello, {{username}}</p>
+				</div>
+				<script type="text/javascript" src="../js/vue.js"></script>
+				<script type="text/javascript">
+					new Vue({
+					el: '#app',
+					data: {
+						username: 'atguigu'
+					}
+					})
+				</script>
+		开发者工具调试：vuejs devtools
+		理解Vue的MVVM：	
+			View ------------>ViewModel----------->Model（扁平化的JS对象）
+			DOM            数据绑定/DOM监听
+		基础语法：
+			模板理解：动态的html页面；包含了一些 JS 语法代码（双大括号表达式、指令(以v-开头的自定义标签属性)）；
+			1、双大括号表达式：{{exp}}；功能: 向页面输出数据；可以调用对象的方法；
+			2、强制数据绑定：功能: 指定变化的属性值；完整写法: v-bind:xxx='yyy'；简写: :xxx='yyy'；
+			3、绑定事件监听：功能: 绑定指定事件名的回调函数；完整写法:v-on:keyup='xxx'；v-on:keyup='xxx(参数)' v-on:keyup.enter='xxx'等等；简写:@keyup='xxx'；@keyup.enter='xxx'；
+			如：<div id="app">
+					<h2>1. 双大括号表达式</h2>
+					<p>{{msg}}</p>
+					<p>{{msg.toUpperCase()}}</p>
+					<h2>2. 指令一: 强制数据绑定</h2>
+					<a href="url">访问指定站点</a><br><!--不能使用-->
+					<a v-bind:href="url">访问指定站点 2</a><br>
+					<a :href="url">访问指定站点 3</a><br>
+					<h2>3. 指令二: 绑定事件监听</h2>
+					<button v-on:click="handleClick">点我</button>
+					<button @click="handleClick">点我 2</button>
+				</div>
+				<script type="text/javascript" src="../js/vue.js"></script>
+				<script type="text/javascript">
+					new Vue({
+					el: '#app',
+					data: {// data的所有属性都会成功 vm 对象的属性, 而模板页面中可以直接访问
+						msg: 'NBA I Love This Game!',
+						url: 'http://www.baidu.com'
+					},
+					methods: {
+						handleClick () {
+							alert('处理点击')
+						}
+					}
+					})
+				</script>
+			4、计算属性和监视：
+			   计算属性：在computed属性对象中定义计算属性的方法；在页面中使用{{方法名}}来显示计算的结果；
+			   监视属性：通过通过vm对象的$watch()或watch配置来监视指定的属性；当属性变化时, 回调函数自动调用, 在函数内部进行计算；
+			   计算属性高级：通过getter/setter实现对属性数据的显示和监视，计算属性存在缓存, 多次读取只执行一次getter计算；
+			   如：<div id="demo">
+						姓: <input type="text" placeholder="First Name" v-model="firstName"><br>
+						名: <input type="text" placeholder="Last Name" v-model="lastName"><br>
+						姓名 1(单向): <input type="text" placeholder="Full Name" v-model="fullName1"><br>
+						姓名 2(单向): <input type="text" placeholder="Full Name" v-model="fullName2"><br>
+						姓名 3(双向): <input type="text" placeholder="Full Name2" v-model="fullName3"><br>
+				   </div>
+				   <script type="text/javascript" src="../js/vue.js"></script>
+					<script type="text/javascript">
+					var vm = new Vue({
+					el: '#demo',
+					data: {
+						firstName: 'Kobe',
+						lastName: 'bryant',
+						fullName2: 'Kobe bryant'
+					},
+					computed: {
+						fullName: function () {
+							return this.firstName + " " + this.lastName
+						},
+						fullName3: {
+							get: function () {
+								return this.firstName + " " + this.lastName
+							},
+							set: function (value) {
+								var names = value.split(' ')
+								this.firstName = names[0]
+								this.lastName = names[1]
+							}
+						}
+					},
+					watch: {
+						lastName: function (newVal, oldVal) {
+							this.fullName2 = this.firstName + ' ' + newVal
+						}
+					}
+					})
+					vm.$watch('firstName', function (val) {
+						this.fullName2 = val + ' ' + this.lastName
+					})
+					</script>
+			5、class与style绑定：
+			   理解：在应用界面中, 某个(些)元素的样式是变化的；class/style绑定就是专门用来实现动态样式效果的技术；
+			   class绑定：:class='xxx'；表达式是字符串: 'classA'；表达式是对象: {classA:isA, classB: isB}；表达式是数组: ['classA', 'classB']；
+			   style绑定：:style="{ color: activeColor, fontSize: fontSize + 'px' }"，其中activeColor/fontSize是data属性；
+			   如：<style>
+					.classA {
+						color: red;
+					}
+					.classB {
+						background: blue;
+					}
+					.classC {
+						font-size: 20px;
+					}
+					</style>
+					<div id="demo">
+						<h2>1. class 绑定: :class='xxx'</h2>
+						<p class="classB" :class="a">表达式是字符串: 'classA'</p>
+						<p :class="{classA: isA, classB: isB}">表达式是对象: {classA:isA, classB: isB}</p>
+						<p :class="['classA', 'classC']"> 表达式是数组: ['classA', 'classB']</p>
+						<h2>2. style 绑定</h2>
+						<p :style="{ color: activeColor, fontSize: fontSize +
+						'px' }"</p>
+						<button @click="update">更新</button>
+					</div>
+					<script type="text/javascript" src="../js/vue.js"></script>
+					<script type="text/javascript">
+					new Vue({
+						el : '#demo',
+						data : {
+							a: 'classA',
+							isA: true,
+							isB: false,
+							activeColor: 'red',
+							fontSize: '20px'
+						},
+						methods : {
+							update () {
+								this.a = 'classC'
+								this.isA = false
+								this.isB = true
+								this.activeColor = 'blue'
+								this.fontSize = '30px'
+							}
+						}
+					})
+					</script>
+			6、条件渲染：
+			   条件渲染指令：v-if与v-else；v-show；比较：需要频繁切换v-show较好；当条件不成立时, v-if的所有子节点不会解析(项目中使用)；
+			   如：<div id="demo">
+						<h2 v-if="ok">表白成功</h2>
+						<h2 v-else>表白失败</h2>
+						<h2 v-show="ok">求婚成功</h2>
+						<h2 v-show="!ok">求婚失败</h2>
+						<br>
+						<button @click="ok=!ok">切换</button>
+					</div>
+			    <script type="text/javascript" src="../js/vue.js"></script>
+				<script type="text/javascript">
+				var vm = new Vue({
+				el: '#demo',
+				data: {
+					ok: false
+				}
+				})
+				</script>
+			7、列表渲染：
+			   列表显示指令：数组: v-for / index；对象: v-for / key；
+			   列表的更新显示：删除 item；替换 item；
+			   列表的高级处理：列表过滤、列表排序；
+			   如：<div id="demo">
+					<h2>测试: v-for 遍历数组</h2>
+					<ul>
+						<li v-for="(p, index) in persons" :key="index">
+						{{index}}--{{p.name}}--{{p.age}}
+						--
+						<button @click="deleteItem(index)">删除</button>
+						--
+						<button @click="updateItem(index, {name:'Jok',age:15})">更新</button>
+						</li>
+					</ul>
+					<h2>测试: v-for 遍历对象</h2>
+					<ul>
+						<li v-for="(value, key) in persons[0]">
+						{{ key }} : {{ value }}
+						</li>
+					</ul>
+					</div>
+					<script type="text/javascript" src="../js/vue.js"></script>
+					<script type="text/javascript">
+					new Vue({
+						el: '#demo',
+						data: {
+						persons: [
+							{id: 1, name: 'Tom', age: 13},
+							{id: 2, name: 'Jack', age: 12},
+							{id: 3, name: 'Bob', age: 14}
+						]
+						},
+						methods: {
+						deleteItem(index) {
+							this.persons.splice(index, 1) //splice()；用于删除、修改、新增；
+						},
+						updateItem(index, p) {
+							// this.persons[index] = p // 页面不会更新
+							this.persons.splice(index, 1, p)
+						}
+						}
+					})
+					</script>
+			   如：<div id="demo">
+						<input type="text" name="searchName" placeholder="搜索指定用户名"
+						v-model="searchName">
+						<ul>
+						<li v-for="(p, index) in filterPerson" :key="index">
+						{{index}}--{{p.name}}--{{p.age}}
+						</li>
+						</ul>
+						<button @click="setOrderType(1)">年龄升序</button>
+						<button @click="setOrderType(2)">年龄降序</button>
+						<button @click="setOrderType(0)">原本顺序</button>
+					</div>
+					<script type="text/javascript" src="../js/vue.js"></script>
+					<script type="text/javascript">
+					new Vue({
+					el: '#demo',
+					data: {
+						orderType: 0, //0 代表不排序, 1 为升序, 2 为降序
+						searchName: '',
+						persons: [
+							{id: 1, name: 'Tom', age: 13},
+							{id: 2, name: 'Jack', age: 12},
+							{id: 3, name: 'Bob', age: 17},
+							{id: 4, name: 'Cat', age: 14},
+							{id: 4, name: 'Mike', age: 14},
+							{id: 4, name: 'Monica', age: 16}
+						]
+					},
+					methods: {
+						setOrderType (orderType) {
+							this.orderType = orderType
+						}
+					},
+					computed: {
+						filterPerson() {
+							// let 声明的变量只在 let 命令所在的代码块内有效；const 声明一个只读的常量，一旦声明，常量的值就不能改变；
+							let {orderType, searchName, persons} = this
+							// 过滤
+							persons = persons.filter(p => p.name.indexOf(searchName)!=-1)
+							// 排序
+							if(orderType!==0) {
+								persons = persons.sort(function (p1, p2) {
+								if(orderType===1) {
+									return p1.age-p2.age
+								} else {
+									return p2.age-p1.age
+								}
+								})
+							}
+							return persons
+						}
+					}
+					})
+					</script>
+			8、事件处理：
+			   绑定监听:
+
+			
+----------------------------------------------大数据定制技术篇----------------------------------------------------------------------------------	
+	一、大数据：
+		概念：Big Data，指的是一段时间范围内内无法使用常规的工具[JavaEE]处理数据集合，需要新的处理模式来处理海量、高增长率、多样化的信息。主要解决的是海量的数据存储与海量的数据分析计算问题。
+		数据的存储单位：
+			bit、Byte、KB、MB、GB、TB、PB、EB、ZB、YB、BB、NB、DB 
+			转化：除了1Byte=8bit，其他都是间隔1024
+		特点：4V + 4高
+			4V：Volume[海量]：人类的数据总量达到EB级别
+				Velocity[实时/高速]：如每年天猫双十一
+				Variety[多样]：结构化[数据库/文本]与非结构化[网络日志、音视频、地理位置]数据
+				Value[价值密度]：低价值密度
+			4高：
+				高可靠[高性能]：多个数据副本
+				高可扩[高扩展]：集群下任意扩展节点
+				高效率[高并发]：并行工作
+				高容错：
+				
+		运用场景：
+			物流仓储[如京东]、零售[分析用户行为]、旅游、商品的广告推荐、金融、保险、房产、人工智能AI...
+		发展前景：
+			政策支持、人才缺口、工资高
+		大数据部门的业务流程：
+			产品经理[人员]提要求[统计指标]	-------------->数据部门搭建数据平台、分析数据 ----------->数据可视化[JavaEE]
+		大数据部门的组织结构[适用于大中型企业]：
+			平台组：[技术] 															--平台搭建[hadoop、Flume[日志收集]、Spark[数据挖掘、分析]、Kafka[消息队列]、Hbase[数据存储]]、集群监控、集群调优
+			数据仓库组：[业务]													    --ETL工程师[抽取、转化、加载]：数据清洗；Hive[数据查询]工程师：数据分析、数据仓库建模
+			数据挖掘组：														    --算法、推荐系统、用户头像工程师
+			报表开发组：JavaEE
+		大数据技术生态圈体系
+			数据来源层：结构化数据[数据库]、半结构化数据[文件日志]、非结构化数据[音视频]
+			数据传输层[DTL]：Sqoop数据传递、Flume日志收集
+				Sqoop是一款开源的工具，主要用于在Hadoop、Hive(数据查询)与传统的数据库(MySql)间进行数据的传递，可以将一个关系型数据库中的数据导进到Hadoop的HDFS中，也可以将HDFS的数据导进到关系型数据库中
+				Flume是Cloudera提供的一个高可用的，高可靠的，分布式的海量日志采集、聚合和传输的系统，Flume支持在日志系统中定制各类数据发送方，用于收集数据；同时，Flume提供对数据进行简单处理，并写到各种数据接受方（可定制）的能力
+			数据存储层：HDFS文件存储、HBase非关系型数据库、Kafka消息队列
+				Kafka是一种高吞吐量的分布式发布订阅消息系统，有如下特性：
+				（1）通过O(1)的磁盘数据结构提供消息的持久化，这种结构对于即使数以TB的消息存储也能够保持长时间的稳定性能。
+				（2）高吞吐量：即使是非常普通的硬件Kafka也可以支持每秒数百万的消息。
+				（3）支持通过Kafka服务器和消费集群来分区消息。
+				（4）支持Hadoop并行数据加载。
+				HBase是一个分布式的、面向列的开源数据库。HBase不同于一般的关系数据库，它是一个适合于非结构化数据存储的数据库
+			资源管理层：Yarn资源管理
+			数据计算层：离线计算、内存计算、实时计算
+				离线计算：MapReduce[Hive数据查询、Mahout数据挖掘]
+					Hive是基于Hadoop的一个数据仓库工具，可以将结构化的数据文件映射为一张数据库表，并提供简单的SQL查询功能，可以将SQL语句转换为MapReduce任务进行运行。 
+				        其优点是学习成本低，可以通过类SQL语句快速实现简单的MapReduce统计，不必开发专门的MapReduce应用，十分适合数据仓库的统计分析
+					Apache Mahout是个可扩展的机器学习和数据挖掘库
+				内存计算：Spark[Spark Milib数据挖掘、Spark R数据分析、Spark SQL数据查询。Spark Streaming实时计算]
+					Spark是当前最流行的开源大数据内存计算框架，可以基于Hadoop上存储的大数据进行计算。
+					R是用于统计分析、绘图的语言和操作环境。R是属于GNU系统的一个自由、免费、源代码开放的软件，它是一个用于统计计算和统计制图的优秀工具。
+				实时计算：Stream
+					Storm用于“连续计算”，对数据流做连续查询，在计算时就将结果以流的形式输出给用户
+			任务调度层：Oozie任务调度、AzKaban任务调度			
+				Oozie是一个管理Hdoop作业（job）的工作流程调度管理系统
+			业务模型层[JavaEE]：业务模型、数据可视化、业务运用
+			数据平台的调度与配置：Zookeeper
+				Zookeeper是Google的Chubby一个开源的实现。它是一个针对大型分布式系统的可靠协调系统，提供的功能包括：配置维护、名字服务、 分布式同步、组服务等。
+				ZooKeeper的目标就是封装好复杂易出错的关键服务，将简单易用的接口和性能高效、功能稳定的系统提供给用户
+			
+	二、Hadoop
+			含义：Hadoop是一个由Apache基金会所开发的分布式系统基础架构，主要解决的是海量数据的存储和海量数据的分析计算问题。
+				  广义上来说，HADOOP通常是指一个更广泛的概念——HADOOP生态圈。
+			发展历史：Lucene ->Nutch -> Hadoop
+				1）Lucene--Doug Cutting开创的开源软件，用java书写代码，实现与Google类似的全文搜索功能，它提供了全文检索引擎的架构，包括完整的查询引擎和索引引擎 
+				2）2001年年底成为apache基金会的一个子项目			
+				3）对于大数量的场景，Lucene面对与Google同样的困难，存储数据困难，检索数据慢。			  
+				4）学习和模仿Google解决这些问题的办法 ：微型版Nutch				  
+				5）可以说Google是hadoop的思想之源
+					GFS --->HDFS
+					Map-Reduce --->MR
+					BigTable --->Hbase				  
+				6）2003-2004年，Google公开了部分GFS和MapReduce思想的细节，以此为基础Doug Cutting等人用了2年业余时间实现了HDFS和MapReduce机制，使Nutch性能飙升 				  
+				7）2005 年Hadoop作为Lucene的子项目Nutch的一部分正式引入Apache基金会。2006 年 3 月份，MapReduce和Nutch Distributed File System (NDFS) 分别被纳入称为 Hadoop 的项目中 				  
+				9）Hadoop就此诞生并迅速发展，标志这云计算时代来临
+			版本：
+				Apache、Cloudera、Hortonworks
+				Apache：最原始（最基础）的版本，对于入门学习最好
+				Cloudera：在大型互联网企业中用的较多，收费
+				Hortonworks：文档较好
+			组成：
+				Hadoop1.x与Hadoop2.x区别：
+					Hadoop1.x：MapReduce（计算+资源调度）、HDFS（数据存储）、Common（辅助工具）
+					Hadoop2.x：MapReduce（计/运算）Yarn（资源调度）、HDFS（数据存储）、Common（辅助工具）
+				HDFS：是一个高可靠、高吞吐量的分布式文件系统。构成：
+					NameNode[目录]：存储文件的元数据，如：文件名、文件目录名、文件属性...
+					DataNode[资源]：数据
+					Secondary NameNode：监控HDFS后台服务
+				Yarn：
+					构成：
+						1）ResourceManager(rm)：处理客户端请求、启动/监控ApplicationMaster、监控NodeManager、资源分配与调度；
+						2）NodeManager(nm)：单个节点上的资源管理、处理来自ResourceManager的命令、处理来自ApplicationMaster的命令；
+						3）ApplicationMaster：数据切分、为应用程序申请资源(CPU、硬盘...)，并分配给内部任务、任务监控与容错;
+						4）Container：对任务运行环境的抽象，封装了CPU、内存等多维资源以及环境变量、启动命令等任务运行相关的信息
+				MapReduce：
+					构成：MapReduce将计算过程分为两个阶段：Map和Reduce
+						  1）Map阶段并行处理输入数据
+					      2）Reduce阶段对Map结果进行汇总
+			环境搭建：
+				环境准备：
+					安装JDK、安装Hadoop[可以配置环境变量]
+			目录结构：
+				（1）bin目录：存放对Hadoop相关服务（HDFS，YARN）进行操作的脚本
+				（2）etc目录：Hadoop的配置文件目录，存放Hadoop的配置文件
+				（3）lib目录：存放Hadoop的本地库（对数据进行压缩解压缩功能）
+				（4）sbin目录：存放启动或停止Hadoop相关服务的脚本
+				（5）share目录：存放Hadoop的依赖jar包、文档、和官方案例
+			运行模式：
+				本地模式、伪分布式模式以及完全分布式模式
+				本地运行模式：不需要启用单独进程，直接可以运行，测试和开发时使用。
+					官方示例：
+					安装路径：opt/module/hadoop-2.7.2/
+						Grep案例：
+							1）在安装路径下创建一个input文件夹，mkdir input
+							2）将Hadoop的xml配置文件复制到input，cp ./etc/hadoop/*.xml input
+							3）执行share目录下的MapReduce程序，./bin/hadoop jar
+															   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar grep ./input/ output 'dfs[a-z.]+'
+							4）查看输出结果，cat ./output/*	
+						WordCount案例：
+							1）在安装路径下创建一个wcinput文件夹，mkdir wcinput
+							2）在wcinput文件夹下创建文件wc.iput并输入内容保存， touch wc.input
+								内容如：zhangsan lisi wangwu lisi zhaoliu 
+							3）执行share目录下的MapReduce程序，hadoop jar
+																share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount ./wcinput/ wcoutput
+							4）查看输出结果，cat wcoutput/part-r-00000，即可查看统计内容出现的次数
+				
+				伪分布式运行模式：等同于完全分布式，只有一个节点。
+					启动HDFS并运行MapReduce程序：
+						环境准备：
+							准备1台客户机[hadoop101]、安装jdk并配置环境变量、安装hadoop并配置环境变量、配置集群、
+							启动、测试集群增、删、查、执行wordcount案例
+						步骤：
+							1）配置集群
+								配置：hadoop-env.sh <!-- 修改JAVA_HOME 路径 -->
+										Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
+										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
+								      core-site.xml <!--Hadoop公用配置-->
+										<!-- 指定HDFS中NameNode的地址 -->
+										<property>
+											<name>fs.defaultFS</name>
+											<value>hdfs://hadoop101:9000</value>
+										</property>
+										<!-- 指定Hadoop运行时产生文件的存储目录 -->
+										<property>
+											<name>hadoop.tmp.dir</name>
+											<value>/opt/module/hadoop-2.7.2/data/tmp</value>
+										</property>
+									  hdfs-site.xml hdfs自定义配置
+										<!-- 指定HDFS副本的数量 -->
+										<property>
+											<name>dfs.replication</name>
+											<value>1</value>
+										</property>
+							2）启动集群
+									格式化NameNode：bin/hdfs namenode -format 注意：初次启动时格式化，以后就不要总格式化							 
+									启动NameNode：sbin/hadoop-daemon.sh start namenode									 
+									启动DataNode：sbin/hadoop-daemon.sh start datanode
+						
+							3）查看集群
+									查看是否启动成功：jps，结果如下：[注意：jps是JDK中的命令，不是Linux命令。]
+									13586 NameNode
+									13668 DataNode
+									13786 Jps
+									web端查看HDFS文件系统：http://hadoop101:50070/dfshealth.html#tab-overview
+								    查看产生的Log日志：
+										当前目录路径下会生成logs文件夹：/opt/module/hadoop-2.7.2/logs
+									思考：为什么不能一直格式化NameNode，格式化NameNode，要注意什么？？？
+										在运行的存储临时目录下：data/tmp/dfs/name/current/或data/tmp/dfs/data/current/中产生VERSION文件存储了clusterID是相同的。
+										结论：格式化NameNode，会产生新的clusterID,导致NameNode和DataNode的clusterID不一致，集群找不到已往数据。
+											  所以格式NameNode时，一定要先删除data数据和log日志，然后再格式化NameNode。
+							4）操作集群[执行wordcount案例]
+									在HDFS文件系统上创建一个input文件夹：bin/hdfs dfs -mkdir -p /user/atguigu/input
+								    将测试文件内容上传到文件系统上：bin/hdfs dfs -put wcinput/wc.input /user/atguigu/input/
+									查看上传的文件是否正确：bin/hdfs dfs -ls  /user/atguigu/input/ 或 bin/hdfs dfs -cat /user/atguigu/input/wc.input
+									运行MapReduce程序：bin/hadoop jar
+													   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount /user/atguigu/input/ /user/atguigu/output
+									查看输出结果：bin/hdfs dfs -cat /user/atguigu/output/*
+									将测试文件内容下载到本地：bin/hdfs dfs -get /user/atguigu/output/part-r-00000 ./wcoutput/
+									删除输出结果：hdfs dfs -rm -r /user/atguigu/output	
+									
+					启动YARN并运行MapReduce程序:
+						环境准备：
+							准备1台客户机、安装jdk并配置环境变量、安装hadoop并配置环境变量、配置集群在YARN上运行MR、
+							启动、测试集群增、删、查、在YARN上执行WordCount案例
+						步骤：
+							1）配置集群
+								配置：yarn-env.sh 修改JAVA_HOME 路径
+										Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
+										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
+									  yarn-site.xml <!-- yarn自定义配置 -->
+										<!-- Reducer获取数据的方式 -->
+										<property>
+												<name>yarn.nodemanager.aux-services</name>
+												<value>mapreduce_shuffle</value>
+										</property>
+										<!-- 指定YARN的ResourceManager的地址 -->
+										<property>
+											<name>yarn.resourcemanager.hostname</name>
+											<value>hadoop101</value>
+										</property>
+									  mapred-env.sh 修改JAVA_HOME 路径
+									    Linux系统中获取JDK的安装路径：echo $JAVA_HOME   ->/opt/module/jdk1.8.0_144									
+										修改JAVA_HOME 路径：export JAVA_HOME=/opt/module/jdk1.8.0_144
+									  mapred-site.xml <!-- mapreduce自定义配置 -->
+										重命名：mv mapred-site.xml.template mapred-site.xml 
+										<!-- 指定MR运行在YARN上 -->
+										<property>
+												<name>mapreduce.framework.name</name>
+												<value>yarn</value>
+										</property>
+							2）启动集群
+									启动前必须保证NameNode和DataNode已经启动[HDFS服务启动]
+								    启动ResourceManager：sbin/yarn-daemon.sh start resourcemanager
+									启动NodeManager：sbin/yarn-daemon.sh start nodemanager
+							3）集群操作
+									YARN的浏览器页面查看：http://hadoop101:8088/cluster
+									删除文件系统上的output文件：bin/hdfs dfs -rm -R /user/atguigu/output
+									执行MapReduce程序：bin/hadoop jar
+													   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount /user/atguigu/input  /user/atguigu/output
+									查看运行结果：bin/hdfs dfs -cat /user/atguigu/output/*
+					
+					配置历史服务器MR：为了查看程序的历史运行情况，需要配置一下历史服务器
+						配置：mapred-site.xml <!-- mapreduce自定义配置-->
+							<!-- 历史服务器端地址 -->
+							<property>
+								<name>mapreduce.jobhistory.address</name>
+								<value>hadoop101:10020</value>
+							</property>
+							<!-- 历史服务器web端地址 -->
+							<property>
+								<name>mapreduce.jobhistory.webapp.address</name>
+								<value>hadoop101:19888</value>
+							</property>
+						启动历史服务器：sbin/mr-jobhistory-daemon.sh start historyserver
+						查看历史服务器是否启动：jps
+						查看JobHistory：http://hadoop101:19888/jobhistory
+					
+					配置日志的聚集[YARN中配置]
+						日志聚集概念：应用运行完成以后，将程序运行日志信息上传到HDFS系统上，可以方便的查看到程序运行详情，方便开发调试。
+						注意：开启日志聚集功能，需要重新启动NodeManager 、ResourceManager和HistoryManager。
+						步骤：
+							配置：yarn-site.xml 
+								<!-- 日志聚集功能使能 -->
+								<property>
+									<name>yarn.log-aggregation-enable</name>
+									<value>true</value>
+								</property>
+								<!-- 日志保留时间设置7天 -->
+								<property>
+									<name>yarn.log-aggregation.retain-seconds</name>
+									<value>604800</value>
+								</property>
+							关闭NodeManager 、ResourceManager和HistoryManager：
+								sbin/yarn-daemon.sh stop resourcemanager
+								sbin/yarn-daemon.sh stop nodemanager
+								sbin/mr-jobhistory-daemon.sh stop historyserver
+							启动NodeManager 、ResourceManager和HistoryManager：
+								sbin/yarn-daemon.sh start resourcemanager
+								sbin/yarn-daemon.sh start nodemanager
+								sbin/mr-jobhistory-daemon.sh start historyserver
+							删除HDFS上已经存在的输出文件：bin/hdfs dfs -rm -R /user/atguigu/output
+							执行WordCount程序：hadoop jar
+											   share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.2.jar wordcount /user/atguigu/input /user/atguigu/output	
+							查看日志：http://hadoop101:19888/jobhistory
+				
+				配置文件说明：Hadoop配置文件分两类：默认配置文件和自定义配置文件，只有用户想修改某一默认配置值时，才需要修改自定义配置文件，更改相应属性值
+					默认配置文件：存放在hadoop相应的jar包中
+					自定义配置文件：core-site.xml、hdfs-site.xml、yarn-site.xml、mapred-site.xml四个配置文件存放在$HADOOP_HOME/etc/hadoop这个路径上，用户可以根据项目需求重新进行修改配置。
+
+				完全分布式运行模式[重点]：多个节点一起运行。	
+					环境准备：
+						准备3台客户机（关闭防火墙、静态ip、主机名称，分别为：102、103、104）、安装jdk并配置环境变量、安装hadoop并配置环境变量、
+						配置集群、单点启动、配置ssh、群起并测试集群
+							注：[学习阶段]可以从已安装好的Linux客户机copy三份来使用，主要修改的配置有：
+							vim /etc/udev/rules.d/70-persistent-net.rules                   -获取address地址
+							vim /etc/sysconfig/network-scripts/ifcfg-eth0					-修改address地址和IP地址
+							vim /etc/sysconfig/network										-添加主机名称
+							vim /etc/hosts													-添加映射
+					集群分发脚本xsync：
+						前提准备：
+							scp（secure copy）安全拷贝：
+								含义：scp可以实现服务器与服务器之间的数据拷贝[from server1 to server2]。
+								基本语法:
+								scp    -r          $pdir/$fname              $user@hadoop$host:$pdir/$fname
+								命令   递归       要拷贝的文件路径/名称    目的用户@主机:目的路径/名称
+							步骤：[hadoop101是实现准备好的客户机]								
+								在hadoop101上，将hadoop101中/opt/module目录下的软件拷贝到hadoop102上
+									scp -r /opt/module  root@hadoop102:/opt/module
+								在hadoop103上，将hadoop101服务器上的/opt/module目录下的软件拷贝到hadoop103上
+									sudo scp -r atguigu@hadoop101:/opt/module root@hadoop103:/opt/module
+								在hadoop103上操作将hadoop101中/opt/module目录下的软件拷贝到hadoop104上
+									scp -r atguigu@hadoop101:/opt/module root@hadoop104:/opt/module
+								注意：拷贝过来的/opt/module目录，别忘了在hadoop102、hadoop103、hadoop104上修改所有文件的所有者和所有者组。
+									  使用：sudo chown atguigu:atguigu -R /opt/module
+								将hadoop101中/etc/profile文件拷贝到hadoop102、hadoop103、hadoop104的/etc/profile上
+									sudo scp /etc/profile root@hadoop102:/etc/profile
+									sudo scp /etc/profile root@hadoop103:/etc/profile
+									sudo scp /etc/profile root@hadoop104:/etc/profile
+								在hadoop102、hadoop103、hadoop104 的客户机上分别执行：source /etc/profile 
+							
+							rsync 远程同步工具
+								含义：主要用于备份和镜像。具有速度快、避免复制相同内容和支持符号链接的优点。
+								rsync和scp区别：用rsync做文件的复制要比scp的速度快，rsync只对差异文件做更新。scp是把所有文件都复制过去。
+								基本语法：
+									rsync    -rvl       $pdir/$fname              $user@hadoop$host:$pdir/$fname
+									命令   选项参数   要拷贝的文件路径/名称    目的用户@主机:目的路径/名称
+									参数说明：-r：递归；-v：显示复制过程；-l：拷贝符号链接
+									如：rsync -rvl /opt/software/ root@hadoop102:/opt/software
+						集群分发脚本：
+							1）在当前用户的家目录下新建脚本，如：/home/atguigu/bin，注意：：如果将xsync放到/home/atguigu/bin目录下仍然不能实现全局使用，可以将xsync移动到/usr/local/bin目录下或添加到系统的PATH变量里去。
+								touch xsync
+							2）编辑内容，格式如下：
+								#!/bin/bash
+								#1 获取输入参数个数，如果没有参数，直接退出
+								pcount=$#
+								if((pcount==0)); then
+								echo no args;
+								exit;
+								fi
+
+								#2 获取文件名称
+								p1=$1
+								fname=`basename $p1`
+								echo fname=$fname
+
+								#3 获取上级目录到绝对路径
+								pdir=`cd -P $(dirname $p1); pwd`
+								echo pdir=$pdir
+
+								#4 获取当前用户名称
+								user=`whoami`
+
+								#5 循环
+								for((host=103; host<105; host++)); do
+										echo ------------------- hadoop$host --------------
+										rsync -rvl $pdir/$fname $user@hadoop$host:$pdir
+								done
+							3）修改脚本 xsync 具有执行权限：chmod 777 xsync
+							4）调用脚本形式：xsync 文件名称
+					集群配置：
+						集群部署规划：HDFS YARN
+							hadoop102 ：NameNode DataNode NodeManager		
+							hadoop103 ：DataNode ResourceManager NodeManager
+							hadoop104 :	SecondaryNameNode DataNode NodeManager
+							重点解释：hadoop102 配置 NameNode
+									  hadoop103 配置 ResourceManager
+									  hadoop104 配置 SecondaryNameNode
+								这三点分别配置在不同的客户机上
+						配置集群[先配置好一台服务器，如：hadoop102，再集群分发同步过去]：
+							1）配置core-site.xml <!-- 公共配置 -->
+								<!-- 指定HDFS中NameNode的地址，namenode常用的端口：9000、50070、8088、50090、19888 -->
+								<property>
+										<name>fs.defaultFS</name>
+									  <value>hdfs://hadoop102:9000</value>
+								</property>
+								<!-- 指定Hadoop运行时产生文件的存储目录 -->
+								<property>
+										<name>hadoop.tmp.dir</name>
+										<value>/opt/module/hadoop-2.7.2/data/tmp</value>
+								</property>
+							2）配置HDFS配置文件
+							   配置hadoop-env.sh  export JAVA_HOME=/opt/module/jdk1.8.0_144
+							   配置hdfs-site.xml <!-- hdfs的配置 -->
+							   <property>
+										<name>dfs.replication</name>
+										<value>3</value>
+								</property>
+								<!-- 指定Hadoop辅助名称节点主机配置 -->
+								<property>
+									  <name>dfs.namenode.secondary.http-address</name>
+									  <value>hadoop104:50090</value>
+								</property>
+							3）配置YARN配置文件
+							   配置yarn-env.sh export JAVA_HOME=/opt/module/jdk1.8.0_144
+							   配置yarn-site.xml <!-- yarn的配置 -->
+							   !-- Reducer获取数据的方式 -->
+								<property>
+										<name>yarn.nodemanager.aux-services</name>
+										<value>mapreduce_shuffle</value>
+								</property>
+								<!-- 指定YARN的ResourceManager的地址 -->
+								<property>
+										<name>yarn.resourcemanager.hostname</name>
+										<value>hadoop103</value>
+								</property>
+							4）MapReduce配置文件
+							   配置mapred-env.sh export JAVA_HOME=/opt/module/jdk1.8.0_144
+							   配置mapred-site.xml <!-- mr的配置 -->
+							   重命名：cp mapred-site.xml.template mapred-site.xml
+							   <!-- 指定MR运行在Yarn上 -->
+								<property>
+										<name>mapreduce.framework.name</name>
+										<value>yarn</value>
+								</property>
+						集群分发：
+							在hadoop102上执行：xsync /opt/module/hadoop-2.7.2/
+						查看文件分发情况：
+							如在hadoop103上面执行：cat /opt/module/hadoop-2.7.2/etc/hadoop/core-site.xml 看看文件是否与hadoop102同步
+					
+					集群单点启动
+						1）如果集群是第一次启动，需要格式化NameNode
+							[atguigu@hadoop102 hadoop-2.7.2]$ hadoop namenode -format 或 bin/hdfs namenode -format 
+						2）在hadoop102上启动NameNode
+							[atguigu@hadoop102 hadoop-2.7.2]$ hadoop-daemon.sh start namenode
+							[atguigu@hadoop102 hadoop-2.7.2]$ jps
+							3461 NameNode
+						3）在hadoop102、hadoop103以及hadoop104上分别启动DataNode
+							[atguigu@hadoop102 hadoop-2.7.2]$ hadoop-daemon.sh start datanode
+							[atguigu@hadoop102 hadoop-2.7.2]$ jps
+							[atguigu@hadoop103 hadoop-2.7.2]$ hadoop-daemon.sh start datanode
+							[atguigu@hadoop103 hadoop-2.7.2]$ jps
+							[atguigu@hadoop104 hadoop-2.7.2]$ hadoop-daemon.sh start datanode
+							[atguigu@hadoop104 hadoop-2.7.2]$ jps
+						问题：每次都一个一个节点启动，效率低下
+					
+					SSH无密登录配置
+						原理：
+										ssh访问B（数据用私钥A加密）			（B接收到数据用公钥A解密）
+						A服务器		------------------------------------------>B服务器
+				（ssh-key-gen/生成密钥对[公/私钥A]）						  （公钥A存储在Authorized_key）
+									<------------------------------------------
+				（用私钥A解密返回的数据）		采用公钥A加密数据返回A
+				
+						语法：ssh 另一台电脑的ip地址/域名
+						
+						生成公钥/私钥：在家目录的.ssh文件夹下执行：ssh-keygen -t rsa 回车三次，就会生成两个文件id_rsa（私钥）、id_rsa.pub（公钥）
+						将公钥拷贝到要免密登录的目标机器上，如：
+							ssh-copy-id hadoop102
+							ssh-copy-id hadoop103
+							ssh-copy-id hadoop104
+						注意：
+							还需要在hadoop102上采用root账号，配置一下无密登录到hadoop102、hadoop103、hadoop104；
+							还需要在hadoop103上采用atguigu账号配置一下无密登录到hadoop102、hadoop103、hadoop104服务器上。
+						
+						.ssh文件夹下文件解释：
+							known_hosts	记录ssh访问过计算机的公钥(public key)
+							id_rsa	生成的私钥
+							id_rsa.pub	生成的公钥
+							authorized_keys	存放授权过得无密登录服务器公钥
+					
+					群起集群
+						配置slaves
+						路径：/opt/module/hadoop-2.7.2/etc/hadoop/slaves下添加内容：
+							hadoop102
+							hadoop103
+							hadoop104
+						注意：该文件中添加的内容结尾不允许有空格，文件中不允许有空行。
+						同步所有节点配置文件，[atguigu@hadoop102 hadoop]$ xsync slaves
+					启动集群
+						1）如果集群是第一次启动，需要格式化NameNode（注意格式化之前，一定要先停止上次启动的所有namenode和datanode进程，然后再删除data和log数据）
+							[atguigu@hadoop102 hadoop-2.7.2]$ bin/hdfs namenode -format
+						2）启动HDFS
+							[atguigu@hadoop102 hadoop-2.7.2]$ sbin/start-dfs.sh
+							[atguigu@hadoop102 hadoop-2.7.2]$ jps
+							4166 NameNode
+							4482 Jps
+							4263 DataNode
+							[atguigu@hadoop103 hadoop-2.7.2]$ jps
+							3218 DataNode
+							3288 Jps
+							[atguigu@hadoop104 hadoop-2.7.2]$ jps
+							3221 DataNode
+							3283 SecondaryNameNode
+							3364 Jps
+						3）启动YARN
+							[atguigu@hadoop103 hadoop-2.7.2]$ sbin/start-yarn.sh
+							注意：NameNode和ResourceManger如果不是同一台机器，不能在NameNode上启动 YARN，应该在ResouceManager所在的机器上启动YARN。
+						4）Web端查看SecondaryNameNode，浏览器中输入：http://hadoop104:50090/status.html
+					
+					集群基本测试
+						1）上传文件到集群
+							上传小文件
+							[atguigu@hadoop102 hadoop-2.7.2]$ hdfs dfs -mkdir -p /user/atguigu/input
+							[atguigu@hadoop102 hadoop-2.7.2]$ hdfs dfs -put wcinput/wc.input /user/atguigu/input
+							上传大文件
+							[atguigu@hadoop102 hadoop-2.7.2]$ bin/hadoop fs -put /opt/software/hadoop-2.7.2.tar.gz  /user/atguigu/input
+						2）上传文件后查看文件存放在什么位置
+						   查看HDFS文件存储路径
+						   [atguigu@hadoop102 subdir0]$ pwd
+						   /opt/module/hadoop-2.7.2/data/tmp/dfs/data/current/BP-938951106-192.168.10.107-1495462844069/current/finalized/subdir0/subdir0
+					
+					集群启动/停止方式总结
+						1.	各个服务组件逐一启动/停止
+							（1）分别启动/停止HDFS组件
+								hadoop-daemon.sh  start / stop  namenode / datanode / secondarynamenode
+							（2）启动/停止YARN
+								yarn-daemon.sh  start / stop  resourcemanager / nodemanager
+						2.	各个模块分开启动/停止（配置ssh是前提）常用
+							（1）整体启动/停止HDFS
+								start-dfs.sh   /  stop-dfs.sh
+							（2）整体启动/停止YARN
+								start-yarn.sh  /  stop-yarn.sh
+					集群时间同步
+						
+						   
+	三、Zookeeper
+		简介：
+		
+	四、Kafka
+		简介：
 		
 				
 			
