@@ -11507,9 +11507,130 @@
 					})
 					</script>
 			8、事件处理：
-			   绑定监听:
-
-			
+			   绑定监听: v-on:xxx="fun"；@xxx="fun"；@xxx="fun(参数)"；默认事件形参: event；隐含属性对象: $event；
+			   事件修饰符：.prevent: 阻止事件的默认行为event.preventDefault()；.stop: 停止事件冒泡event.stopPropagation()；
+			   按键修饰符：.keycode: 操作的是某个keycode值的键；.keyName: 操作的某个按键名的键(少部分)；
+			   如：<div id="example">
+						<h2>1. 绑定监听</h2>
+						<button v-on:click="test1">Greet</button>
+						<button @click="test1">Greet2</button>
+						<button @click="test2($event, 'hello')">Greet3</button>
+						<h2>2. 事件修饰符</h2>
+						<!-- 阻止事件默认行为 -->
+						<a href="http://www.baidu.com" @click.prevent="test3">百度一下</a>
+						<br/>
+						<br/>
+						<!-- 停止事件冒泡 -->
+						<div style="width: 200px;height: 200px;background: red" @click="test4">
+						<div style="width: 100px;height: 100px;background: green"
+						@click.stop="test5"></div>
+						</div>
+						<h2>3. 按键修饰符</h2>
+						<input @keyup.8="test6">
+						<input @keyup.enter="test6">
+					</div>
+					<script type="text/javascript" src="../js/vue.js"></script>
+					<script type="text/javascript">
+					new Vue({
+					el: '#example',
+					data: {
+						name: 'Vue.js'
+					},
+					methods: {
+						test1 (event) {
+							// 方法内 `this` 指向 vm
+							// alert('Hello ' + this.name + '!')
+							// `event` 是原生 DOM 事件
+							alert(event.target.innerHTML)
+						},
+						test2 (event, msg) {
+							alert(event.target.innerHTML + '---' + msg)
+						},
+						test3() {
+							alert('阻止事件的默认行为')
+						},
+						test4() {
+							alert('out')
+						},
+						test5() {
+							alert('inner')
+						},
+						test6(event) {
+							alert(event.keyCode + '---' + event.target.value)
+						}
+					}
+					})
+					</script>
+			9、表单输入绑定：
+			   使用v-model对表单数据自动收集；text/textarea password checkbox radio select；
+			   如：<div id="demo">
+						<form @submit.prevent="handleSubmit">
+							<span>用户名: </span>
+							<input type="text" v-model="user.username"><br>
+							<span>密码: </span>
+							<input type="password" v-model="user.pwd"><br>
+							<span>性别: </span>
+							<input type="radio" id="female" value="female" v-model="user.sex">
+							<label for="female">女</label>
+							<input type="radio" id="male" value="male" v-model="user.sex">
+							<label for="male">男</label><br>
+							<span>爱好: </span>
+							<input type="checkbox" id="basket" value="basketball"
+							v-model="user.likes">
+							<label for="basket">篮球</label>
+							<input type="checkbox" id="foot" value="football"
+							v-model="user.likes">
+							<label for="foot">足球</label>
+							<input type="checkbox" id="pingpang" value="pingpang"
+							v-model="user.likes">
+							<label for="pingpang">乒乓</label><br>
+							<span>城市: </span>
+							<select v-model="user.cityId">
+							<option value="">未选择</option>
+							<option v-for="city in allCitys" :value="city.id">
+							{{ city.name }}
+							</option>
+							</select><br>
+							<span>介绍: </span>
+							<textarea v-model="user.desc" rows="10"></textarea><br><br>
+							<input type="submit" value="注册">
+						</form>
+					</div>
+					<script type="text/javascript" src="../js/vue.js"></script>
+					<script type="text/javascript">
+					var vm = new Vue({
+					el: '#demo',
+					data: {
+						user: {
+							username: '',
+							pwd: '',
+							sex: 'female',
+							likes: [],
+							cityId: '',
+							desc: '',
+						},
+						allCitys: [{id: 1, name: 'BJ'}, {id: 2, name: 'SZ'},{id: 4, name:
+						'SH'}],
+					},
+					methods: {
+						handleSubmit (event) {
+							alert(JSON.stringify(this.user))
+						}
+					}
+					})
+					</script>
+			10、Vue实例生命周期：
+				生命周期流程图：
+									new Vue()#新建实例
+									    |   
+									init event#初始化事件&生命周期
+									    |    -------beforeCreated
+									初始化注入&校验
+									    |    -------created
+									是否指定EL（元素）选项？N ---->当调用vm.$mount(el)函数时
+									    Y ------------------------------------------------->
+				Vue生命周期分析：	
+					
 ----------------------------------------------大数据定制技术篇----------------------------------------------------------------------------------	
 	一、大数据：
 		概念：Big Data，指的是一段时间范围内内无法使用常规的工具[JavaEE]处理数据集合，需要新的处理模式来处理海量、高增长率、多样化的信息。主要解决的是海量的数据存储与海量的数据分析计算问题。
