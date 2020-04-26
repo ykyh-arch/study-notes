@@ -1650,9 +1650,8 @@
 								}
 							} 
 							}}
-
 	服务熔断器（断路器）：		 
-			-Hystrix：
+			-Hystrix：停更进维；
 			 概念来源：服务雪崩：
 				服务扇出：多个微服务之间调用的时候，假设微服务A调用微服务B和微服务C，微服务B和微服务C又调用其它的微服务，这就是所谓的“扇出”效应。
 				解决方案：熔断模式（容错处理机制）、隔离模式（容错处理机制）、限流模式（预防模式）
@@ -1676,8 +1675,7 @@
 								client:
 								register-with-eureka: false
 								service-url: 
-								defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/
-		
+								defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/		
 					3,申明使用：1、程序main入口，添加@EnableCircuitBreaker注解，开启熔断支持；
 								2、在控制层申明使用
 									格式示例：fallbackMethod 快速应急的处理方法，进行服务降级处理
