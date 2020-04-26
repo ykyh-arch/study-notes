@@ -1448,6 +1448,7 @@
 			    使用时注入， @Autowired
 							 private DiscoveryClient client; //注：DiscoveryClient是spring clould对治理体系的一个抽象；
 			自我保护机制：某时刻某一个微服务不可用了，eureka不会立刻清理，依旧会对该微服务的信息进行保存！
+			怎么禁止自我保护：配置文件中添加：eureka.server.enbale-self-preservation=false
 			集群处理：
 				在Eureka服务器中添加配置：
 				eureka: 
@@ -1461,13 +1462,50 @@
 					defaultZone: http://eureka1.com:7002/eureka/,http://eureka3.com:7003/eureka/
 			与Dubbo的Zookeeper的比较：
 				著名的CAP理论指出，一个分布式系统不可能同时满足C(一致性)、A(可用性)和P(分区容错性)。由于分区容错性P在是分布式系统中必须要保证的，因此我们只能在A和C之间进行权衡。
-				因此,Zookeeper保证的是CP,Eureka则是AP。因此，Eureka可以很好的应对因网络故障导致部分节点失去联系的情况，而不会像zookeeper那样使整个注册服务瘫痪。
+				CAP理论关注粒度是数据，而不是整体系统设计；
+				因此,Zookeeper保证的是CP,Eureka则是AP。因此，Eureka可以很好的应对因网络故障导致部分节点失去联系的情况。
+			-Zookeeper：
+				简介：由于Eureka停止更新了，Zookeeper可以作为替代品；Zookeeper是一个分布式协调工具，可以实现注册中心功能；
+				使用：
+				1,引用模块：POM.XML
+				 <!--SpringBoot整合Zookeeper客户端-->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					<artifactId>spring-cloud-starter-zookeeper-discovery</artifactId>
+					<exclusions>
+						<!--先排除自带的zookeeper3.5.3-->
+						<exclusion>
+							<groupId>org.apache.zookeeper</groupId>
+							<artifactId>zookeeper</artifactId>
+						</exclusion>
+					</exclusions>
+				</dependency>
+				<!--添加zookeeper3.4.14版本-->
+				<dependency>
+					<groupId>org.apache.zookeeper</groupId>
+					<artifactId>zookeeper</artifactId>
+					<version>3.4.14</version>
+				</dependency>
+				<!-- 说明：spring-cloud默认引用的是zookeeper3.5.3版本的ZK，所以需要检查是否与服务端ZK版本一致 -->
+				2,配置参数：application.properties或YML文件的配置
+				server:
+				  port: 8004
+				#服务别名，注册zookeeper到注册中心名称
+				spring:
+				  application:
+					name: cloud-provider-payment
+				  cloud:
+					zookeeper:
+					  connect-string: 120.79.219.152:2181 #ZK服务端地址
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理	  
+				4,临时节点：不像Eureka有自我保护机制；
 			-Consul：
-				简介：Spring Cloud Consul是分布式的、高可用、横向扩展(AP原则)，它包含多个组件，但是作为一个整体，在微服务架构中为我们的基础设施提供服务发现和服务配置的工具。它包含了下面几个特性：
-					  服务发现（service discovery）
-					  健康检查（health checking）
+				简介：Spring Cloud Consul是分布式的、高可用、横向扩展(CP原则)，它包含多个组件，但是作为一个整体，在微服务架构中为我们的基础设施提供服务发现和服务配置的工具，提供全方位网格解决方案。它包含了下面几个特性：
+					  服务发现（service discovery）、提供HTTP和DNS两种发现方式
+					  健康检查（health checking）、支持多种方式、Http、Tcp、Docker、Shell脚本定制
 					  Key/Value存储（一个用来存储动态配置的系统）
 					  多数据中心（multi-datacenter）
+					  可视化Web界面
 				使用-客户端：
 				1,引用模块：POM.XML
 					<dependency>
@@ -1478,15 +1516,27 @@
 				格式：
 					  spring.cloud.consul.host=localhost #域名
 					  spring.cloud.consul.port=8500 #端口
-	
+				或：
+					server:
+					  port: 8006
+					spring:
+					  application:
+						name: consul-provider-payment
+					#consul注册中心地址
+					  cloud:
+						consul:
+						  host: localhost
+						  port: 8500
+						  discovery:
+							service-name: ${spring.application.name}
 				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理
 				注意：consul不需要创建类似eureka-server的服务端吗？由于Consul自身提供了服务端，所以我们不需要像之前实现Eureka的时候创建服务注册中心，直接通过下载consul的服务端程序就可以使用。
-				启动consul服务：$consul agent -dev				
+				启动consul服务：$consul agent -dev； 查看版本：	$consul --version；			
 			-Nocas：
 				参考Spring Cloud Alibaba 技术站的Nocas相关内容；		
 				详情参考：https://blog.csdn.net/qq_38765404/article/details/89521124
 	负载均衡：
-			-Ribbon（结合Eureka使用）：
+			-Ribbon（结合Eureka以及RestTemplate使用）：	官网已经进入维护模式；
 			 简介：基于Netflix实现的一套客户端负载均衡的工具，主要功能是提供客户端的软件负载均衡算法。
 			 负载均衡：将用户的请求基于某种规则平摊的分配到多个服务上，从而达到系统的HA，常见的负载均衡有软件Nginx，LVS，Haproxy，硬件F5等
 				分类：集中式LB-即在服务的消费方和提供方之间使用独立的LB设施(可以是硬件，如F5, 也可以是软件，如nginx), 由该设施负责把访问请求通过某种策略转发至服务的消费方；
@@ -1512,12 +1562,13 @@
 							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/	
 				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；2、在配置文件ConfigBean中添加@LoadBalanced注解
 				  -》结论：Ribbon和Eureka整合后服务消费方可以直接调用服务而不用再关心地址和端口号
-			    4,策略IRule：简单轮询负载均衡RoundRobinRule，区别于RetryRule，随机负载均衡，加权响应时间负载均衡，区域感知轮询负载均衡
+			    4,策略IRule：简单轮询负载均衡RoundRobinRule，区别于RetryRule，随机负载均衡，加权响应时间负载均衡，区域感知轮询负载均衡；
 			 自定义Ribbon：	
 				主启动类添加@RibbonClient注解，格式：@RibbonClient(name="MICROSERVICECLOUD",configuration=MySelfRule.class)，注意：这个自定义配置类不能放在@ComponentScan所扫描的当前包下以及子包下，
 					否则我们自定义的这个配置类就会被所有的Ribbon客户端所共享，也就是说我们达不到特殊化定制的目的了。
-				在配置文件ConfigBean中添加@LoadBalanced注解			
+				在配置文件ConfigBean中添加@LoadBalanced注解；			
 			-Feign（声明式服务调用，WebService客户端）：它的使用方法是定义一个接口，然后在上面添加注解，同时也支持JAX-RS（Java API for RESTful Web Services）标准的注解。
+			 Feign 是一个声明式的Web服务客户端，让编写Web服务客户端变得非常容易，只需创建一个接口并在接口上申明注解；
 			 特性：
 				可插拔式的注解支持，包括Feign注解和JAX-RS注解;
 				支持可插拔的HTTP编码器和解码器;
@@ -1544,7 +1595,7 @@
 							register-with-eureka: false
 							service-url: 
 							defaultZone: http://eureka1.com:7001/eureka/,http://eureka2.com:7002/eureka/,http://eureka3.com:7003/eureka/	
-				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；同时添加@EnableFeignClients 来开启feign
+				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；同时添加@EnableFeignClients来开启feign
 			                2, 定义接口：
 							   格式：value=“服务名称”,configuration = xxx.class 这个类配置Hystrix的一些精确属性
 			                   @FeignClient(value = "serviceName",fallback = FeignFallBack.class)
@@ -1558,7 +1609,48 @@
 								@Override
 								public String method1() {
 									return "error";
-								}								
+								}
+			-OpenFeign：
+				介绍：由于Feign停止更新，将由OpenFeign取代，可以解析SpringMVC下的@requestMapping注解下的接口；
+				超时控制：服务提供方与服务消费方允许的服务调用时间不一致就会导致出错，所以需要进行超时控制；
+				日志记录：
+				使用：
+				1,引用模块：POM.XML
+					  <!-- openfeign -->
+					<dependency>
+						<groupId>org.springframework.cloud</groupId>
+						<artifactId>spring-cloud-starter-openfeign</artifactId>
+					</dependency>
+				2,配置参数：application.properties或YML文件的配置
+					server:
+					  port: 80
+					#设置feign客户端超时时间（OpenFeign默认支持ribbon）
+					ribbon:
+					  ReadTimeout: 5000 #指的是建立连接后从服务器读取到可用资源所用的时间
+					  ConnectTimeout: 5000 #指的是建立连接所用的时间，适用于网络状况正常的情况下，两端连接所用的实际
+					logging:
+					  level:
+						#feign日志以什么级别监控那个接口
+						com.eiletxie.springcloud.service.PaymentFeignService: debug
+				3,申明使用：1、程序main入口，添加@EnableDiscoveryClient注解，开启服务治理；同时添加@EnableFeignClients来开启feign；
+							2、定义接口：
+							@Component
+							@FeignClient(value = "CLOUD-PAYMENT-SERVICE")
+							public interface PaymentFeignService {
+								@GetMapping(value="/payment/get/{id}")
+								public CommonResult<Payment> getPaymentById(@PathVariable("id") Long id);
+							}
+							3、控制层调用；
+							4、配置日志bean：
+							@Configuration 
+							public class FeignConfig {
+							@Bean 
+							Logger.Level feignLoggerLevel() { 
+								return  Logger.Level.FULL; #设置日志级别
+								}
+							} 
+							}}
+
 	服务熔断器（断路器）：		 
 			-Hystrix：
 			 概念来源：服务雪崩：
