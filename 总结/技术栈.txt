@@ -1651,7 +1651,7 @@
 							} 
 							}}
 	服务熔断器（断路器）：		 
-			-Hystrix：停更进维；
+			-Hystrix：停更进维，将被Sentinel取代；
 			 概念来源：服务雪崩：
 				服务扇出：多个微服务之间调用的时候，假设微服务A调用微服务B和微服务C，微服务B和微服务C又调用其它的微服务，这就是所谓的“扇出”效应。
 				解决方案：熔断模式（容错处理机制）、隔离模式（容错处理机制）、限流模式（预防模式）
@@ -1738,8 +1738,9 @@
 							port: 9901		
 					3,申明使用：1、程序main入口，添加@EnableHystrixDashboard注解，开启熔断监控的支持；	
 	路由网关：
-			-Zuul：
-			 概念：代理+路由+过滤三大功能，可以与Eureka整合并注册到注册中心里面
+			-Zuul 1.X：
+			 概念：代理+路由+过滤三大功能，可以与Eureka整合并注册到注册中心里面；
+			 缺点：Netflix公司的Zuul 1.X是阻塞的I/O的API GATEWAY，采用的是传统的Servlet与Tomcat容器框架，Zuul 2.X迟迟未发布；
 			 使用：
 				1,引用模块：POM.XML
 					<dependency>
@@ -1760,8 +1761,98 @@
 							serverName.serviceId: 服务名 //给微服务起别名
 							//或使用：serverName.url: http://${IP}:${PORT}/  //基于未使用服务注册中心的
 				3,申明使用：1、程序main入口，添加@EnableZuulProxy注解，开启Zuul的支持；
+			- Spring Cloud Gateway：
+			    概念：新一代网关配置，目标是替代Netflix ZUUL，其不仅提供统一的路由方式，并且基于Filter链的方式提供了网关基本的功能，例如：安全，监控/埋点，和限流等。				
+				优势：底层采用的是新一代的webflux框架，它是异步非阻塞的支持Netty通讯的框架；
+				作用: 反向代理、鉴权、流量控制、熔断、日志监控；
+				功能：路由、断言、过滤；核心：路由转发+执行过滤器链；
+				使用-客户端：
+				1,引用模块：POM.XML	
+				<!--gateway依赖-->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					  <artifactId>spring-cloud-starter-gateway</artifactId>
+				</dependency>
+				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
+				格式：
+					spring:
+						  application:
+							name: gateway-server
+						  cloud:
+							gateway:
+							  routes:
+								- id: nacos-discovery-provider
+								  uri: lb://nacos-discovery-provider #动态路由
+								 #uri: http://localhost:8001
+								  predicates: #断言
+									- Path=/provider/**
+									- After=2020-03-12T15:44:15.064+08:00[Asia/Shanghai]
+								   #- Cookie=username,eiletxie   #带Cookie，并且username的值为eiletxie
+								   #- Header=X-Request-Id,\d+ #请求头要有 X-Request-Id属性并且值为整数的正则表达式
+								  filters:
+									- StripPrefix=1
+							  discovery:
+								locator:
+								  enabled: true  #表明gateway开启服务注册和发现的功能，并且spring cloud gateway自动根据服务发现为每一个服务创建了一个router，这个router将以服务名开头的请求路径转发到对应的服务。
+								  lowerCaseServiceId: true   #是将请求路径上的服务名配置为小写（因为服务注册的时候，向注册中心注册时将服务名转成大写的了），比如以/service-hi/*的请求路径被路由转发到服务名为service-hi的服务上。
+								  filters:
+									- StripPrefix=1									
+						server:
+						  port: 9093
+				3、申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务调用
+						使用示例：http://localhost:9093/provider/hello?name=zhansan
+				4、支持自定义路由与过滤：
+				   如：@Configuration
+						public class GatewayConfig {
+							/**
+							 * 配置了一个id为route-name的路由规则
+							 * 当访问地址 http://localhost:9527/guonei时会自动转发到地址： http://news.baidu.com/guonei
+							 * @param builder
+							 * @return
+							 */
+							@Bean
+							public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+								RouteLocatorBuilder.Builder routes = builder.routes();
+								routes.route("path_route_eiletxie",
+										r -> r.path("/guonei")
+												.uri("http://news.baidu.com/guonei")).build();
+								return routes.build();
+							}
+							@Bean
+							public RouteLocator customRouteLocator2(RouteLocatorBuilder builder) {
+								RouteLocatorBuilder.Builder routes = builder.routes();
+								routes.route("path_route_eiletxie2",
+										r -> r.path("/guoji")
+												.uri("http://news.baidu.com/guoji")).build();
+								return routes.build();
+							}
+						}
+					//自定义过滤链
+					@Component
+					@Slf4j
+					public class MyLogGatewayFilter implements GlobalFilter, Ordered {
+						@Override
+						public Mono< Void > filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+							log.info("****** come in MyLogGateWayFilter: " + new Date());
+							String uname = exchange.getRequest().getQueryParams().getFirst("uname");
+							if(uname == null) {
+							  log.info("*****用户名为null，非法用户，o(╥﹏╥)o");
+							  exchange.getResponse().setStatusCode(HttpStatus.NOT_ACCEPTABLE);
+							  return exchange.getResponse().setComplete();
+							}
+							return chain.filter(exchange);
+						}
+						/**
+						 * 加载过滤器的顺序，数字越小，优先级越高
+						 * @return
+						 */
+						@Override
+						public int getOrder() {
+							return 0;
+						}
+					}				
 	分布式配置中心：
-				 -SpringCloud Config（与Git整合使用）
+				 -SpringCloud Config（与Git、SVN整合使用）
 				 概念来源：分布式系统面临的---配置问题
 				 概念：为微服务架构中的微服务提供集中化的外部配置支持，配置服务器为各个不同微服务应用的所有环境提供了一个中心化的外部配置
 				    分类：服务端和客户端
@@ -1771,6 +1862,9 @@
 						  2、运行期间动态调整配置，不再需要在每个服务部署的机器上编写配置文件，服务会向配置中心统一拉取配置自己的信息
 						  3、当配置发生变动时，服务不需要重启即可感知到配置的变化并应用新的配置
 						  4、将配置信息以REST接口的形式暴露
+				 流程图：  Client （客户端、bootstrap.yml）
+							  |
+						Config Server <-------------->Git / GitHub 仓库
 				 使用：
 					 1、用自己的Github账户建一个统一配置中心仓库，并克隆到本地；
 					 2、新建配置文件application.yml（保存格式必须为UTF-8）
@@ -1857,9 +1951,28 @@
 												label: master   
 												uri: http://config-3344.com:3344  #本微服务启动后先去找3344号服务（链接Config服务端），通过SpringCloudConfig获取GitHub的服务地址
 						  3,申明使用：
-									测试：在控制层使用，如：
-									@Value("${spring.application.name}")
-									private String applicationName;						  
+							测试：在控制层使用，如：
+							@Value("${spring.application.name}")
+							private String applicationName;
+						  4,客户端之动态刷新
+						  1,引用模块：POM.XML
+						  <dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-boot-starter-actuator</artifactId>
+						  </dependency>
+						  2,配置参数：bootstrap.yml
+						  #暴露监控端点
+						   management:
+							  endpoints:
+								web:
+								  exposure:
+									include: "*"
+						  3,业务类Controller修改，添加@RefreshScope，同时需要运维人员手动发送post请求刷新客户端服务，如：curl -X POST “http://localhost:3355/actuator/refresh”；
+						  缺点：客户端很多的时候，需要手动一个个去刷新，能不能广播、一次通知处处生效？
+	SpringCloud Bus消息总线：
+		含义：分布式自动刷新配置功能；Spring Cloud Bus配合Spring Cloud Config使用可以实现配置的动态刷新；Bus支持两种消息代理： RabbitMQ和Kafka；
+			  微服务架构中，利用消息代理机制管理各个微服务订阅一个消息主题，该主题消息会被订阅消费，则称为消息总线；
+		
 ----------------------------------------------Spring Cloud Alibaba 技术篇---------------------------------------------------------						  					 
 	基本介绍：Spring Cloud Alibaba 致力于提供微服务开发的一站式解决方案，依托 Spring Cloud Alibaba，只需要添加一些注解和少量配置，就可以将 Spring Cloud 应用接入阿里微服务解决方案，
 			  通过阿里中间件来迅速搭建分布式应用系统。
@@ -1872,8 +1985,8 @@
 			  6、阿里云对象存储：阿里云提供的海量、安全、低成本、高可靠的云存储服务。支持在任何应用、任何时间、任何地点存储和访问任意类型的数据
 			  7、分布式任务调度：提供秒级、精准、高可靠、高可用的定时（基于 Cron 表达式）任务调度服务
 			  8、阿里云短信服务：覆盖全球的短信服务，友好、高效、智能的互联化通讯能力，帮助企业迅速搭建客户触达通道					  
-	1、服务注册与发现（配置中心）
-		-Nocas（= Spring Cloud Eureka + Spring Cloud Config）：
+	1、服务注册与发现（配置中心、消息总线）
+		-Nocas（= Spring Cloud Eureka + Spring Cloud Config + Spring Cloud Bus）：
 				简介：Spring Cloud Alibaba 项目中开发分布式应用微服务的子组件，致力于服务发现、配置和管理微服务，基于 DNS 和基于 RPC 的服务发现。
 				关键特性：
 					1、服务发现和服务健康监测；
@@ -2024,68 +2137,6 @@
 						}
 	3、其他：
 		 - Webflux：替换了旧的Servlet线程模型。用少量的线程处理request和response io操作，这些线程称为Loop线程，而业务交给响应式编程框架处理，响应式编程是非常灵活的，用户可以将业务中阻塞的操作提交到响应式框架的work线程中执行，而不阻塞的操作依然可以在Loop线程中进行处理，大大提高了Loop线程的利用率。反应堆式编程reactor。
-		 - Spring Cloud Gateway：网关配置，目标是替代Netflix ZUUL，其不仅提供统一的路由方式，并且基于Filter链的方式提供了网关基本的功能，例如：安全，监控/埋点，和限流等。
-				使用-客户端：
-				1,引用模块：POM.XML	
-				<!--gateway依赖-->
-				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					  <artifactId>spring-cloud-starter-gateway</artifactId>
-				</dependency>
-				<!--Nacos的服务注册与发现模块-->
-				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-				</dependency>
-				<!--统一管理-->
-				<dependencyManagement>
-					<dependencies>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-dependencies</artifactId>
-								<version>Greenwich.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-								<version>0.2.2.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-					</dependencies>
-				</dependencyManagement>
-				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
-				格式：
-					spring:
-						  application:
-							name: nacos-discovery-gateway-server
-						  cloud:
-							nacos:
-							  discovery:
-								server-addr: 192.168.43.142:8848
-								metadata:
-								  name: healthy
-							gateway:
-							  routes:
-								- id: nacos-discovery-provider
-								  uri: lb://nacos-discovery-provider
-								  predicates:
-									- Path=/provider/**
-								  filters:
-									- StripPrefix=1
-							  
-							  discovery:
-								locator:
-								  enabled: true  #表明gateway开启服务注册和发现的功能，并且spring cloud gateway自动根据服务发现为每一个服务创建了一个router，这个router将以服务名开头的请求路径转发到对应的服务。
-								  lowerCaseServiceId: true   #是将请求路径上的服务名配置为小写（因为服务注册的时候，向注册中心注册时将服务名转成大写的了），比如以/service-hi/*的请求路径被路由转发到服务名为service-hi的服务上。
-								  filters:
-									- StripPrefix=1									
-						server:
-						  port: 9093
-				3、申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务调用
-						使用示例：http://localhost:9093/provider/hello?name=zhansan
 		 -Sentinel：
 				介绍：随着微服务的流行，服务和服务之间的稳定性变得越来越重要。Sentinel 作为流量防卫组件，以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度保护服务的稳定性。
 				特征：
