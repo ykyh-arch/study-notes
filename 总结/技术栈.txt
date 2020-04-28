@@ -1972,7 +1972,64 @@
 	SpringCloud Bus消息总线：
 		含义：分布式自动刷新配置功能；Spring Cloud Bus配合Spring Cloud Config使用可以实现配置的动态刷新；Bus支持两种消息代理： RabbitMQ和Kafka；
 			  微服务架构中，利用消息代理机制管理各个微服务订阅一个消息主题，该主题消息会被订阅消费，则称为消息总线；
-		
+		基本使用：
+			安装消息代理服务：如：RabbitMQ；安装完成后默认用户名/密码为：guest
+		动态刷新全局广播：
+			设计思想：1、利用消息总线触发一个客户端/bus/refresh,而刷新所有客户端的配置；2、利用消息总线触发一个服务端ConfigServer的/bus/refresh断电，而刷新所有客户端的配置；
+			方案选择后者：因为前者打破了微服务的职责单一性，因为微服务本身是业务模块，它不应该承担配置刷新的职责；破坏了微服务各节点的对等性；
+			配置中心服务端添加消息总线支持：
+				1,引用模块：POM.XML
+				<!-- 添加消息总线RabbitMQ支持 -->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					<artifactId>spring-cloud-starter-bus-amqp</artifactId>
+				</dependency>
+				2,配置参数：application.yml
+				#rabbit相关配置 15672是web管理界面的端口，5672是MQ访问的端口
+				spring:  
+				  rabbitmq:
+					host: localhost
+					port: 5672
+					username: guest
+					password: guest
+				#rabbitmq相关设置 ，暴露 bus刷新配置的端点
+				management:
+				  endpoints:
+					web:
+					  exposure:
+						include: 'bus-refresh'
+			客户端添加消息总线支持：	
+				1,引用模块：POM.XML
+				<!-- 添加消息总线RabbitMQ支持 -->
+				<dependency>
+					<groupId>org.springframework.cloud</groupId>
+					<artifactId>spring-cloud-starter-bus-amqp</artifactId>
+				</dependency>
+				2,配置参数：bootstrap.yml
+				#rabbit相关配置 15672是web管理界面的端口，5672是MQ访问的端口
+				spring:  
+				  rabbitmq:
+					host: localhost
+					port: 5672
+					username: guest
+					password: guest
+				#rabbitmq相关设置 ，暴露 bus刷新配置的端点
+				management:
+				  endpoints:
+					web:
+					  exposure:
+						include: '*'
+			运维人员：发送POST请求：curl -X POST "http://服务配置中心服务端：端口号/actuator/bus-refresh"；
+			结论：一次修改，广播通知，处处生效；
+		动态刷新定点通知：	
+			公式：http://服务配置中心服务端：端口号/actuator/bus-refresh/{destination}；/bus/refresh请求不再发送客户端服务实例上，而是发给config server并通过destination参数类指定需要更新配置的服务或实例
+			      其中的destination：客户端服务名:端口；
+	SpringCloud Stream消息驱动：
+		基本介绍：
+			
+				  
+			
+			
 ----------------------------------------------Spring Cloud Alibaba 技术篇---------------------------------------------------------						  					 
 	基本介绍：Spring Cloud Alibaba 致力于提供微服务开发的一站式解决方案，依托 Spring Cloud Alibaba，只需要添加一些注解和少量配置，就可以将 Spring Cloud 应用接入阿里微服务解决方案，
 			  通过阿里中间件来迅速搭建分布式应用系统。
