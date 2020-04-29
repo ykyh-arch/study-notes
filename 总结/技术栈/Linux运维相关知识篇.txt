@@ -1,0 +1,781 @@
+----------------------------------------------Linux运维相关知识篇------------------------------------------------------------------------------------------------------------							
+	方向：运维工程师、嵌入式工程师
+	应用领域：1、个人桌面应用；2、服务器（免费、稳定、高效）；3、嵌入式领域（内核小，对网络有良好的支持，成本小，物联网运用广泛）
+	一、基础篇
+			含义：是一款操作系统，免费、开源、安全、高效、稳定，处理高定发十分强悍
+			创始人：Linus 林纳斯
+			发行版本：redhat（centos、redhat）、ubuntu、suse 、红旗（Fedora）
+			Linux与Unix关系：GUN计划Linux内核
+			与windows的比较：
+						Linux  										windows
+				收费：  费用低											高
+				维护：   开源，全球爱好者提供技术支持			      微软
+				安全性：  高                                          低，补丁  
+				使用习惯： 命令行                                       图形界面
+				定制性：   强                                            弱
+				应用场景：  企业级										桌面操作系统
+				
+		使用：
+			学习阶段：安装VM（虚拟机，提供虚拟空间，前提：BIOS开启了对虚拟化设备的支持），再安装Linux系统（centos）
+				网络连接（TCP）三种形式：
+					桥连接：Linux可以和其它的系统通信，但是可能造成ip冲突。
+					NAT（网络地址转换方式）连接: linux可以访问外网，不会造成ip冲突。
+					主机模式：linux是一个独立的主机，不能访问外网。
+				vmtools工具使用：
+					1、在windows与centos之间使用粘贴命令
+					2、设立共享文件					
+		Linux目录结构：
+			简介：Linux采用的是树状的目录结构，根目录/。在Linux世界，一切皆文件。
+			基本目录介绍：
+				/bin：命令目录
+				/sbin：系统管理员使用的命令目录
+				/home：家目录，普通用户家目录，默认以用户名命名
+				/root：超级管理员用户目录
+				/boot：引导目录，启动时加载的核心文件，如：镜像文件
+				/proc：虚拟目录，是系统内存的映射
+				/srv：service缩写，当一些服务启动需要读取的数据目录
+				/tmp：临时目录
+				/dev：设备，类似于windows的设备管理器，以文件形式存储
+				/media：媒体目录，会自动识别设备，如：U盘
+				/mnt：临时挂载目录
+				/opt：安装软件目录，默认为空
+				/usr/local：软件安装所在目录，一般是源码安装方式
+				/var：可变目录，经常修改的文件，包括日志文件
+				/selinux：安全子系统，类似360	
+				/etc：配置文件目录
+					  /etc/passwd  -用户（user）的配置文件，记录用户的各种信息，每行的含义：用户名:口令:用户标识号:组标识号:注释性描述:主目录:登录Shell，如：zwj:x:503:504::/home/zwj:/bin/bash
+					  /etc/shadow -口令的配置文件，每行的含义：登录名:加密口令:最后一次修改时间:最小时间间隔:最大时间间隔:警告时间:不活动时间:失效时间:标志
+					  /etc/group -组(group)的配置文件，记录 Linux 包含的组的信息，每行含义：组名:口令:组标识号:组内用户列表
+					  /etc/inittab -修改系统的运行级别
+		远程登录：
+			远程登录（安全模拟终端）软件：Xshell、SecureCRT （支持SSH(Secure SHell远程管理协议) SSH1,SSH2（密文传输）都属于TCP（传输控制协议，软件与软件之间的通讯）协议
+										  ,区别于IP（计算机与计算机之间的通讯）协议 以及 Microsoft windows平台的TELNET（明文传输）协议），使用前提：Linux操作系统开启了SSHD服务，此服务监听22号端口
+			上传和下载的文件：Xftp 基于windows平台强大的ftp、sftp文件传输软件
+					ftp:文件传输协议，默认端口20和21，其中20用于传输数据，21用于传输控制信息，sftp：（SSH File Transfer Protocol）安全文件传送协议
+			图形化操作Linux软件的工具：Xmanager
+		编辑器：
+			vi：所有的linux都会内置
+			vim：是vi的增强版，以颜色来区分语法是否正确，代码补全等功能
+			三种模式：
+				正常模式：默认模式
+				编辑/插入模式：按i、I、o、O、a、A、r、R，一般按i		
+				命令行模式：通过提供相关指令，实现存盘、读取、替换、显示行号、离开vim等一系列动作
+				相互转化：					
+									按i
+					正常模式	---------------->      编辑模式	
+							    <----------------
+							        按ESC
+							
+									按：或/
+					正常模式	---------------->      命令行模式（wq、q、q!）
+							    <----------------		
+									按ESC
+				快捷键：
+					1) 拷贝当前行yy：拷贝当前行向下的 5 行，5yy，并粘贴（p）
+					2) 删除当前行dd：删除当前行向下的 5 行 5dd		
+					3) 在文件中查找某个单词[命令行下/关键字，回车查找,输入n就是查找下一个]		
+					4) 设置文件的行号或取消文件的行号[命令行下:set nu和:set nonu]		
+					5) 编辑/etc/profile 文件，使用快捷键到文档的最末行[G]和最首行[gg],注意这些都是在正常模式下执行的。		
+					6) 在一个文件中输入"linux" ,然后又撤销这个动作，再正常模式下输入u		
+					7) 编辑/etc/profile 文件，并将光标移动到第20行，第一步：显示行号:set nu，第二步：输入20这个数，第三步: 输入 shift+g	
+	二、实操篇
+		关机/重启：
+			halt：直接使用，效果等价于关机；reboot：重启系统；syn：把内存的数据同步到磁盘
+			shutdown -h now : 表示立即关机
+			shutdown -h 1 : 表示 1 分钟后关机
+			shutdown -r now: 立即重启				
+			注意：当关机或者重启时，都应该先执行sync指令，把内存的数据写入磁盘，防止数据丢失。				
+		用户登录和注销：
+			注销：logout 即可注销用户
+			切换系统管理员身份：su - 用户名
+			注意：logout注销指令在图形运行级别无效，在运行级别3下有效
+				运行级别7种：
+				0 ：关机                                       -系统停机状态，系统默认运行级别不能设为 0，否则不能正常启动
+				1 ：单用户【找回丢失密码】					   -单用户工作状态，root 权限，用于系统维护，禁止远程登陆
+				2：多用户状态没有网络服务					   -多用户状态(没有 NFS)，不支持网络
+				3：多用户状态有网络服务						   -完全的多用户状态(有 NFS)，登陆后进入控制台命令行模式
+				4：系统未使用保留给用户						   -系统未使用，保留
+				5：图形界面									   -X11 控制台，登陆后进入图形 GUI 模式
+				6：系统重启									   -系统正常关闭并重启，默认运行级别不能设为 6，否则不能正常启动
+				常用运行级别是 3 和 5 ，要修改默认的运行级别可改文件/etc/inittab中的 id:5:initdefault:这一行中的数字
+				切换运行级别：
+					init [012356]，如：init 5
+				如何找回密码？（以root账户为例）
+				思路： 进入到单用户模式，然后修改 root 密码。因为进入单用户模式，root 不需要密码就可以登录
+				总结：开机->在引导时输入 回车键-> 看到一个界面输入 e -> 看到一个新的界面，选中第二行（编辑内核）在输入 e-> 在这行最后输入1 ,再输入 回车键->再次输入 b ,这时就会进入到单用户模式。
+					  这时，我们就进入到单用户模式，使用passwd 指令来修改 root 密码。					  
+		用户管理：
+			说明：Linux系统是一个多用户多任务的操作系统，任何一个要使用系统资源的用户，都必须首先向系统管理员申请一个账号，然后以这个账号的身份进入系统
+				  Linux的用户需要至少要属于一个组  
+			添加用户：
+				useradd [选项] 用户名，如：useradd xm
+					当创建用户成功后，会自动的创建和用户同名的家目录，也可以通过 useradd -d 指定目录，如：useradd -d /home/xm1 xm
+					指定用户组：useradd -g 用户组 用户名，如：useradd -g xiaoming xm
+					修改用户组：usermod -g 用户组 用户名，如：usermod -g xiaoqiang xm 
+		    修改用户密码：
+				passwd 用户名，如：passwd xm
+			删除用户：
+				userdel [选项] 用户名，如：userdel xm（保留家目录），userdel -r xm（删除家目录）
+			查询用户信息：
+				id 用户名，如：id root（会显示uid、gid、组名）
+			切换用户：
+				在操作Linux中，如果当前用户的权限不够，可以通过 su - 指令，切换到高权限用户
+				su – 切换用户名，如：su – xf
+				注意：从权限高的用户切换到权限低的用户，不需要输入密码，反之需要；当需要返回到原来用户时，使用 exit 指令
+			用户组：
+				类似于角色，系统可以对有共性的多个用户进行统一的管理
+				增加组：groupadd 组名，如：groupadd wudang
+				删除组：groupdel 组名，如：groupdel wudang				
+		帮助指令：
+			man [指令或配置文件] -获得帮助信息，如：man ls
+			help 指令 -获得shell内置命令的帮助信息，如：help ls
+		文件目录：
+			pwd：显示当前工作目录的绝对路径
+			ls [选项] [目录或是文件]: list缩写，如：ls -al /etc
+				常用选项
+				-a ：显示当前目录所有的文件和目录，包括隐藏的。
+				-l ：以列表的方式显示信息	
+			cd [参数] -切换到指定目录，参数：可以是绝对路径和相对路径
+			  cd ~ 或 cd 回到家目录
+			  cd .. 回到上一级目录
+			创建目录（make directory）：
+				mkdir [选项] 要创建的目录，如：mkdir -p /home/xm/student
+					常用选项
+					-p ：创建多级目录
+			删除目录（remove directory）：	
+				rmdir [选项] 要删除的空目录，如：rmdir /home/xm/student
+				提示：如果需要删除非空目录，需要使用 rm -rf 要删除的目录
+			创建空文件：
+				touch 文件名称1 文件名称2，如：touch 1.txt 2.txt
+			拷贝文件：
+				cp [选项] source dest，如：cp -r /home/test /home/zwj
+				常用参数
+				-r ：递归复制整个文件夹
+				注意：原路径与目标路径存在相同文件时，强制覆盖不提示的方法：\cp
+			删除文件/目录：
+				rm [选项] 要删除的文件或目录，如：rm -rf /home/test
+				常用参数
+				-r ：递归删除整个文件夹
+				-f ：强制删除不提示
+			重命名/移动文件或目录：
+				mv oldNameFile newNameFile -重命名
+				mv /sourceFolder /targetFolder -移动文件或目录
+			查看文件：
+				cat [选项] 要查看的文件，如：cat -n /etc/profile
+				常用选项
+				-n ：显示行号
+				cat 文件名 | more [分页浏览]  -注意：cat只能浏览文件，而不能修改文件				
+				more 要查看的文件 -基于 VI 编辑器的文本过滤器，它以全屏幕的方式按页显示文本文件的内容，more
+					 指令中内置了若干快捷键，如：more /etc/profile
+					快捷键：
+						空白键（space）   -向下翻一页
+						Enter             -向下翻一行
+						q                 -离开
+						ctrl+f            -向下滚动一屏
+						ctrl+b            -向上滚动一屏
+						=                 -输出当前行号
+						:f                -输出文件名和当前行号	
+				less 指令用来分屏查看文件内容，less 指令在显示文件内容时，并不是一次将整个文件加载之后才显示，而是根据显示
+					 需要加载内容，对于显示大型文件具有较高的效率。				 
+					 less 要查看的文件，如：less /opt/金庸-射雕英雄传精校版.txt
+					 less也指令中内置了若干快捷键
+					快捷键：
+						空白键（space）/pagedown   -向下翻一页
+						pageup   				   -向上翻一页
+						q                          -离开
+						/字符串                    -向下搜索字符串，n向下查找；N向上查找
+						?字符串                    -向上搜索字符串，n向上查找；N向下查找						
+				head 显示文件的开头部分内容，默认情况下 head 指令显示文件的前 10 行内容，如：head -n 5 /etc/profile
+					 head 文件        -查看文件头10行内容
+					 head -n 5 文件   -查看文件头5行内容					 
+				tail 用于输出文件中尾部的内容，默认情况下 tail 指令显示文件的后 10 行内容
+					 tail 文件        -查看文件尾10行内容
+					 tail -n 5 文件   -查看文件尾5行内容
+					 tail -f 文件     -实时追踪该文档的所有更新，工作中使用多								
+			输出重定向/追加：
+				>输出重定向: 会将原来的文件的内容覆盖
+				>>追加：不会覆盖原来文件的内容，而是追加到文件的尾部
+				如：ls -l >文件，如：ls -l > a.txt , 将 ls -l 的显示的内容覆盖写入到 a.txt 文件，如果该文件不存在，就创建该文件
+					ls -al >>文件，如：ls -l >> aa.txt , 列表的内容追加到文件 aa.txt 的末尾
+					cat 文件1 > 文件2 （功能描述：将文件1的内容覆盖到文件2）	
+			输出指令：
+				echo [选项] [输出内容]，如：echo $PATH			
+			软连接/符号链接（link缩写）：
+				类似于 windows 里的快捷方式，主要存放了链接其他文件的路径
+				ln -s [原文件或目录] [软链接名]       -给原文件创建一个软链接，如：ln -s /root liknToRoot，注意：删除软链接时，rm -rf liknToRoot（后面不需要/）
+				当我们使用 pwd 指令查看目录时，仍然看到的是软链接所在目录			
+			执行过的历史命令：
+				history：查看已经执行过历史命令，也可以执行历史指令，如：history 10        -最近执行的10条命令
+						 执行历史命令：先找到对应命令编号，然后！编号，如：!178		
+		时间日期：			 
+			date：显示当前日期
+				date +%Y 					显示当前年份
+				date +%m 					显示当前月份
+				date +%d 					显示当前是哪一天
+				date "+%Y-%m-%d %H:%M:%S"   显示年月日时分秒 
+			date：设置日期
+			date -s 字符串时间，如：date -s 2018-10-10 11:22:22			
+		日历：
+			cal [选项] 不加选项，显示本月日历
+			cal 2020 显示2020年日历	
+		查找：
+			find：从指定目录向下递归地遍历其各个子目录，将满足条件的文件或者目录显示在终端
+			find [搜索范围] [选项] 搜索的文件或目录
+			选项：
+				-name				按文件名
+				-user				按文件所属用户
+				-size				按文件大小
+			如：find /home -name 1.txt
+				find /home -size +1M  （+大于，-小于）		
+		快速定位文件路径：
+			locate 指令利用事先建立的系统中所有文件名称及路径的locate 数据库实现快速定位给定的文件。
+				   Locate 指令无需遍历整个文件系统，查询速度较快。为了保证查询结果的准确度，管理员必须定期更新 locate 时刻 
+			locate 搜索文件
+			注意：由于 locate 指令基于数据库进行查询，所以第一次运行前，必须使用 updatedb 指令创建 locate 数据库
+			如：updatedb 
+				locate 1.txt            -返回文件路径		
+		过滤查找与管道符|：
+			grep 过滤查找，管道符“|”，表示将前一个命令的处理结果输出传递给后面的命令处理
+			grep [选项] 查找内容 源文件
+			常用选项
+				-n 显示匹配行号
+				-i 忽略大小写
+			如：cat 1.txt | grep -n yes          -区分大小写			
+		压缩与解压：
+			gzip/gunzip：
+				gzip 文件                        -压缩文件，只能将文件压缩为*.gz 文件，不会保留源文件，如：gzip 1.txt
+				gunzip 文件.gz                   -解压文件			
+			zip/unzip：
+				zip [选项] XXX.zip 目录路径              -压缩文件，压缩文件和目录，如：zip -r package.zip /home/
+				常用参数：
+					-r 递归压缩，即压缩目录
+				unzip [选项] XXX.zip 			 		 -解压文件，如：unzip -d /opt/tmp/ package.zip 
+				常用参数：
+					-d<目录> ：指定解压后文件的存放目录			
+			tar：打包指令[重要]，最后打包后的文件是 .tar.gz 的文件
+				tar [选项] XXX.tar.gz 打包的内容（目录或文件） -打包目录，压缩后的文件格式.tar.gz
+				常用参数：
+					-c 产生.tar打包文件
+					-v 详细信息
+					-f 指定压缩后的文件名
+					-z 打包同时压缩
+					-x 解压.tar打包文件			
+				打包并压缩：如：tar -zcvf package.tar.gz 1.txt 2.txt	
+				解压文件：如：tar -zxvf package.tar.gz -C /opt/               -C指定解压路径			
+		组管理与权限管理
+			在 linux 中的每个用户必须属于一个组，不能独立于组外。在 linux 中每个文件有所有者、所在组、其它组的概念
+			文件或目录所有者：一般为文件的创建者,谁创建了该文件，就自然的成为该文件的所有者
+				查看所有者：ls -ahl
+				修改所有者：chown 用户名 文件名，如：chown -R tom kkk/	
+							chown newowner:newgroup 文件名
+							-R 如果是目录，则使其下所有子文件或目录递归生效			
+			文件或目录所在组：当某个用户创建了一个文件后，默认这个文件的所在组就是该用户所在的组
+				查看所在组：ls -ahl
+				修改所在组：chgrp 组名 文件名，如：chgrp -R police kkk/		
+							-R 如果是目录，则使其下所有子文件或目录递归生效			
+			文件或目录其它组：除文件的所有者和所在组的用户外，系统的其它用户都是文件的其它组			
+			改变用户所在的组：
+				在添加用户时，可以指定将该用户添加到哪个组中，同样的用 root 的管理权限可以改变某个用户所在的组
+				usermod -g 组名 用户名
+				usermod -d 目录名 用户名        -改变该用户登陆的初始目录				
+			文件或目录权限：
+				ls -l 中显示的内容如下：
+				-rwxrw-r-- 1 root root 1213 Feb 2 09:39 abc
+				0-9 位说明
+				1)第 0 位确定文件类型(d[目录], -[普通文件] , l[软链接] , c[字符设备，鼠标、键盘等] , b[块文件，硬盘])
+				2)第 1-3 位确定所有者（该文件的所有者）拥有该文件的权限。---User
+				3)第 4-6 位确定所属组（同用户组的）拥有该文件的权限，---Group
+				4)第 7-9 位确定其他用户拥有该文件的权限 ---Other
+				后面的字符含义：
+					第一位：如果是文件，表示硬链接数，如果是目录表示子目录数
+					第二位：所有者
+					第三位：所在组
+					第四位：文件大小，如果是目录是4096
+					第五位：时间，最后修改时间
+					最后一位：文件名			
+				权限解析：
+					rwx 作用到文件
+					1) [ r ]代表可读(read): 可以读取,查看
+					2) [ w ]代表可写(write): 可以修改,但是不代表可以删除该文件,删除一个文件的前提条件是对该文件所在的目录有写权限，才能删除该文件.
+					3) [ x ]代表可执行(execute):可以被执行
+					rwx 作用到目录
+					1) [ r ]代表可读(read): 可以读取，ls 查看目录内容
+					2) [ w ]代表可写(write): 可以修改,目录内创建+删除+重命名目录
+					3) [ x ]代表可执行(execute):可以进入该目录				
+				修改权限：
+					chmod 指令，可以修改文件或者目录的权限
+					变更权限方式一：+ 、-、= 变更权限
+						u:所有者g:所有组o:其他人 a:所有人(u、g、o 的总和)	
+						chmod u=rwx,g=rx,o=x 文件目录名
+						chmod o+w 文件目录名
+						chmod a-x 文件目录名
+					变更权限方式二：利用数字变更权限
+						规则：r=4 w=2 x=1,rwx=4+2+1=7
+						chmod u=rwx,g=rx,o=x 文件目录名 相当于 chmod 751 文件目录名			
+			crond 定时任务调度：
+				简单任务：直接在crontab中加入任务即可
+				复杂任务：写脚本（Shell编程）				
+				任务调度：是指系统在某个时间执行的特定的命令或程序
+				任务调度分类：1.系统工作：有些重要的工作必须周而复始地执行。如病毒扫描等
+							  2.个别用户工作：个别用户可能希望执行某些程序，比如对 mysql 数据库的备份				
+				crontab [选项]
+				常用选项
+					-e 编辑当前用户crontab任务
+					-l 查询当前用户所有的crontab任务
+					-r 删除当前用户所有的crontab任务
+				重启任务调度：service crond restart
+			    如：
+					设置任务调度文件：/etc/crontab
+					设置个人任务调度，执行 crontab –e 命令，接着输入任务到调度文件，如：*/1 * * * * ls –l /etc/ > /tmp/to.txt
+					意思说每小时的每分钟执行ls –l /etc/ > /tmp/to.txt 命令				
+				cron表达式：注意与Java的cron表达式的区别，它是由5位占位符组成的，从分钟开始				
+				    分钟 小时 天 月 星期				
+				简单脚本运用：
+					每隔 1 分钟，就将当前的日期信息，追加到/tmp/mydate文件中
+					1) 先编写一个文件 /home/mytask.sh，添加内容：date >> /tmp/mydate
+					2) 给 mytask.sh 一个可以执行权限，chmod 744 /home/mytask.sh
+					3) crontab -e，添加：*/1 * * * * /home/mytask.sh
+					4) 成功			
+		Linux 磁盘分区、挂载
+			分区基础知识：
+				MBR分区:
+				1.最多支持四个主分区
+				2.系统只能安装在主分区
+				3.扩展分区要占一个主分区
+				4.MBR 最大只支持 2TB，但拥有最好的兼容性
+				GTP分区：
+				1.支持无限多个主分区（但操作系统可能限制，比如 windows 下最多 128 个分区）
+				2.最大支持 18EB 的大容量（1EB=1024 PB，1PB=1024 TB ）
+				3.windows7 64 位以后支持 gtp
+			原理介绍：
+				Linux 采用了一种叫“载入”的处理方法，将一个分区和linux的一个目录联系起来，这时要载入的一个分区将使它的存储空间在一个目录下获得
+			硬盘介绍：
+				1)Linux 硬盘分 IDE 硬盘和 SCSI 硬盘，目前基本上是 SCSI 硬盘
+				2)对于 IDE 硬盘，驱动器标识符为“hdx~”,其中“hd”表明分区所在设备的类型，这里是指 IDE 硬
+				  盘了。“x”为盘号（a 为基本盘，b 为基本从属盘，c 为辅助主盘，d 为辅助从属盘）,“~”代表分区，
+				  前四个分区用数字 1 到 4 表示，它们是主分区或扩展分区，从 5 开始就是逻辑分区。例，hda3 表示为
+				  第一个 IDE 硬盘上的第三个主分区或扩展分区,hdb2 表示为第二个 IDE 硬盘上的第二个主分区或扩展
+				  分区。
+				3)对于 SCSI 硬盘则标识为“sdx~”，SCSI 硬盘是用“sd”来表示分区所在设备的类型的，其余则
+				  和 IDE 硬盘的表示方法一样。			
+			查看磁盘分区：
+				lsblk -f 查看当前系统的分区情况，查看各分区大小：lsblk
+				经典案列：如何挂载一块新的硬盘？
+				主要步骤：
+					1、虚拟机添加一块硬盘
+					2、分区，指令：fdisk /dev/sdb         -初始化
+					3、格式化：mkfs -t ext4 /dev/sdb1 
+					4、设置挂载：mount 设备名称（分区） 目录名称 mount /dev/sdb1 /home/newdisk
+					5、取消挂载：umount 设备名称或目录名称 umount /dev/sdb1
+					6、永久挂载：编辑/etc/fstab文件，添加一行/dev/sdb1 /home/newdisk ext4 defaults 0 0，再执行mount -a 计时生效
+			硬盘健康情况查询：
+				查看系统磁盘使用情况：df -lh
+				指定目录磁盘使用情况：默认为当前目录
+					du -h /目录
+					参数：-s 指定目录占用大小汇总
+						  -h 带计量单位
+						  -a 含文件 
+						  --max-depth=1 子目录深度
+						  -c 列出明细的同时，增加汇总值					
+			        如：查询/opt目录的磁盘占用情况，深度为 1，du -ach --max-depth=1 /opt
+				常用指令：
+					1、查询/home目录下的文件个数：ls -l /home | grep "^-" | wc -l
+					2、查询/home目录下的目录个数：ls -l /home | grep "^d" | wc -l
+					3、查询/home目录下的文件个数（包括子文件夹）：ls -lR /home | grep "^-" | wc -l
+					4、查询/home目录下的目录个数（包括子文件夹）：ls -lR /home | grep "^d" | wc -l	
+				目录结构：tree		
+		Linux 网络配置
+			查看网络：ifconfig
+			查看当下服务器是否连接通目标主机：ping，如： ping www.baidu.com
+			测试端口：telnet，如：telnet 192.168.1.175:8080
+			获取网络：
+				1、自动获取：IP不固定
+				2、固定网络：直接修改置文件指定IP,并可以连接到外网，编辑vim /etc/sysconfig/network-scripts/ifcfg-eth0
+							 修改后，一定要重启服务（reboot重启系统/service network restart）							 
+			查看系统网络情况：
+				netstat [选项]，如：netstat -anp | grep sshd
+				选项参数：
+					-an 按一定顺序排列输出
+					-p	显示哪个进程在调用		
+		进程管理：
+			含义：
+				1)在 LINUX 中，每个执行的程序（代码）都称为一个进程。每一个进程都分配一个 ID号
+				2)每一个进程，都会对应一个父进程，而这个父进程可以复制多个子进程
+				3)每个进程都可能以两种方式存在的。前台与后台，前台进程就是用户目前的屏幕上可以进
+				  行操作的。后台进程则是实际在操作，但由于屏幕上无法看到的进程，通常使用后台方式执行
+				4)一般系统服务都是以后台进程的方式存在，而且都会常驻在系统中，直到关机才才结束	
+			显示系统执行的进程：
+				后台运行的进程：
+					ps -aux 
+					参数说明：-a 终端所有的进程信息；-u 以用户格式显示进程信息； -x 显示后台运行的进程参数
+					1)指令：ps –aux|grep xxx
+					2)指令说明
+						•System V 展示风格
+						•USER：用户名称
+						•PID：进程号
+						•%CPU：进程占用 CPU 的百分比
+						•%MEM：进程占用物理内存的百分比
+						•VSZ：进程占用的虚拟内存大小（单位：KB）
+						•RSS：进程占用的物理内存大小（单位：KB）
+						•TTY：终端名称,缩写 .
+						•STAT：进程状态，其中 S-睡眠，s-表示是会话的先导进程，N-表示进程拥有比普通优先
+							   级更低的优先级，R-正在运行，D-短期等待（不可被唤醒的睡眠状态 , 通常进程可能在等待 I/O 的情况），Z-僵死进程，T-被跟踪或者被停止等等
+						•STARTED：进程的启动时间
+						•TIME：CPU 时间，即进程使用 CPU 的总时间
+						•COMMAND：启动进程所用的命令和参数，如果过长会被截断显示				
+				显示所有进程信息（全格式）：ps -ef 
+					参数说明：-e 显示所有进程 -f 全格式
+					1)指令：ps –ef|grep xxx
+					2)指令说明
+						•UID：用户 ID
+						•PID：进程 ID
+						•PPID：父进程 ID
+						•C：CPU 用于计算执行优先级的因子。数值越大，表明进程是 CPU 密集型运算，执行优先级会
+							降低；数值越小，表明进程是 I/O 密集型运算，执行优先级会提高
+						•STIME：进程启动的时间
+						•TTY：完整的终端名称
+						•TIME：CPU 时间
+						•CMD：启动进程所用的命令和参数				
+					三种风格：
+						BSD 风格的参数，前面不加破折线
+						Unix 风格的参数，前面加单破折线
+						GNU 风格的长参数，前面加双破折线
+			终止进程：
+				介绍:若是某个进程执行一半需要停止时，或是已消了很大的系统资源时，此时可以考虑停止该进程
+				kill [选项] 进程号 			-通过进程号杀死进程 
+				killall 进程名称			-通过进程名称杀死进程，也支持通配符，这在系统因负载过大而变得很慢时使用
+				选项：-9:表示强迫进程立即停止
+			查看进程树：
+				pstree [选项] ,可以更加直观的来看进程信息，如：pstree -p
+				常用选项：
+				-p :显示进程的 PID
+				-u :显示进程的所属用户			
+			动态监控进程：
+				指令：Top，Top 与 ps 最大的不同之处，在于 top 在执行一段时间可以更新正在运行的的进程
+				top [选项]
+				选项参数：
+					-d 秒数 								-每隔几秒后更新，默认3秒
+					-i										-不显示僵死或闲置进程
+					-p 进程号                               -指定进程ID，显示进程信息
+				交互说明：
+					P（以CPU使用率排序） M（以内存使用率排序） N（以PID排序） q（退出top）
+				如：监视特定用户：top 回车 输入u ，再输入用户名
+				    终止进程：top 回车 输入k ，再输入PID	
+		服务管理：
+			含义：本质就是进程，但是是运行在后台的，通常都会监听某个端口，等待其它程序的请求，比如(mysql,sshd、防火墙等)，因此又称为守护进程。
+			service 服务名 [start | stop | restart | reload | status]
+			注：在 CentOS7.0 后，不再使用service,而是 systemctl
+			如：service iptables start   			 -启动防火墙			
+			服务自动启或服务永久关闭：ckconfig
+				查看服务名：
+					1、指令： setup -> 系统服务 就可以看到系统服务
+					2、/etc/init.d/服务名称，如： ls -l /etc/init.d/					
+				Linux系统开机流程：开机	-> BIOS ->/boot ->init进程名 ->运行级别 ->运行对应的服务				
+				chkconfig 指令：可以给每个服务的各个运行级别设置自启动/关闭，语法：chkconfig [服务名] --list|grep xxx
+					chkconfig --level 5 服务名 on/off，如：chkconfig --level 5 sshd off
+														   chkconfig [--level 5] iptables off					
+				注意：chkconfig重新设置服务后自启动或关闭，需要重启机器 reboot才能生效
+		防火墙：
+			查看所有开放的端口：firewall-cmd --zone=public --list-ports
+			添加：				firewall-cmd --zone=public --add-port=80/tcp --permanent    （--permanent永久生效，没有此参数重启后失效）			
+			重新载入：			firewall-cmd --reload
+			查看：				firewall-cmd --zone=public --query-port=80/tcp
+			删除：				firewall-cmd --zone=public --remove-port=80/tcp --permanent 
+			批量开放端口：
+				firewall-cmd --permanent --zone=public --add-port=100-500/tcp
+				firewall-cmd --permanent --zone=public --add-port=100-500/udp
+				firewall-cmd --reload					
+		Linux包管理：
+			rpm：一种用于互联网下载包的打包及安装工具，它包含在某些 Linux 分发版中，它生成具有.RPM扩展名的文件。RPM 是 RedHat Package Manager（RedHat 软件包管理工具）的缩写，类似 windows
+				 的 setup.exe，Linux 的分发版本都有采用（suse,redhat, centos 等等），可以算是公认的行业标准了
+			    查询指令：
+					查询已安装的 rpm 列表：rpm –qa|grep xx，如：rpm –qa|grep firefox
+					rpm -qa :查询所安装的所有 rpm 软件包
+					rpm -qa | more [分页显示]
+					rpm -qa | grep X [rpm -qa | grep firefox ]
+					rpm -q 软件包名 :查询软件包是否安装，如：rpm -q firefox					
+					rpm -qi 软件包名 ：查询软件包信息
+					rpm -ql 软件包名 :查询软件包中的文件，如：rpm -ql firefox					
+					rpm -qf 文件全路径名 查询文件所属的软件包，如：rpm -qf /etc/passwd	rpm -qf /root/install.log
+				卸载：
+					rpm -e RPM包的名称，如：rpm -e firefox
+					注意：1) 如果其它软件包依赖于您要卸载的软件包，卸载时则会产生错误信息
+						  2) 如果非要卸载，添加参数：--nodeps,就可以强制删除，但是一般不推荐这样做，因为依赖于该软件包的程序可能无法运行，如：rpm -e --nodeps foo
+				安装：					
+					rpm -ivh RPM包全路径名称，如：rpm -ivh firefox.XXX.rpm
+					参数说明：
+						i=install 安装
+						v=verbose 提示
+						h=hash 进度条
+			yum：是一个 Shell前端软件包管理器。基于RPM包管理，能够从指定的服务器自动下载 RPM 包并且安装，可以自动处理依赖性关系，并且一次安装所有依赖的软件包，使用 yum 的前提是可以联网		
+				基本指令：
+					查询yum服务器是否有需要安装的软件：yum list|grep xx，如：yum list|grep firefox 
+					安装指定的yum包：yum install xxx，如：yum install firefox					
+	三、搭建：JavaEE环境：
+			JDK：配置环境变量，vim /etc/profile
+				 JAVA_HOME=/opt/jdk1.7.0_79
+				 PATH=/opt/jdk1.7.0_79/bin:$PATH
+				 export JAVA_HOME PATH
+			注意：需要注销用户，环境变量才能生效！	 			
+			Tomcat：解压[tar -zxvf apache-tomcat.tar.gz] -> 启动：bin/下执行.startup.sh
+			注意：需要开放端口，外部才能访问！
+				修改防火墙开放端口[centos7.0以下的版本]：vim /etc/sysconfig/iptables，
+				添加一行：-A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 8080:9000 -j ACCEPT，
+				重启防火墙service iptables restart			
+			Eclipse：解压 -> 安装目录执行./eclipse			
+			MySql：略				
+	四、大数据Shell编程：	
+		简介：
+			1)Linux 运维工程师在进行服务器集群管理时，需要编写Shell程序来进行服务器管理
+			2)对于JavaEE和Python程序员来说，工作的需要，要求编写一些Shell脚本进行程序或者是服务器的维护，比如编写一个定时备份数据库的脚本
+			3)对于大数据程序员来说，需要编写Shell程序来管理集群			
+			Shell是一个命令行CMD解释器，它为用户提供了一个向Linux内核发送请求以便运行程序的界面系统
+			级程序，用户可以用Shell来启动、挂起、停止甚至是编写一些程序	
+		Shell入门：
+			脚本要求：
+				1) 脚本以#!/bin/bash 开头
+				2) 脚本需要有可执行权限+x（如：chmod 744 XX.sh）
+				3）单行注释：#
+				4）多行注释：：<<!                        !
+			执行方式：
+				1) 输入脚本的绝对路径或相对路径，如：./1.sh
+				2) sh+脚本，不推荐，如： sh 1.sh				   
+		Shell变量：
+			变量分为：系统变量和用户自定义变量，系统变量：$HOME、$PWD、$SHELL、$USER 等等，如：echo "home=$HOME"
+			显示当前shell中所有变量：set			
+			自定义变量：
+				规则：
+					1) 变量名称可以由字母、数字和下划线组成，但是不能以数字开头
+					2) 等号两侧不能有空格
+					3) 变量名称一般习惯为大写
+				使用：
+				1)定义变量：变量=值，如：A=10 				echo "A=$A"
+				2)撤销变量：unset 变量，如：unset A
+				3) 声明静态变量：readonly 变量，注意：不能 unset，如：readonly B=100 				echo "B=$B"
+				将命令的返回值赋值给变量：
+					1）A=`ls -la` 反引号，运行里面的命令，并把结果返回给变量 A
+					2）A=$(ls -la) 等价于反引号			
+			环境变量：
+				基本语法：
+				1) export 变量名=变量值 											-将shell变量输出为环境变量
+				2) source 配置文件													-让修改后的配置信息立即生效
+				3) echo $变量名														-查询环境变量的值
+			    如：配置Tomcat环境变量，vim /etc/profile 添加一行：export TOMCAT_HOME=/opt/tomcat，保存退出
+					source /etc/profile 让修改后的配置信息立即生效，使用：echo $TOMCAT_HOME			
+			位置参数变量：
+				含义：当执行一个shell脚本时，如果希望获取到命令行的参数信息，就可以使用到位置参数变量，比如 ： ./m1.sh 100 200, 	
+					  这个就是一个执行shell 的命令行，可以在 m1.sh脚本中获取到参数信息
+				基本语法：
+					$n  					-n为数字，$0代表命令本身，$1-$9代表第一到第九个参数，10以上的参数需要用大括号包含，如${10}
+					$* 						-*代表命令行中所有的参数，$*把所有的参数看成一个整体
+					$@						-@代表命令行中所有的参数，不过$@把每个参数区分对待
+					$#						-#代表命令行中所有参数的个数					
+			预定义变量：
+				含义： shell设计者事先已经定义好的变量，可以直接在shell脚本中使用
+				基本语法：
+					$$   				    -当前进程的进程号（PID）
+					$!						-后台运行的最后一个进程的进程号（PID）
+					$？ 					-最后一次执行的命令的返回状态。如果这个变量的值为 0，证明上一个命令正确执行；
+											 如果这个变量的值为非 0（具体是哪个数，由命令自己来决定），则证明上一个命令执行不正确了					
+			运算符：
+				1) “$((运算式))”或“$[运算式]”
+				2) expr m + n 注意 expr 运算符间要有空格
+				3) expr m - n
+				4) expr \*, /, % 乘，除，取余
+				如：计算：(2+3)*6
+					方式一：$(((2+3)*6))
+					方式二：$[(2+3)*6]
+					方式三：TEMP `expr 2 + 3`
+							RESULT=`expr $TEMP \* 6`			
+			条件判断：
+				基本语法：
+					[ condition ]（注意 condition 前后要有空格）#非空返回 true，可使用$?验证（0 为 true，>1 为 false）
+					如：[condition] && echo OK || echo notOK                   -条件满足，执行后面的语句
+			判断条件：
+				1)比较运算符
+					= 字符串比较
+					-lt 小于
+					-le 小于等于
+					-eq 等于
+					-gt 大于
+					-ge 大于等于
+					-ne 不等于
+					如：if [ 23 -gt 22 ]
+						then
+							echo "dayu"
+						fi	
+				2)按照文件权限进行判断
+					-r 有读的权限 [ -r 文件 ]
+					-w 有写的权限 [ -w 文件 ]
+					-x 有执行的权限 [ -x 文件 ]
+				3)按照文件类型进行判断
+					-f 文件存在并且是一个常规的文件
+					-e 文件存在
+					-d 文件存在并是一个目录
+					如：if [ -e /home/1.txt ]
+						then
+							echo "exist"
+						fi	
+			流程控制：
+				if条件判断：
+					基本语法：
+					if [ 条件判断式 ];then
+					程序
+					fi
+					或者
+					if [ 条件判断式 ]
+					then
+					程序
+					elif [ 条件判断式 ]
+					then
+					程序
+					fi
+				注意：（1）[ 条件判断式 ]，中括号和条件判断式之间必须有空格 (2) 推荐使用第二种方式				
+				case语句：
+					case $变量名 in
+					"值 1"）
+					如果变量的值等于值 1，则执行程序 1
+					;;
+					"值 2"）
+					如果变量的值等于值 2，则执行程序 2
+					;;
+					…省略其他分支…
+					*）
+					如果变量的值都不是以上的值，则执行此程序
+					;;
+					esac				
+				for循环控制：
+					for 变量 in 值 1 值 2 值 3…
+					do
+					程序
+					done
+					或者
+					for (( 初始值;循环控制条件;变量变化 ))
+					do
+					程序
+					done
+				while循环控制：
+					while [ 条件判断式 ]
+					do
+					程序
+					done				
+			读取控制台输入：
+				read(选项)(参数)
+				选项：
+					-p：指定读取值时的提示符
+					-t：指定读取值时等待的时间（秒），如果没有在指定的时间内输入，就不再等待了
+				参数：
+					变量：指定读取值的变量名
+				如：
+					read -t 10 -p "请输入一个数NUM=" NUM
+					echo "你输入的值是NUM=$NUM" 
+			函数：
+				分类：系统函数、自定义函数
+				系统函数：
+					basename：返回完整路径最后 / 的部分，常用于获取文件名
+					basename [pathname] [suffix] 							-basename 命令会删掉所有的前缀包括最后一个（‘/’）字符，然后将字符串显示出来，
+																			 suffix 为后缀，如果 suffix 被指定了，basename 会将 pathname 或 string 中的 suffix 去掉
+					如：basename /home/1.txt								-结果： 1.txt
+						basename /home/1.txt .txt  							-结果： 1	
+					dirname：返回完整路径最后 / 的前面的部分，常用于返回路径部分
+					dirname 文件绝对路径                                    -从给定的包含绝对路径的文件名中去除文件名（非目录的部分），然后返回剩下的路径（目录的部分）
+					如：dirname /home/1.txt									-结果： /home				
+				自定义函数：
+					[ function ] funname[()]
+					{
+					Action;
+					[return int;]
+					}
+					调用直接写函数名：funname [值]
+					如：计算2个输入参数的和
+						function getSum(){
+							SUM=$[SN1+$N2]
+							echo "参数的和=$SUM"
+						}						
+						read -p "请输入一个数N1=" N1
+						read -p "请再输入一个数N2=" N2						
+						调用：getSum $N1 $N2			
+			综合案例（数据库备份）：
+				需求分析（提示：使用crond定时器）
+				1)每天凌晨 2:10 备份 数据库 DB 到 /data/backup/db
+				2)备份开始和备份结束能够给出相应的提示信息
+				3)备份后的文件要求以备份时间为文件名，并打包成 .tar.gz 的形式，比如：2018-03-12_230201.tar.gz
+				4) 在备份的同时，检查是否有 10 天前备份的数据库文件，如果有就将其删除
+				编写脚本(备份逻辑)：
+					vim /usr/sbin/mysql_db_backup.sh
+						BACKUP=/data/backup/db
+						echo "------------------------开始备份---------------------"
+						echo "------------------------备份的路径是：$BACKUP/$DATETIME.tar.gz---------------------"
+						#主机
+						HOST=localhost
+						#用户名
+						DB_USER=root
+						#密码
+						DB_PWD=123456
+						#备份数据库的名称
+						DATEBASE=DB
+						#创建备份的路径，如果备份的路径文件夹存在，就使用，否则则创建
+						[ ! -d "$BACKUP/$DATETIME" ] && mkdir -p "$BACKUP/$DATETIME"
+						#执行mysql备份数据库的指令
+						mysqldump -u${DB_USER} -p${DB_PWD} --host=$HOST $DATEBASE | gzip > $BACKUP/$DATETIME/$DATETIME.tar.gz
+						#打包备份文件
+						cd $BACKUP
+						tar -zcvf $DATETIME.tar.gz $DATETIME
+						#删除临时文件
+						rm -rf $BACKUP/$DATETIME
+						#删除10天前的备份文件
+						find $BACKUP -mtime +10 -name "*.tar.gz" -exec rm -rf {} \; 
+						echo "------------------------备份文件成功---------------------"
+				将脚本添加到crontab配置里：
+					10 2 * * * /usr/sbin/mysql_db_backup.sh					
+	五、其他：
+			Ubuntu：
+				含义：Ubuntu（友帮拓、优般图、乌班图）是一个以桌面应用为主的开源 GNU/Linux 操作系统，Ubuntu是基于 GNU/Linux，支持 x86、amd64（即 x64）和 ppc（Pocket PC，掌上电脑的操作平台） 架构，由全球化的专业开发团队（Canonical Ltd）
+					  打造的。专业的 Python 开发者一般会选择 Ubuntu 这款 Linux 系统作为生产平台。
+				安装：略，支持中文需要安装中文语言包
+					  左侧图标栏System Settings（系统设置）->Language Support（语言支持）选项卡 ->Install / Remove Languages ->
+					  Chinese(Simplified) -> Apply Changes ->把汉语（中国）拖到第一位 -> 重启
+				用户：安装 ubuntu 成功后，都是普通用户权限，并没有最高 root 权限，如果需要使用 root 权限的时候，
+					  通常都会在命令前面加上 sudo。使用 su 命令来直接切换到 root用户的，但是如果没有给 root 设置初始密码，就会抛出 su :
+					  Authentication failure 这样的问题
+				设置密码：
+					  1) 输入 sudo passwd 命令，输入一般用户密码并设定 root 用户密码
+					  2) 设定 root 密码成功后，输入 su 命令，并输入刚才设定的 root 密码，就可以切换成 root 了
+					     提示符$代表一般用户，提示符#代表 root用户
+					  3) 输入 exit 命令，退出 root并返回一般用户
+				软件管理：
+					apt 是 Advanced Packaging Tool 的简称，是一款安装包管理工具
+					在 Ubuntu 下，我们可以使用 apt 命令可用于软件包的安装、删除、清理等，类似于 Windows 中的软件管理工具
+				使用：
+					sudo apt-get update 										-更新镜像源
+					sudo apt-get install package 								-安装包
+					sudo apt-get remove package 								-删除包
+					sudo apt-cache search package 								-搜索软件包
+					sudo apt-cache show package									-获取包的相关信息，如说明、大小、版本等
+					sudo apt-get install package --reinstall					-重新安装包					
+					sudo apt-get -f install										-修复安装
+					sudo apt-get remove package --purge 						-删除包，包括配置文件等
+					sudo apt-get build-dep package 								-安装相关的编译环境
+					sudo apt-get upgrade 										-更新已安装的包
+					sudo apt-get dist-upgrade 									-升级系统
+					sudo apt-cache depends package 								-了解使用该包依赖那些包
+					sudo apt-cache rdepends package 							-查看该包被哪些包依赖
+					sudo apt-get source package									-下载该包的源代码				
+				国内镜像源：https://mirrors.tuna.tsinghua.edu.cn/				
+				备份镜像源：sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup				
+			使用SSH远程登录：
+				SSH 为 Secure Shell 的缩写，由 IETF 的网络工作小组（Network Working Group）所制定；SSH 为
+				建立在应用层和传输层基础上的安全协议
+				SSH 是目前较可靠，专为远程登录会话和其他网络服务提供安全性的协议。常用于远程登录，以
+				及用户之间进行资料拷贝。几乎所有 UNIX 平台—包括 HP-UX、Linux、AIX、Solaris、Digital UNIX、
+				Irix，以及其他平台，都可运行 SSH。
+				使用 SSH 服务，需要安装相应的服务器和客户端。客户端和服务器的关系：如果A 机器想被 B
+				机器远程控制，那么A 机器需要安装 SSH 服务器，B 机器需要安装 SSH 客户端
+				和 CentOS 不一样，Ubuntu 默认没有安装 SSHD 服务，因此，我们不能进行远程登录。				
+				安装：
+					sudo apt-get install openssh-server                         -安装了 SSH 服务端和客户端
+					service sshd restart                                        -启动了 sshd 服务，监听端口 22
+				从Linux 客户机连接Linux 服务机：
+					基本语法：
+					ssh 用户名@IP，如：ssh atguigu@192.168.188.131，使用 ssh 访问，如访问出现错误。可查看是否有该文件 ～/.ssh/known_ssh 尝试删除该文件解决
+					登出：exit 或者 logout	

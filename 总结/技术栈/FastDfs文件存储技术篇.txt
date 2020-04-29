@@ -1,0 +1,137 @@
+----------------------------------------------FastDfs文件存储技术篇--------------------------------------------------------------------------------------------------------	
+		技术支持：参考https://blog.csdn.net/kamroselee/article/details/80334621
+	一、简介
+		FastDFS是一款类Google FS开源的轻量级分布式文件系统，用纯C语言实现，支持UNIX系统。功能：文件存储、文件同步[组内物理节点]、文件访问（文件上传、文件下载）等，
+		解决了大容量存储和负载均衡的问题。
+		特别适合以文件（建议范围：4KB < file_size <500MB）为载体的在线服务，如相册网站、视频网站等等。
+		术语：
+			Tracker Server：跟踪服务器，与client通信，在Http访问上配合nginx实现起负载均衡/调度[集群]的作用。
+			Storage Server：存储服务器，保存文件和文件的meta data（元数据），可以配置集群。
+			Group：FastDFS采用了分组存储方式，组内的Storage server之间是平等关系，不同组的Storageserver之间不会相互通信，组内的Storage server之间会相互连接进行文件同步！
+				   增加组来扩充存储容量（横向扩容），组内增加存储服务器来扩充服务能力（纵向扩容）。
+			Storage State：状态收集，Storage server会连接集群中所有的Tracker server，定时向他们报告自己的状态，包括磁盘剩余空间、文件同步状况、文件上传下载次数等统计信息。
+		文件上传流程：
+			状态收集------>客户端上传请求------>tracker查询可用的storage（检测同步状态）------>返回信息(storage的IP与端口)给客户端------>客户端上传文件（file_content与metadata）------>storage生成file_id并写入磁盘
+					------>storage返回file_id（路径信息与文件名）给客户端------>客户端存储文件信息
+			客户端得到的形如这种格式fild_id：group1/M00/02/44/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+			文件解析：
+				group1:组名
+				M00：虚拟磁盘路径，磁盘选项中store_path*[存储服务器]对应，如果配置了store_path0则是M00，如果配置了store_path1则是M01；内部其实是通过软连接实现的；
+				02/44：数据两级目录，256*256个目录
+				wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png：文件名，文件名包含：源存储服务器IP地址、文件创建时间戳、文件大小、随机数和文件拓展名等信息。
+		文件下载流程：
+			状态收集------>客户端下载链接请求------>tracker查询可用的storage（检测同步状态）------>返回信息(storage的IP与端口)给客户端------>客户端传入file_id（组名，路径，文件名）------>storage查找文件
+					------>storage返回file_content给客户端
+		安装：
+			单节点安装：安装tracker，再安装storage
+			主要步骤：
+				准备工作：
+					1）下载安装包：http://sourceforge.net/projects/FastDFS/或https://github.com/happyfish100/FastDFS（推荐）
+					2）系统环境配置：FastDFS编译依赖gcc环境，yum install gcc-c++
+					3）安装依赖库[规划安装目录：/usr/local/]：yum -y install libevent；--安装libevent
+								   cd /usr/local
+								   tar -zxvf libfastcommonV1.0.7.tar.gz
+								   cd libfastcommon-1.0.7
+								   ./make.sh
+								   ./make.sh install --安装libfastcommon，注意：libfastcommon安装好后会自动将库文件拷贝至/usr/lib64下，由于FastDFS程序引用usr/lib目录所以需要将/usr/lib64下的库文件拷贝至/usr/lib下；				
+				tracker
+					编译安装：[规划安装目录：/usr/local/]
+						tar -zxvf FastDFS_v5.05.tar.gz
+						cd FastDFS
+						./make.sh
+						./make.sh install --安装成功将安装目录下的conf下的文件拷贝到目录/etc/fdfs/下，
+					修改配置：进入/etc/fdfs/目录，执行：cp tracker.conf.sample tracker.conf，修改配置：vim tracker.conf，base_path=/home/yuqing/FastDFS 改为base_path=/home/FastDFS
+					启动：/usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart
+						  或/etc/init.d/fdfs_trackered restart
+					设置开机自动启动：vim /etc/rc.d/rc.local，添加一行：/usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart或/etc/init.d/fdfs_trackered restart
+				storage
+					编译安装：同tracker，
+					修改配置：进入/etc/fdfs/目录，执行：cp storage.conf.sample storage.conf，修改配置：vim storage.conf，
+							  group_name=group1，base_path=/home/yuqing/FastDFS改为：base_path=/home/FastDFS，store_path0=/home/yuqing/FastDFS改为：store_path0=/home/FastDFS/fdfs_storage--->对应M00
+							  tracker_server=192.168.101.3:22122 #配置tracker服务器的IP，默认端口为22122
+							  http_server_port=8888 #配置http服务端口
+					启动：/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart，格式:客户端指令+配置文件+操作指令
+						  或/etc/init.d/fdfs_storaged restart
+					设置开机自动启动：vim /etc/rc.d/rc.local，添加一行：/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart或/etc/init.d/fdfs_storaged restart
+				上传测试：
+					修改配置：进入/etc/fdfs/目录，执行：cp client.conf.sample client.conf，修改配置：vim client.conf，base_path=/home/yuqing/FastDFS 改为base_path=/home/FastDFS
+							  tracker_server=192.168.101.3:22122 #配置tracker服务器的IP
+					测试：将/home下的图片1.png上传到FastDFS中，
+						  执行指令：/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/1.png -->执行结果：192.168.101.3/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+									对应服务器位置：/home/fastdfs/fdfs_storage/data/group1/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png									
+		java Client API：略
+		FastDFS和nginx整合[主要是存储服务器上]
+			在tracker上安装nginx：目的是实现反向代理、负载均衡。
+			在Storage上安装nginx：[规划安装目录：/usr/local/]，目的是实现Http方式的上传与下载。
+				主要步骤：
+					 1）cd /usr/local
+						tar -zxvf FastDFS-nginx-module_v1.16.tar.gz
+						cd FastDFS-nginx-module/src
+						vim ./config --修改config文件将/usr/local/路径改为/usr/
+						cp mod_FastDFS.conf /etc/fdfs/ --将FastDFS-nginx-module/src下的mod_FastDFS.conf拷贝至/etc/fdfs/下并修改mod_FastDFS.conf的内容:
+							vim /etc/fdfs/mod_FastDFS.conf
+							base_path=/home/FastDFS
+							tracker_server=192.168.101.3:22122 #多个tracker配置多行
+							url_have_group_name=true #url中包含group名称
+							store_path0=/home/FastDFS/fdfs_storage #指定文件存储路径
+					 2）拷贝文件：cp /usr/lib64/libfdfsclient.so /usr/lib/
+					 3）把module添加nginx中，通过设置安装参数方式添加模块：
+						/configure \ 
+						–prefix=/usr/local/nginx \ 
+						–pid-path=/var/run/nginx/nginx.pid \ 
+						–lock-path=/var/lock/nginx.lock \ 
+						–error-log-path=/var/log/nginx/error.log \ 
+						–http-log-path=/var/log/nginx/access.log \ 
+						–with-http_gzip_static_module \ 
+						–http-client-body-temp-path=/var/temp/nginx/client \ 
+						–http-proxy-temp-path=/var/temp/nginx/proxy \ 
+						–http-fastcgi-temp-path=/var/temp/nginx/fastcgi \ 
+						–http-uwsgi-temp-path=/var/temp/nginx/uwsgi \ 
+						–http-scgi-temp-path=/var/temp/nginx/scgi \ 
+						–add-module=/usr/local/Fastdfs-nginx-module/src
+					 4）编译安装nginx：make; make install 
+					 5）nginx添加服务端：
+						server {
+					        listen       8888; #对应storage.conf中配置的服务地址
+					        server_name  192.168.101.3;					 
+					        location /group1/M00/{ #也可以使用正则，~/group[0-9]/M00
+					                #root /home/FastDFS/fdfs_storage/data;
+					                ngx_fastdfs_module;
+					        }
+						}
+					 6）访问测试：http://192.168.101.3:8888/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png				
+		FastDFS集群环境搭建:
+			前提准备：准备6台服务器[物理节点]，如：192.168.1.173-178
+			架构规划：173是tracker1[对应的storage是175、176，group1]、174是tracker2[对应的storage是177、178，group2]
+			步骤：
+				1）、公共部分操作，安装gcc依赖环境、安装libfastcommon公共依赖包、安装FastDFS；
+				2）、配置173、174tracker追踪服务器；
+					 在/etc/fdfs/目录下，[cp tracker.conf.sample tracker.conf]修改配置文件：vim tracker.conf，修改内容:base_path=/home/FastDFS，在配置文件中可以设置store_lookup=0[设置负载均衡策略，可选值：0、1、2]
+					 启动服务器：/etc/init.d/fdfs_trackered restart
+			    3）、配置175、176、177、178storage存储服务器；
+					 175、176为group1
+					 177、178为group2				 
+					 在/etc/fdfs/目录下，[cp storage.conf.sample storage.conf]修改配置文件：vim storage.conf，修改内容:
+					 核心内容：group_name=group1 #175、176为group1，177、178为group2
+							   tracker_server=192.168.1.173：22122
+							   tracker_server=192.168.1.174：22122
+					 启动服务器：/etc/init.d/fdfs_storaged restart
+					 观察结论：追踪服务器集群采用的是选举算法，选择Leader来连接，符合主从规则；
+					 监控集群指令：/usr/bin/fdfs_monitor /etc/fdfs/storage.conf
+				4）、客户端测试上传数据
+					 在/etc/fdfs/目录，执行：cp client.conf.sample client.conf，修改配置：vim client.conf，base_path=/home/yuqing/FastDFS 改为base_path=/home/FastDFS
+							   tracker_server=192.168.1.173:22122 #配置tracker服务器的IP
+							   tracker_server=192.168.1.174:22122
+					 测试：	/usr/bin/fdfs_test /etc/fdfs/client.conf upload /home/1.png	 或 /usr/bin/fdfs_unload_file /etc/fdfs/client.conf /home/1.png
+					 结果：文件存储按上面追踪服务器指定的策略[参数：store_lookup]来存储，且同组下的数据同步；				
+				5）、整合nginx模块[存储服务器上]，便于http方式访问
+					 前提准备：在175、176、177、178四个物理节点上都安装nginx模块，同单机版；
+					 配置文件：vim /etc/fdfs/mod_FastDFS.conf，主要修改内容：同单机版，此外有group_name=group1/2，group_count=2；
+					 nginx配置同单机版；
+					 访问测试：http://192.168.11.175:8888/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+				6）、整合nginx缓存模块[追踪服务器上]，作反向代理负载均衡，利用缓存，代理存储服务器
+					 在173、174上，解压安装ngx_cache_purge-2.3模块，安装nginx[安装相关Lib依赖和缓存模块./configure --add-module=../ngx_cache_purge-2.3]
+					 安装完成后，修改nginx.conf文件信息，主要修改：缓存配置以及负载均衡的配置信息	
+					 上传测试；http://192.168.11.173:8000/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png或http://192.168.11.174:8000/group1/M00/00/00/wKhlBVVY2M-AM_9DAAAT7-0xdqM485_big.png
+				     
+				7）、整合keepalived，提供一个VIP实现整体的访问流程；

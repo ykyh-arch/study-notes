@@ -1,0 +1,1053 @@
+----------------------------------------------MysqL高级运维知识技术篇------------------------------------------------------------------------
+	一、Mysql运算符：
+		安全等于运算符[<=>]：规则均为NULL时，其返回值为1，否则返回0；
+						如：
+						SELECT NULL <=>1;  						-0
+						SELECT 1<=>0;							-0
+						SELECT NULL <=>NULL; 					-1
+		最值运算符：
+			LEAST()或least()运算符，返回最小值；如：SELECT LEAST(2,0),LEAST('a','b','c'),LEAST(10,NULL);					-0,a,null
+			GREATEST()或greatest()运算符，返回最大值；SELECT GREATEST(2,0),GREATEST('a','b','c'),GREATEST(10,NULL);			-2,c,null
+		REGEXP[正则]运算符:
+			正则表达式：在不同的开发语言中，正则表达式的基本语法都是一样的，只是在使用方式上有所差别！
+			注意：MySQL 支持转义字符 
+				# 单引号：\'
+				# 双引号：\''，如：INSERT INTO test(`name`) value('\'');
+				# 反斜杠：\\
+				# 回车符：\r
+				# 换行符：\n
+				# 制表符：\tab
+				# 退格符：\b
+			规则：
+				# '\b' 匹配一个字边界，即字与空格间的位置
+				# '\B' 匹配\b之外的任意字符
+				# '\d' 匹配0-9的任意一个数字，如：/^\d$/ 表示数字
+				# '\D' 匹配\d之外的任意字符
+				# '\f' 匹配换页符
+				# '\r' 匹配回车符
+				# '\s' 匹配任何空白字符(包括空格、制表符、换页符、换行符等)
+				# '\S' 匹配任何非空白字符
+				# '\t' 匹配制表符
+				# '\v' 匹配垂直制表符
+				# '\n' 匹配换行符
+				# '\w' 匹配包括下划线在内的任意单词字符(包括A-Z、a-z、0-9、_，就是行话:数字、字母、下划线)，
+						如：/^\w{6,16}$/ 表示6-16位字母、数字、下划线组成的
+				# '\W' 匹配\w之外的所有字符
+				# '^'  匹配以该字符后面的字符开头的字符串，如：SELECT name FROM t_person WHERE name REGEXP '^st';
+				# '$'  匹配以该字符前面的字符结尾的字符串，如：SELECT name FROM t_person WHERE name REGEXP 'ok$';
+				# '.'  表示任何一个单字符，除\n外
+				# '[]' 匹配在方括号内的任一个字符
+						 如：“[abc]" 匹配a、b或c。“[a-z]”匹配任何单个字母，而“[0-9]”匹配任何单个数字	
+				# '*' 匹配零个或多个在他前面的字符或子表达式，如：'zx*' 可以匹配z后面跟0到无数个x(「z」或「zxx」皆可)
+					  如：“x*”匹配任何数量的'*'字符,等价于'{0,}'，“[0-9]*”匹配任何数量的数字，而“.*”匹配任何数量的任何字符
+				# '?' 匹配零次或一次匹配前面的字符或子表达式 
+				# '+' 匹配至少一个在他前面的字符，等价于{1,}
+				# '|' 或，如：p1|p2|p3表示匹配 p1 或 p2 或 p3；g|food 匹配g或food；(g|f)ood 匹配good或food
+				# '[^字符集合]' 匹配不在指定集合中的任何字符，如： '[^abc]' 可以匹配不在abc内的任意字符
+				# '{n,}'或'{n,m}'，如：“字符串{n,}”表示前面的字符串至少匹配n次；“字符串{n,m}”表示匹配前面的字符串不少于n次，不多于m次
+				  示例：'a{5,8}'匹配5-8个a；'123{3}'匹配结果12333；'(456){2}'匹配结果456456			  
+		逻辑运算符：
+			逻辑与：AND 或&&；逻辑或 OR或||
+				如：
+				SELECT * FROM testuser WHERE gender ='女' AND `name` LIKE '%赵%';
+				SELECT * FROM testuser WHERE gender ='女' && `name` LIKE '%赵%';
+			异或XOR运算符：
+				当任意一个操作数为NULL时，返回值为NULL;对于非NULL的操作数，
+				如果两个操作数都是非0值或者都是0值，则返回结果为0，反之为1，
+				XOR等同于a AND (NOT b))或者NOT a AND (b)
+				如：SELECT 1 XOR 1, 0 XOR 0,1 XOR 0,1 XOR NULL,1 XOR 1 XOR 1;					-0,0,1,null,1		
+	二、Mysql事务管理：
+			Mysql事务是必须满足4个条件（ACID）：
+				原子性（Atomicity，或称不可分割性）、一致性（Consistency）、隔离性（Isolation，又称独立性）、持久性（Durability）
+			注意：
+				1）在 MySQL 中只有使用了 Innodb 数据库引擎的数据库或表才支持事务；
+				2）事务处理可以用来维护数据库的完整性，保证成批的 SQL 语句要么全部执行，要么全部不执行；
+				3）事务用来管理 insert,update,delete 语句；
+		    事务控制语句：
+				BEGIN 或 START TRANSACTION 显式地开启一个事务
+				COMMIT 或 COMMIT WORK。COMMIT 会提交事务，并使已对数据库进行的所有修改成为永久性的
+				ROLLBACK 或 ROLLBACK WORK。回滚会结束用户的事务，并撤销正在进行的所有未提交的修改
+				SAVEPOINT identifier，SAVEPOINT 允许在事务中创建一个保存点，一个事务中可以有多个 SAVEPOINT
+				RELEASE SAVEPOINT identifier 删除一个事务的保存点，当没有指定的保存点时，执行该语句会抛出一个异常
+				ROLLBACK TO identifier 把事务回滚到标记点
+				SET TRANSACTION 用来设置事务的隔离级别。InnoDB 存储引擎提供事务的隔离级别有READ UNCOMMITTED、READ COMMITTED、REPEATABLE READ 和 SERIALIZABLE
+			事务的处理方式：
+				方式一：用 BEGIN, ROLLBACK, COMMIT来实现
+				方式二：直接用 SET 来改变 MySQL 的自动提交模式；SET AUTOCOMMIT=0 禁止自动提交；SET AUTOCOMMIT=1 开启自动提交；
+			结论：
+				在 MySQL 命令行的默认设置下，事务都是自动提交的，即执行 SQL 语句后就会马上执行 COMMIT 操作。
+				因此要显式地开启一个事务务须使用命令 BEGIN 或 START TRANSACTION，或者执行命令 SET AUTOCOMMIT=0，用来禁止使用当前会话的自动提交。
+				如：
+					BEGIN;
+					SQL insert,update,delete 语句；
+					COMMIT/ROLLBACK;					-数据库表有改变/数据库表没有改变		
+	三、Mysql视图[虚表、逻辑表]：
+			含义：视图（view）是一种虚拟存在的表，是一个逻辑表，本身并不包含数据，而是由一个SELECT语句保存在数据字典中的。
+				  通过视图，可以展现基表的部分数据；视图数据来自定义视图的查询中使用的表，使用视图动态生成。
+			优点：
+				为了保障数据安全性，提高查询效率，简单（是过滤好的复合条件的结果集）、安全（用户只能查询或修改所能见到得到的数据）、数据独立（屏蔽真实表结构变化带来的影响）
+			语法：	  
+				# CREATE [OR REPLACE] [ALGORITHM = {UNDEFINED | MERGE | TEMPTABLE}]     -- 创建、替换、选择算法[未定义的[默认]，合并，临时的] 
+				# VIEW view_name [(column_list)] 										-- 视图名、列名
+				# AS select_statement 													-- 查询SELECT语句
+				# [WITH [CASCADED | LOCAL] CHECK OPTION] 								-- 控制权限，推荐使用，可以保证数据的安全性
+			基本格式：
+			　　create view <view_name>[(column_list)]
+				as select语句
+				with check option;
+			示例：
+				-- 建表、插入数据
+				CREATE TABLE student (stuno INT ,stuname NVARCHAR(60));											-学生表（学号、姓名）
+				CREATE TABLE stuinfo (stuno INT ,class NVARCHAR(60),city NVARCHAR(60));							-学生信息表（学号、班级、城市）
+				INSERT INTO student VALUES(1,'wanglin'),(2,'gaoli'),(3,'zhanghai');
+				INSERT INTO stuinfo VALUES(1,'wuban','henan'),(2,'liuban','hebei'),(3,'qiban','shandong');				
+				-- 创建视图
+				CREATE VIEW stu_class(id,NAME,class) AS SELECT student.`stuno`,student.`stuname`,stuinfo.`class`
+				FROM student,stuinfo WHERE student.`stuno`=stuinfo.`stuno` with check option;			
+				-- 查看视图														  
+					方法：
+						方式一：SELECT * FROM stu_class								-- 类似查表的方式
+						方式二：DESCRIBE 或 DESC
+								DESCRIBE stu_class; 或 DESC stu_class;
+						方式三：SHOW TABLE STATUS LIKE
+								SHOW TABLE STATUS LIKE 'stu_class'; 								-- comment项为view表示视图
+								SHOW TABLE STATUS LIKE 'stuinfo';							    	-- 基表
+						方式四：SHOW CREATE VIEW
+								SHOW CREATE VIEW stu_class;
+								SELECT * FROM `information_schema`.`VIEWS`; 						-- 查看MySQL数据库中所有视图的详细信息
+				-- 修改视图
+					含义：通过视图更新的时候都是转到基表进行更新，如果对视图增加或者删除记录，实际上是对基表增加或删除记录
+					语法：
+						# ALTER OR REPLACE [ALGORITHM = {UNDEFINED | MERGE | TEMPTABLE}]
+						# VIEW view_name [(column_list)]
+						# AS select_statement
+						# [WITH [CASCADED | LOCAL] CHECK OPTION]
+						如：
+						DELIMITER $$																-- 分隔符
+
+						CREATE OR REPLACE VIEW `stu_class` AS 										-- 创建或替换
+						SELECT
+						  `student`.`stuno`  AS `id`
+						FROM (`student` JOIN `stuinfo`)
+						WHERE (`student`.`stuno` = `stuinfo`.`stuno`) WITH CHECK OPTION $$
+
+						DELIMITER ;
+						
+						DESC stu_class;																-- 查看
+						SELECT * FROM stu_class;													-- 查看
+					DML操作更新视图[单表]：
+						结论：
+							如：
+							ALTER VIEW stu_class AS SELECT stuno,stuname FROM student;					-- 修改视图							
+							UPDATE stu_class SET stuname='xiaofang' WHERE stuno=2; 						-- 修改视图数据
+							SELECT * FROM student; 														-- 原表的数据也改变
+							INSERT INTO stu_class VALUES(6,'haojie');
+							DELETE FROM stu_class WHERE stuno=1;
+						注意：
+							并非所有视图都可以做DML操作，以下情况例外：
+							    ①select子句中包含distinct
+							　　②select子句中包含组函数
+							　　③select语句中包含group by子句
+							　　④select语句中包含order by子句
+							　　⑤select语句中包含union 、union all等集合运算符
+							　　⑥where子句中包含相关子查询
+							　　⑦from子句中包含多个表
+							　　⑧如果视图中有计算列，则不能更新
+							　　⑨如果基表中有某个具有非空约束的列未出现在视图定义中，则不能做insert操作				
+				-- 删除视图
+					# 语法 ：视图本身没有数据，因此对视图进行的DML操作最终都体现在基表中
+					# DROP VIEW [IF EXISTS]
+					# view_name [, view_name] ...
+					# [RESTRICT | CASCADE]
+					如：
+					DROP VIEW IF EXISTS stu_class; 
+					-- SHOW CREATE VIEW stu_class; 														-- Table '[库名].stu_class' doesn't exist		
+	四、Mysql触发器：
+			含义：触发器是与表有关的数据库对象，在满足定义条件时触发，并执行触发器中定义的语句集合。
+			特点：
+			    1、有begin end体，begin end之间的语句可以写的简单或者复杂的
+			　　2、什么条件会触发：I、D、U
+			　　3、什么时候触发：在增删改前或者后
+			　　4、触发频率：针对每一行执行
+			　　5、触发器定义在表上，附着在表上
+				也就是由事件来触发某个操作，事件包括INSERT语句，UPDATE语句和DELETE语句；可以协助应用在数据库端确保数据的完整性
+			注意：
+				尽量少使用触发器，不建议使用！
+				触发器是针对每一行的；对增删改非常频繁的表上切记不要使用触发器，因为它会非常消耗资源
+			使用：
+				语法：
+				# CREATE TRIGGER trigger_name trigger_time trigger_event  
+				# ON tbl_name FOR EACH ROW trigger_stmt
+				 
+				参数解释 ：trigger_name 触发器名称; trigger_time 触发时间，值有：BEFORE或AFTER; 
+				           trigger_event 激发事件，值有：INSERT UPDATE DELETE; tbl_name 表名 
+		   	               trigger_stmt 触发程序激活时执行的语句，是BEGIN ... END复合语句结构。
+				名词解释：
+					OLD & NEW ：表示触发器的所在表中，触发了触发器的那一行数据，来引用触发器中发生变化的记录内容[原数据/新数据]；				
+				
+				-- 单执行[有一个执行语句]触发器
+				CREATE TABLE account(acct_num INT ,amount DECIMAL(10,2));								-- 建表
+				CREATE TRIGGER ins_sum BEFORE INSERT ON account											-- 触发器
+				FOR EACH ROW SET @SUM=@SUM+new.amount;
+
+				#申明变量
+				DECLARE @SUM INT
+				SET @SUM=0
+				INSERT INTO account VALUES(1,1.00),(2,2.00)
+				SELECT @SUM
+				select * from account;
+				
+				-- 多执行[多个执行语句]触发器
+				CREATE TABLE `user` (																	-- 建表
+				  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '用户ID',
+				  `account` VARCHAR(255) DEFAULT NULL COMMENT '用户账号',
+				  `name` VARCHAR(255) DEFAULT NULL COMMENT '用户姓名',
+				  `address` VARCHAR(255) DEFAULT NULL COMMENT '用户地址',
+				  PRIMARY KEY (`id`)
+				) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+				CREATE TABLE `user_history` (															-- 建表
+				  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+				  `user_id` BIGINT(20) NOT NULL COMMENT '用户ID',
+				  `operatetype` VARCHAR(200) NOT NULL COMMENT '操作的类型',
+				  `operatetime` DATETIME NOT NULL COMMENT '操作时间',
+				  PRIMARY KEY (`id`)
+				) ENGINE=INNODB DEFAULT CHARSET=utf8;
+				
+				
+				DROP TRIGGER IF EXISTS `tri_insert_user`;												-- 清空触发器										
+				
+				DELIMITER ;;
+				CREATE TRIGGER `tri_insert_user` AFTER INSERT ON `user` FOR EACH ROW BEGIN 				-- 新增
+					INSERT INTO user_history(user_id, operatetype, operatetime) VALUES (new.id, 'add a user', NOW());
+				END
+				;;
+				DELIMITER ;
+
+				DROP TRIGGER IF EXISTS `tri_update_user`;												-- 清空触发器				
+				DELIMITER $$
+				CREATE TRIGGER `tri_update_user` AFTER UPDATE ON `user` FOR EACH ROW BEGIN 				-- 修改
+					INSERT INTO user_history(user_id,operatetype, operatetime) VALUES (new.id, 'update a user', NOW());
+				END $$
+				DELIMITER ;
+
+				DROP TRIGGER IF EXISTS `tri_delete_user`;												-- 清空触发器
+				DELIMITER |
+				CREATE TRIGGER `tri_delete_user` AFTER DELETE ON `user` FOR EACH ROW BEGIN 				-- 删除
+					INSERT INTO user_history(user_id, operatetype, operatetime) VALUES (old.id, 'delete a user', NOW());
+				END
+				|
+				DELIMITER ;
+				
+				注意：分割线[语句结束符]可以使用的符号[可以自定义]：$$ ;; | // 
+
+				-- 向user表中插入数据
+				INSERT INTO `user`(account, `name`, address) VALUES ('zhangsan.@sina.cn', 'zhangsan', '合肥');
+				INSERT INTO `user`(account, `name`, address) VALUES ('lisi.@sina.cn', 'lisi', '蚌埠');
+				INSERT INTO `user`(account, `name`, address) VALUES ('wangwu.@sina.cn', 'wangwu', '芜湖'),('zhaoliu.@sina.cn', 'zhaoliu', '安庆');
+				-- 向user表中修改数据
+				UPDATE `user` SET `name` = 'qianqi', account = 'qianqi.@sina.cn', address='铜陵' WHERE `name`='zhaoliu';
+				-- 向user表中删除数据
+				DELETE FROM `user` WHERE `name` = 'wangwu';
+
+				-- 查看触发器
+				SHOW TRIGGERS;																  -- 查看所有的触发器
+				SELECT * FROM `information_schema`.`TRIGGERS` WHERE `TRIGGER_NAME`='ins_sum'; -- 查看指定触发器
+				
+				-- 删除触发器，注意：基表删除后，触发器不复存在
+				# 语法：DROP TRIGGER [schema_name.]trigger_name
+				DROP TRIGGER `db1`.`ins_sum`;				  				  
+	五、Mysql存储过程[函数、程序]：
+			含义：存储过程简称过程，Stored Procedure，是一种在数据库中存储复杂程序，以便外部程序调用的一种数据库对象。
+				  简单点，可以将其理解为没有返回值的函数，一般存储过程并不显示结果，而是把结果返回给你指定的变量。
+				  存储过程是为了完成特定功能的SQL语句集，经编译创建并保存在数据库中，用户可通过指定存储过程的名字并给定参数(需要时)来调用执行。
+				  存储过程思想上很简单，就是数据库 SQL 语言层面的代码封装与重用。
+			优点：
+				存储过程可封装，并隐藏复杂的商业逻辑
+				存储过程可以回传值，并可以接受参数
+				存储过程无法使用 SELECT 指令来运行，因为它是子程序，与查看表，数据表或用户定义函数不同
+				存储过程可以用在数据检验，强制实行商业逻辑等
+			缺点：
+				存储过程，往往定制化于特定的数据库上，因为支持的编程语言不同。当切换到其他厂商的数据库系统时，需要重写原有的存储过程。
+				存储过程的性能调校与撰写，受限于各种数据库系统。			
+			使用：参考：https://blog.csdn.net/qq_40884473/article/details/78442457 	
+				基本格式：
+					-- 创建存储过程，声明结束符
+					DELIMITER $  													-- 声明存储过程的结束符
+					CREATE PROCEDURE pro_name()    									-- 存储过程名称(参数列表)，参数：IN：表示输入参数，可以携带数据带存储过程中；
+																													 OUT：表示输出参数，可以从存储过程中返回结果；
+																													 INOUT：表示输入输出参数，既可以输入功能，也可以输出功能
+					BEGIN
+						-- 可以写多个sql语句;       								-- sql语句+流程控制
+						SELECT * FROM table_name;
+					END $ 
+					
+					DELIMITER ; 															-- 结束结束符
+					
+					-- 执行存储过程
+					CALL pro_name();   												-- CALL 存储过程名称(参数);
+					
+					-- 删除存储过程 
+					DROP PROCEDURE [IF EXISTS] pro_name;
+					 
+				完整格式：
+					# CREATE PROCEDURE sp_name ([ proc_parameter ]) [ characteristics..] routine_body 
+					# 参数：sp_name 存储过程名称
+					#		proc_parameter 参数列表，形式：[IN|OUT|INOUT] param_name type
+					#	
+					#  characteristic: 											    -- 特征项
+					#    LANGUAGE SQL  												    -- SQL语言
+					#  | [NOT] DETERMINISTIC 											-- 存储过程执行的结果是否确定
+					#  | { CONTAINS SQL | NO SQL | READS SQL DATA | MODIFIES SQL DATA } -- 程序包含、不包含、读、写SQL语句
+					#  | SQL SECURITY { DEFINER | INVOKER } 							-- 安全性  定义者 调用者
+					#  | COMMENT 'string' 												-- 注释
+					#   
+					#  routine_body: 													-- SQL代码的内容 用BEGIN...END来表示SQL代码的开始和结束
+				示例：
+					输入参数：
+						DELIMITER $
+						CREATE PROCEDURE pro_findById(IN eid INT)  						-- IN: 输入参数
+						BEGIN
+							SELECT * FROM t_employee WHERE id=eid;
+						END $ 
+						
+						DELIMITER ;
+						 						
+						CALL pro_findById(4);											-- 调用
+					输出参数：
+						DELIMITER $
+						CREATE PROCEDURE pro_Out(OUT str VARCHAR(20))  					-- OUT：输出参数
+						BEGIN								
+							SET str='hellojava';										-- 给参数赋值
+						END $
+						
+						DELIMITER ;
+						问题：如何接收？？？答案使用Mysql变量						
+						CALL pro_Out(@NAME);													-- 调用
+						SELECT @NAME;
+						
+						Mysql变量：全局变量、会话变量、局部变量
+							全局变量：全局变量又叫内置变量，是mysql数据库内置的变量，对所有连接都起作用。
+									  查看所有全局变量：show variables；查看某个全局变量：select @@变量名；如：select @@basedir
+									  修改全局变量：set 变量名=新值；character_set_client: mysql服务器的接收数据的编码；character_set_results：mysql服务器输出数据的编码；
+							会话变量：
+								只存在于当前客户端与数据库服务器端的一次连接当中。如果连接断开，那么会话变量全部丢失！
+								定义会话变量: set @变量=值；查看会话变量：select @变量
+							局部变量：
+								在存储过程中使用的变量就叫局部变量，只要存储过程执行完毕，局部变量就丢失。
+								
+					输入输出参数：
+						DELIMITER $
+						CREATE PROCEDURE pro_InOut(INOUT n INT)  							-- INOUT：输入输出参数
+						BEGIN						   
+						   SELECT n;														-- 查看变量
+						   SET n =500;
+						END $																
+			
+						SET @n=10;															-- 调用				 
+						CALL pro_InOut(@n);						 
+						SELECT @n;
+					
+					条件判断：
+						DELIMITER $
+						CREATE PROCEDURE pro_If(IN num INT,OUT str VARCHAR(20))
+						BEGIN
+							IF num=1 THEN
+								SET str='星期一';
+							ELSEIF num=2 THEN
+								SET str='星期二';
+							ELSEIF num=3 THEN
+								SET str='星期三';
+							ELSE
+								SET str='输入错误';
+							END IF;
+						END $
+						 						
+						CALL pro_If(4,@str);											--调用						 
+						SELECT @str;
+					
+					循环功能：						
+						DELIMITER $
+						CREATE PROCEDURE proWhile(IN num INT,OUT result INT)
+						BEGIN	
+							DECLARE	i INT DEFAULT 1;										--定义一个局部变量
+							DECLARE vsum INT DEFAULT 0;
+							WHILE i<=num DO
+								  SET vsum = vsum+i;
+								  SET i=i+1;
+							END WHILE;
+							SET result=vsum;
+						END $
+						 
+						CALL pro_While(100,@result);									--调用						 
+						SELECT @result;
+					
+					将查询的结果赋值给变量[INTO]:
+						DELIMITER $
+						CREATE PROCEDURE pro_findById(IN eid INT,OUT vname VARCHAR(20) )
+						BEGIN
+							SELECT empName INTO vname FROM t_employee WHERE id=eid;
+						END $
+						
+						CALL pro_findById2(1,@NAME);									--调用						 
+						SELECT @NAME;
+						
+	六、Mysql存储函数：				
+			含义：MySQL存储函数（自定义函数），函数一般用于计算和返回一个值，可以将经常需要使用的计算或功能写成一个函数。
+			使用：
+				语法：
+					CREATE OR ALTER FUNCTION func_name ([param_name type[,...]])		--创建或修改
+					RETURNS type
+					[characteristic ...] 
+					BEGIN
+						routine_body
+					END;
+				
+					参数说明：
+						1）func_name ：存储函数的名称。
+						2）param_name type：可选项，指定存储函数的参数。type参数用于指定存储函数的参数类型，该类型可以是MySQL数据库中所有支持的类型。
+						3）RETURNS type：指定返回值的类型。
+						4）characteristic：可选项，指定存储函数的特性。
+						5）routine_body：SQL代码内容。
+					
+					调用存储函数：
+						在MySQL中，存储函数的使用方法与MySQL内部函数的使用方法基本相同。
+						用户自定义的存储函数与MySQL内部函数性质相同。区别在于，存储函数是用户自定义的。而内部函数由MySQL自带。
+						语法结构：SELECT func_name([parameter[,…]]);
+						示例：
+							-- 创建用户信息表
+							CREATE TABLE IF NOT EXISTS tb_user
+							(
+								id INT AUTO_INCREMENT PRIMARY KEY COMMENT '用户编号',
+								name VARCHAR(50) NOT NULL COMMENT '用户姓名'
+							) COMMENT = '用户信息表';
+							 
+							-- 添加数据
+							INSERT INTO tb_user(name) VALUES('pan_junbiao的博客');
+							INSERT INTO tb_user(name) VALUES('KevinPan');
+							INSERT INTO tb_user(name) VALUES('pan_junbiao');
+							INSERT INTO tb_user(name) VALUES('阿标');
+							INSERT INTO tb_user(name) VALUES('panjunbiao');
+							INSERT INTO tb_user(name) VALUES('pan_junbiao的CSDN博客');
+							INSERT INTO tb_user(name) VALUES('https://blog.csdn.net/pan_junbiao');
+							-- 创建存储函数
+							DROP FUNCTION IF EXISTS func_user;
+							CREATE FUNCTION func_user(in_id INT)
+							RETURNS VARCHAR(50)
+							BEGIN
+								DECLARE out_name VARCHAR(50);						 
+								SELECT name INTO out_name FROM tb_user
+								WHERE id = in_id;						 
+								RETURN out_name;
+							END;
+							-- 调用存储函数
+							SELECT func_user(1);
+							SELECT func_user(2);							
+					删除存储函数：DROP FUNCTION IF EXISTS func_name;
+			
+			Mysql的存储过程与存储函数的区别：
+				1）存储函数有且只有一个返回值，而存储过程不能有返回值。就是说能不能使用return。
+				2）存储函数只能有输入参数，而且不能带in, 而存储过程可以有多个in,out,inout参数。
+				3）存储过程中的语句功能更强大，存储过程可以实现很复杂的业务逻辑，而函数有很多限制，如不能在函数中使用insert,update,delete,create等语句；
+				   存储函数只完成查询的工作，可接受输入参数并返回一个结果，也就是函数实现的功能针对性比较强。比如：工期计算、价格计算。
+				4）存储过程可以调用存储函数。但函数不能调用存储过程。
+				5）存储过程一般是作为一个独立的部分来执行(call调用)。而函数可以作为查询语句的一个部分来调用。
+		
+		Mysql系统内置函数：
+			字符串函数：
+				SELECT CONCAT_WS('-','1st','2nd','3rd'),CONCAT_WS('-','1st',NULL,'3rd'); 					--字符串拼接，结果为：1st-2nd-3rd，1st-3rd；
+				SELECT INSERT('warWalf',2,2,'BB'); 															--替换，结果为：wBBWalf
+				SELECT LPAD('hello',4,'??'),RPAD('hello',10,'??'); 											--填充，结果为：hell，hello?????
+				SELECT TRIM(' book ') `trim`; 																--去除两端空格，结果为：book
+				SELECT TRIM('xy' FROM 'xyxboxyokxxyxy');																	结果为：xboxyokx
+				SELECT REPEAT('str',3); 																	--重复，结果为：strstrstr
+				SELECT STRCMP('txt','txt2') ,STRCMP('txt2','txt'),STRCMP('txt','txt'); 						--比较字符串大小，返回-1或1或0，结果为：-1,1,0
+				SELECT LOCATE('ball','football'),POSITION('ball' IN 'football') ,INSTR('football','ball');  --查找位置，结果为：5,5,5
+				SELECT ELT(3,'1st','2nd','3rd'),ELT(3,'net','os'); 											--查找字符串，结果为：3rd，null
+				SELECT FIELD('hi','hihi','hey','hi','bas') AS col1,
+					   FIELD('hi','hihi','lo','hilo','foo') AS col2; 									    --查找在字符数组中的位置[返回索引]，结果为：3,0
+				SELECT FIND_IN_SET('hi','hihi,hey,hi,bas'); 												--查找在字符数组中的位置[返回索引]，结果为：3
+				SELECT MAKE_SET(1,'a','b','c') AS col1,
+				       MAKE_SET(1|4,'hello','nice','world') AS col2; 										--二进制返回的字符串，结果为：a hello,world
+				
+			数值函数：
+				SELECT TRUNCATE(1.32,1); 																	--截取小数后一位，结果为：1.3
+				SELECT MOD(31,8);																			--取余，结果为：7
+				SELECT ROUND(1.36,1);																		--四舍五入，结果为：1.4
+				SELECT HEX('this is a test str'); 															--十六进制表示，结果为：746869732069732061207465737420737472
+				CHAR_LENGTH()																				--字符长度，对于char型的字符串会去除左右的空格
+				LENGTH()																					--字符长度
+			
+			日期时间函数：
+				SELECT NOW(),CURDATE(),CURRENT_DATE(),CURRENT_TIMESTAMP(),LOCALTIME(),SYSDATE(); 		    --2017-08-07 14:14:49 2017-08-07 2017-08-07 2017-08-07 14:14:49 2017-08-07 14:14:49 2017-08-07 14:14:49
+				SELECT UTC_DATE(),UTC_TIME();																--2019-07-04 02:50:56
+				SELECT MONTHNAME('2013-8-2')；																--获取月份；August
+				SELECT QUARTER('11-04-01'); 																--返回季度 1~4
+				SELECT MINUTE('11-02-03 10:10:06'); 														--分钟
+				SELECT SECOND('10:23:10'); 																	--秒数
+				SELECT DAYNAME('2013-2-3'); 																--返回星期；Sunday 
+				SELECT EXTRACT(YEAR FROM '2013-2-3'); 														--返回年数 2013
+				SELECT TIME_TO_SEC('23:22:00'); 															--转换为秒数；转换公式为：小时*3600+分钟*60+秒  84120
+				SELECT SEC_TO_TIME('84120'); 																--转换为时间；23:22:00
+				DATE_FORMAT()																				--where 表名.字段 = DATE_FORMAT(NOW(),'%Y-%m-%d'); 今日
+				WEEKOFYEAR() 																				--表示一年中的第几周;WHERE WEEKOFYEAR( 表名.时间字段（如：create_time）) = WEEKOFYEAR(NOW());本周内;
+			
+			日期计算：
+				SELECT DATE_ADD('2013-2-3',INTERVAL 1 MONTH); 												--增加日期：2013-03-03 
+				SELECT ADDDATE('2013-2-3',INTERVAL 1 WEEK); 												--增加日期：2013-02-10 
+				SELECT DATE_SUB('2013-2-3',INTERVAL 1 WEEK); 												--减少日期：2013-01-27
+				SELECT SUBDATE('2013-2-3',INTERVAL 1 WEEK); 												--减少日期：2013-01-27
+				SELECT ADDTIME('2013-2-3 01:05:06','10:50:20'); 											--增加时间：2013-02-03 11:55:26
+				SELECT SUBTIME('2013-2-3 01:05:06','10:50:20'); 											--减少时间：2013-02-02 14:14:46
+				SELECT DATEDIFF('2008-12-30','2007-12-29') AS DiffDate；									--时间差,返回天数；367
+				SELECT LAST_DAY('2003-02-05');  															--每月最后一天：2003-02-28
+				SELECT DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s');												--格式化日期：2017-08-07 10:20:11
+				SELECT TIME_FORMAT('100:00:00', '%H %k %h %I %l'); 											--格式化时间 '%H %k %h %I %l' 表示小时
+				SELECT DATE_FORMAT(NOW(),GET_FORMAT(TIMESTAMP,'ISO')); 										--格式化日期 2017-08-07 10:36:35 
+				
+				--今天
+				SELECT DATE_FORMAT(NOW(),'%Y-%m-%d 00:00:00') AS '今天开始';
+				SELECT DATE_FORMAT(NOW(),'%Y-%m-%d 23:59:59') AS '今天结束';
+
+				--昨天
+				SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y-%m-%d 00:00:00') AS '昨天开始';
+				SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%Y-%m-%d 23:59:59') AS '昨天结束';
+
+				--上周
+				SELECT DATE_FORMAT( DATE_SUB( DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 1 WEEK), '%Y-%m-%d 00:00:00') AS '上周一';
+				SELECT DATE_FORMAT( SUBDATE(CURDATE(), WEEKDAY(CURDATE()) + 1), '%Y-%m-%d 23:59:59') AS '上周末';
+
+				--本周
+				SELECT DATE_FORMAT( SUBDATE(CURDATE(),DATE_FORMAT(CURDATE(),'%w')-1), '%Y-%m-%d 00:00:00') AS '本周一';
+				SELECT DATE_FORMAT( SUBDATE(CURDATE(),DATE_FORMAT(CURDATE(),'%w')-7), '%Y-%m-%d 23:59:59') AS '本周末';
+				--上面的本周算法会有问题,因为mysql是按照周日为一周第一天，如果当前是周日的话,会把时间定为到下一周
+				SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), '%Y-%m-%d 00:00:00') AS '本周一';
+				SELECT DATE_FORMAT( DATE_ADD(SUBDATE(CURDATE(), WEEKDAY(CURDATE())), INTERVAL 6 DAY), '%Y-%m-%d 23:59:59') AS '本周末';
+
+				--上月
+				SELECT DATE_FORMAT( DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01 00:00:00') AS '上月初';
+				SELECT DATE_FORMAT( LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)), '%Y-%m-%d 23:59:59') AS '上月末';
+
+				--本月
+				SELECT DATE_FORMAT( CURDATE(), '%Y-%m-01 00:00:00') AS '本月初';
+				SELECT DATE_FORMAT( LAST_DAY(CURDATE()), '%Y-%m-%d 23:59:59') AS '本月末';	
+				
+				--示例
+				SELECT * FROM test_user WHERE TO_DAYS(create_time) = TO_DAYS(NOW()); 										--当天数据
+				SELECT * FROM test_user WHERE testuser.create_time LIKE CONCAT('%',DATE_FORMAT(NOW(),'%Y-%m-%d'),'%'); 		--当天数据
+				SELECT * FROM test_user WHERE TO_DAYS(NOW()) - TO_DAYS(create_time) = 1; 									--昨天数据
+				SELECT * FROM test_user WHERE create_time > DATE_SUB(NOW(), INTERVAL 7 DAY) AND create_time <= NOW(); 		--近7天
+				SELECT * FROM test_user WHERE create_time > DATE_SUB(NOW(), INTERVAL 30 DAY) AND create_time <= NOW(); 		--近30天
+				SELECT * FROM test_user WHERE WEEKOFYEAR(create_time) = WEEKOFYEAR(NOW()); 									--当前这周数据(不包括上周日)
+				SELECT * FROM test_user WHERE YEARWEEK(DATE_FORMAT(create_time,'%Y-%m-%d')) = YEARWEEK(NOW()); 				--当前这周数据(包括上周日)
+				SELECT * FROM test_user WHERE YEARWEEK(DATE_FORMAT(create_time,'%Y-%m-%d')) = YEARWEEK(NOW())-1; 			--上一周数据
+				SELECT * FROM test_user WHERE WEEKOFYEAR(create_time) = WEEKOFYEAR(NOW())-1; 								--上一周数据
+				SELECT * FROM test_user WHERE DATE_FORMAT(create_time, '%Y%m') = DATE_FORMAT(CURDATE(), '%Y%m'); 			--本月数据
+				SELECT * FROM test_user WHERE PERIOD_DIFF( DATE_FORMAT(NOW(),'%Y%m'),DATE_FORMAT(create_time,'%Y%m')) =1; 	--上月数据
+				SELECT * FROM test_user WHERE QUARTER(create_time)= QUARTER(NOW()); 										--本季度的数据
+				SELECT * FROM test_user WHERE QUARTER(create_time)= QUARTER(DATE_SUB(NOW(),INTERVAL 1 QUARTER)); 			--上季度的数据
+				SELECT * FROM test_user WHERE QUARTER(create_time)= QUARTER(DATE_ADD(NOW(),INTERVAL 1 QUARTER)); 			--下季度的数据
+				SELECT * FROM test_user WHERE YEAR(create_time)=YEAR(NOW()); 												--今年的数据
+				SELECT * FROM test_user WHERE YEAR(create_time)=YEAR(DATE_SUB(NOW(),INTERVAL 1 YEAR)); 						--去年的数据
+				SELECT * FROM test_user WHERE create_time BETWEEN DATE_SUB(NOW(),INTERVAL 3 MONTH) AND NOW(); 				--距现在3个月的数据
+				
+			条件判断函数：
+				SELECT IF(3>2,2,3); 										--返回2
+				SELECT IFNULL(1,2),IFNULL(NULL,10); 						--假如V1不为NULL，则IFNULL(V1,V2)的返回值为v1；否则其返回值为v2
+			
+				# CASE函数
+				# 语法一：
+				#	SELECT 
+				#	    表字段,
+				#	CASE
+				#	    WHEN （Bollean值）条件1 THEN 结果表达式1
+				#	    WHEN （Bollean值）条件2 THEN 结果表达式2
+				#	    ELSE 结果表达式3 END  
+				#	FROM 表名
+				#
+
+				# 语法二：
+				#	SELECT 
+				#	    表字段1,
+				#	CASE 表字段2
+				#	    WHEN 值1 THEN 结果表达式1
+				#	    WHEN 值2 THEN 结果表达式2
+				#	    ELSE 结果表达式3  END 
+				#	FROM 表名
+			
+			MySQL系统信息函数：
+				SELECT VERSION(),CONNECTION_ID();													--返回MySQL 的版本、链接数（ID）
+				SHOW PROCESSLIST; 																	--查看线程，只显示100个
+				SHOW FULL PROCESSLIST; 																--包括所有线程
+				SELECT DATABASE(),SCHEMA(); 														--当前数据库
+				SELECT USER(),CURRENT_USER(),SYSTEM_USER(),SESSION_USER();							--用户名
+				SELECT CHARSET('abc') ,CHARSET(CONVERT('abc' USING latin1)),CHARSET(VERSION()); 	--字符集
+				SELECT COLLATION(_latin2 'abc'),COLLATION(CONVERT('abc' USING utf8)); 				--字符集排列方式 latin2_general_ci utf8_general_ci
+			 
+			加密函数：
+			SELECT PASSWORD('NEWPWD'); 																--*067906D546600BF74D1435B72BDD12D45421DD17
+			SELECT MD5('123'); 																		--(32位十六进制数字组成)202cb962ac59075b964b07152d234b70			 
+			#加密
+			SELECT ENCODE('uetec','123'); 															--'123'密码 'uetec'加密字符串，结果为：��WJ 加密后乱码			
+			#解密
+			SELECT DECODE(ENCODE('uetec','123'),'123'); 											--uetec
+			#格式化
+			SELECT FORMAT(12332.123465,4); 				 											--格式化函数,数字格式化,进行四舍五入，结果为：12,332.1235			
+			SELECT CONV('a',16,2); 																	--进制转换，将十六进制的a转换为二进制表示的数值，结果为：1010 
+			#IP地址转化
+			SELECT INET_ATON('192.168.1.200'); 														--3232235976，IP地址与数字相互转换的函数，优化存储空间
+			SELECT INET_NTOA('3232235976'); 														--192.168.1.200
+			SHOW VARIABLES LIKE 'character_set_%';  												--查看当前MySQL使用的字符集
+			SELECT  CAST(100 AS CHAR(2)),CONVERT('2013-8-9 12:12:12',TIME);						    --数据类型的转换		
+	七、数据库设计PowerDesigner工具
+		1、工具产生的原因：
+			不同数据库（MySql、Oracle）表相互转换存储，提供可视化界面查看表与表之间关系以及表结构
+		2、工具使用：
+			使用管理者身份运行软件->创建物理模型->在工作空间创建表设计表->建立表之间的关联关系（关系：子表连向主表）->将物理模型（后缀为pdm的文件）导出SQL脚本文件，然后在数据库中执行即可；
+		3、物理模型反转（反向操作）：
+		   含义：将数据库中的表转化为PDM文件，使用步骤：file->Reverse Engieer->Database->配置要反转的数据库的数据源->反转操作；		   
+	八、MyCAT数据库分库分表高可用（数据库中间层：OneProxy、MaxScale）
+		1、含义：由阿里团队用JAVA语言开发，对于DBA数据库管理员来说，相当于MySQL的SERVER层，不存储数据，所有数据存储在MySQL里，而MySQL相当于存储层；
+				 对于研发来说，等同于MySQL，是透明的，但对SQL有些限制；
+				 对于系统架构来说，是数据库中间件层，可以实现对后端数据库的分库分表和读写分离，对前端运用影藏了后端数据库的存储逻辑；
+		  数据库中间层：位于前端运用（APP）与后端数据库（MySQL）中间；
+		2、作用：作为分布式数据库（相对于关系型数据库）的中间层（APP->MyCAT->MYSQL/SQL SERVER/MongoDB等）；实现后端数据库读写分离以及负载均衡；控制数据库连接数量（池的作用）
+					        读/写	
+				 传统：APP----------->主库MySQL
+				 当读的负载大后，演变成                 写
+					   APP----------->中间层（MyCAT）---------->主库MySQL
+													 ---------->从库，即实现了读写分离，从库可以有多个；	
+													    读
+		         当主库宕机后，在一主一从模式下，从库自动实现承担起读写的功能，实现了高可用；当在一主多从模式下，其中一个从库实现了承担起读写的功能，而其他数据库不能同步；
+				 如何解决这个问题？？？
+				 可以利用MySQL的主从复制同步数据，具体产品有：MHA（Master High Availability）、MMM (MySQL Master-Master Replication Manager) 等
+				 当写的负载大后，怎么解决？？？
+				 对业务数据库进行垂直拆分，将Master（主库）按业务拆分成多个数据库（如：用户库、商品库、订单库）；
+				 APP----------->中间层（MyCAT/虚拟的数据DB又称逻辑库，它的作用管理拆分好的多个数据库）---------->多个拆分好的库；
+				 对业务数据库进行水平拆分（基于垂直拆分基础上），对于某个已拆分好的数据库（如：订单库）进行水平拆分（基于某种规则F（c））；
+		3、MyCAT基本元素：
+			逻辑库：对于应用来说相当于MySQL中的数据库，逻辑库对应后端多个物理数据库，当中并不保存数据；
+			逻辑表：对于应用来说相当于MySQL中的数据表，逻辑库对应后端多个物理数据库中的表，当中并不保存数据；分类：按是否分片分为：分片表（按水平拆分的，表结构相同，存储数据不同，汇总在一起才是真正的数据表）与非分片表、
+			全局表：所有分片都存在的表（通常是字典表）、ER关系表；
+		4、MyCAT安装：	
+				1）下载解压安装包XXXXX.tar.gz；
+				2）安装好JDK1.7+；
+				3）为新建的MyCAT新建系统运行账户（权限控制）；
+				4）为MyCAT与JDK配置好系统环境变量，便于后期使用；
+		5、	MyCAT配置文件
+				1）种类：server.xml：系统参数、用户名/密码权限配置；scheme.xml：逻辑库与逻辑表配置；rule.xml：水平切分时配置一些规则；log4j2.xml：配置日志格式以及级别；
+			2）详细说明：
+			   server.xml配置文件说明
+			   用途：系统参数配置、用户名/密码权限控制、配置SQL防火墙以及SQL拦截功能；
+			   <system>系统参数： 
+			   如：
+			   <system>
+					<property name="serverPort">3306</property><!-- 服务端口->
+					<property name="managerPort">3306</property><!-- 管理端口->
+					<property name="nonePasswordLogin">0</property><!-- 密码登陆，0需要密码；1不需要密码，默认0->
+					<property name="bindIp">0.0.0.0</property><!-- 绑定Ip，0.0.0.0允许所有Ip->
+					<property name="frontWriteQueueSize">2048</property><!-- 前端允许队列大小->
+					<property name="charset">utf-8</property><!-- 字符集编码->
+					<property name="txIsolation">2</property><!-- 事务隔离， repeatable可重复读read commited可读已提交->
+					<!-- 事务隔离，READ UNCOMMITTED、READ COMMITTED、REPEATABLE READ 和 SERIALIZABLE->
+					<property name="processors">8</property><!-- 进程数->
+					<property name="idleTimeOut">18000000</property><!-- 空闲超时数，单位毫秒->
+					<property name="sqlExecuteTimeOut">300</property><!-- SQL执行的超时时间，单位秒->
+					<property name="useSqlStat">0</property><!--使用SQL统计 1为开启实时统计、0为关闭 -->
+					<property name="useGlobalTableCheck">0</property>
+					<property name="sequnceHandleType">2</property>
+					<property name="defaultMaxLimit">100</property><!-- 返回数据集大小限制，行数->
+					<property name="maxPacketSize">104857600</property><!-- 最大包大小->
+			   </system>
+			   <user>用户参数： 
+			    <user name="test" defaultAccount="true"><!-- 默认用户->
+					<property name="usingDecrypt">1</property><!-- 是否加密，1加密->
+					<!-- <property name="password">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</property>-><!-- 加密密码，通过java -cp Mycat-server-1.6.5-release.jar io.mycat.util.DecryptUtil 0:root:123456  前端加密：用户名：密码->
+					<property name="password">123456</property><!-- 明文密码->
+					<property name="schemas">db1,db2</property><!-- 当前用户访问的逻辑库，可以配置多个->
+					<property name="readOnly">false</property><!-- 用户权限：是否只读用户->
+			   </user>
+				<user name="test">
+					<privileges check="true"><!-- 开启权限->
+						<schema name="db1" dml="0110"><!-- 逻辑库的权限，dml表示insert、update、select、delete权限，0不具有，1具有->
+							<table name="tb1" dml="0000"></table><!-- 逻辑表的权限->
+							<table name="tb2" dml="1111"></table>
+						</schema>
+					</privileges><!-- 权限控制->
+			   </user> 
+			 log4j2.xml（Apache）配置文件说明
+			   用途：输出日志格式配置；日志级别控制；
+			   <PatternLayout>
+					<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}[%t]%5p - %m%n</pattern><!-- 时间、线程、级别、消息、换行->
+			   <PatternLayout>
+			   日志级别：
+			   <asyncRoot level="info" includeLocation="true" />
+			   All -> Trace -> Debug -> Info -> Warn -> Error -> Fatal -> OFF （级别越来越高，输出信息越少）
+			   rule.xml配置文件说明
+			   用途：配置水平分片的分片规则；配置水平分片的分片规则对应的分片函数；
+			   如：
+			   <tableRule name="hash-mod-4_id"><!-- 逻辑表分片规则，名称->
+					<rule>
+						<columns>id</columns><!-- 分片规则，列值->
+						<algorithm>hash-mod-4</algorithm><!-- 分片规则，算法，取<function>的name属性->
+					</rule>
+			   </tableRule>
+			   <function name="hash-mod-4"
+						class="io.mycat.route.function.PartitionByHashMod"><!-- 对应的Java类，哈希取模分片 -->
+						<property name="count">4</property><!-- 将表分4份->
+			   </function>
+			   常用的分片算法：
+					简单取模-PartitionByMod （对分片列取模）
+					如：
+					<tableRule name="customer_login"><!-- 分片规则，名称->
+						<rule>
+						  <columns>customer_id</columns><!-- 分片列->
+						  <algorithm>mod-long</algorithm>
+						</rule>
+					  </tableRule>
+					<function name="mod-long" class="io.mycat.route.function.PartitionByMod">
+						<property name="count">2</property><!-- 分片基数->
+					</function>
+					特点：分片列整数类型的表；
+					哈希取模-PartitionByHashMod （对分片列进行哈希运算后再取模）
+					如：
+					<tableRule name="customer_login"><!-- 分片规则，名称->
+						<rule>
+						  <columns>login_name</columns><!-- 分片列->
+						  <algorithm>mod-long</algorithm>
+						</rule>
+					  </tableRule>
+					<function name="mod-long" class="io.mycat.route.function.PartitionByHashMod">
+						<property name="count">2</property><!-- 分片基数->
+					</function>
+					特点：可以运用于多种数据类型如字符串日期，对分片列hash再mod
+					分片枚举-PartitionByFileMap
+					如：
+					<tableRule name="customer_login"><!-- 分片规则，名称->
+						<rule>
+						  <columns>arear_id</columns><!-- 分片列->
+						  <algorithm>mod-long</algorithm>
+						</rule>
+					  </tableRule>
+					<function name="mod-long" class="io.mycat.route.function.PartitionByFileMap">
+						<property name="mapFile">partion-file-map.txt</property><!-- 指定分片枚举值与节点关系，如：100001=0，具体的节点由scheme.xml指定->
+						<property name="type">0</property><!-- 数据类型：0整型，非0字符串->
+						<property name="defaultNode">0</property><!-- 默认分片节点，>=0启动默认节点->
+					</function>
+					特点：人为的根据枚举值指定数据存储的位置，需要配置好枚举值与节点关系（$MYCAT/conf目录下）
+					字符串范围取模分片-PartitionByPrefixPattern（指定字符串首字母长度进行ASCII值运算并求和与取模基数取模）
+					如：
+					<tableRule name="customer_login"><!-- 分片规则，名称->
+						<rule>
+						  <columns>login_name</columns><!-- 分片列->
+						  <algorithm>partition-prefix-pattern</algorithm>
+						</rule>
+					  </tableRule>
+					<function name="partition-prefix-pattern" class="io.mycat.route.function.PartitionByPrefixPattern">
+						<property name="mapFile">partition-prefix-pattern.txt</property><!-- 指定分片范围值与节点关系，如：0~100=0，具体的节点由scheme.xml指定->
+						<property name="patternValue">128</property><!-- 取模基数->
+						<property name="prefixPattern">2</property><!-- 字符串前缀->
+					</function>
+					特点：指定字符串前N个字符确认存储位置，需要配置好范围值与节点关系（$MYCAT/conf目录下）
+				scheme.xml（逻辑库，逻辑表）配置文件说明
+				用途：配置逻辑库与逻辑表；配置逻辑表所存储的数据节点（真实的物理节点）；配置数据节点所对应的物理数据库服务器信息；
+				<scheme>标签-定义逻辑库
+				如：<scheme name="db1" checkSQLscheme="false" sqlMaxLimit="1000"></scheme><!-- 逻辑库名称、返回结果集行数，-1关闭限制、发给MyCAT的SQL是否含库名（库名.表名）->
+				<table>标签-定义逻辑表
+				如：<table name="customer_login" primaryKey="customer_id" dataNode="db01,db02" rule="customer_login"/><!-- 逻辑表名称（与后端物理表名保持一致）、逻辑表主键、数据节点（后端物理数据库）、分片规则，对应rule.xml中的tableRule->
+				<dataNode>标签-定义逻辑表所对应的存储物理数据库	
+				如：<dataNode name="db01" dataHost="mysql01" database="db1"/><!-- 数据节点名称、数据节点所在的物理主机信息、物理数据库名称->
+				<dataHost>标签-定义后端数据库主机信息
+				如：<dataHost name="mysql01" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1" >
+					<!-- 物理主机名称
+						 最大/最小连接数（池作用）
+						 balance：0不开启读写分离机制（都在主库），1全部的readHost与stand by writeHost参与select语句的负载均衡（多主多从），2全部的readHost与writeHost参与select语句的负载均衡（写压力不大）,3全部的readHost参与select语句的负载均衡（一主多从）
+					            写类型，取值0或1，一般为0
+						 数据库类型，如：mysql、mongodb
+						 数据库驱动，取值有：native原生的，jdbc
+						 切换类型，值有1或-1，-1关闭切换功能（主从复制）
+					-->
+					<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
+					<writeHost host="192.168.1.1" url="192.168.1.1:3306" user="root" password="123456"><!-- 主机名、url、后端数据库用户名、密码-->
+						<readHost host="192.168.1.2" url="192.168.1.2:3306" user="root" password="123456"><readHost><!-- 从库，可以是多个-->
+					<writeHost/><!-- 主库-->
+				<dataHost/>	
+		6、数据库架构升级之垂直分库
+			案例分析：                  写负载很大
+				APP、web（前端应用）  --------------->后端数据库MySQL（订单/用户/仓配/商品模块） ？？？ ------------->解决方法：增加内存、CPU、SSID磁盘IO读写
+				
+				另外一种方案：
+				
+				APP、web（前端应用）  -------------->数据库中间件MyCAT（虚拟库可以与数据库保持同名、池的作用管理数据库连接数）   ------------->后端多个数据库（订单/仓配、用户、商品模块）
+			垂直分库的步骤：
+				分析业务模块之间的关系
+					订单（冗余商品信息、API接口获取用户信息）/仓配、用户、商品模块
+				复制数据库到其他数据库实例（主从复制，主库192.168.1.2从库192.168.1.3-5）
+					备份原数据库并记录相关事务日志点；（主库.2备份事务、存储过程、触发器、事件）
+						mysqldump --master-data=2 --single-transaction --routines --triggers --events -uroot -p imooc_db > back_immoc.sql
+					在原数据库中建立备份用户（主库.2）；
+						create user 'im_repl'@'192.168.1.%' identified by '123456'；（创建用户）
+						grant replication slave on *.* to  'im_repl'@'192.168.1.%'；（授权）
+					在新数据库（.3-5）上恢复备份数据库（从库）；
+						mysql -uroot -p order_db < back_immoc.sql （订单库）
+						mysql -uroot -p customer_db < back_immoc.sql （用户库）
+						mysql -uroot -p product_db < back_immoc.sql （商品库）
+					在新数据库实例上配置复制链路（.3-5从库，主从复制）；
+						change master to master_host='192.168.1.2',master_user='im_repl',master_password='123456',master_log_file='mysql-bin.00001',MASTER_POS_LOG='453251'；（相关事务日志点）
+						show slave status；（查看从库状态）
+						change replication filter replication_rewrite_db=((immoc_db,order_db))；（过滤重命名）
+						change replication filter replication_rewrite_db=((immoc_db,customer_db))；
+						change replication filter replication_rewrite_db=((immoc_db,product_db))；
+					在新数据库实例（.3-5从库）上启动复制；
+						start slave；
+					结论：192.168.1.2 原始库immooc_db；192.168.1.3 order_db（订单库）；192.168.1.4 product_db（商品库）；192.168.1.5 customer_db（用户库）；起初从库与主库数据结构、表完全一致；
+				配置MyCAT垂直分库（主库.2）
+					配置scheme.xml：配置逻辑库、逻辑表
+						<!--逻辑库配置-->
+						<scheme name="imooc_db" checkSQLscheme="false" sqlMaxLimit="1000"><!-- 逻辑库与原后端数据库保持同名 -->
+							<!--逻辑表配置-->
+							<table name="order_master" primaryKey="order_id" dataNode="ordb"/><!-- 订单表 -->
+							<table name="order_detail" primaryKey="order_detail_id" dataNode="ordb"/>
+							<table name="region_info" primaryKey="region_id" dataNode="ordb,prodb,custdb" type="global"/><!-- 区域表，全局表 -->
+							...
+							<table name="product_brand_infos" primaryKey="product_brand_id" dataNode="prodb"/><!-- 商品表 -->
+							<table name="customer_inf" primaryKey="customer_inf_id" dataNode="custdb"/><!-- 用户表 -->
+						</scheme>
+						<!-- 数据节点配置-->
+						<dataNode name="ordb" dataHost="mysql0103" database="order_db"/><!-- 数据主机信息、后端数据库 -->
+						<dataNode name="prodb" dataHost="mysql0104" database="product_db"/>
+						<dataNode name="custdb" dataHost="mysql0105" database="customer_db"/>
+						<!-- 数据主机配置 -->
+						<dataHost name="mysql0103" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1">
+							<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
+							<writeHost host="192.168.1.3" url="192.168.1.3:3306" user="im_mycat" password="123456"/>
+							<!-- 创建im_mycat用户
+								mysql -uroot -p；
+								create user 'im_mycat'@'192.168.1.%' identified by '123456'；（创建用户）
+								grant select,update,insert,delete on *.* to  'im_mycat'@'192.168.1.%'；（授权增删改查）
+								grant execute on *.* to  'im_mycat'@'192.168.1.%'；（授权执行）
+							-->							
+						<dataHost/>
+						<dataHost name="mysql0104" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1">
+							<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
+							<writeHost host="192.168.1.4" url="192.168.1.4:3306" user="im_mycat" password="123456"/>					
+						<dataHost/>
+						<dataHost name="mysql0105" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1">
+							<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
+							<writeHost host="192.168.1.5" url="192.168.1.5:3306" user="im_mycat" password="123456"/>					
+						<dataHost/>
+					配置server.xml：配置系统参数、用户信息
+						<system>
+							<property name="serverPort">8066</property><!-- 服务端口->
+							<property name="managerPort">9066</property><!-- 管理端口->
+							<property name="nonePasswordLogin">0</property><!-- 密码登陆，0需要密码；1不需要密码，默认0->
+							<property name="bindIp">0.0.0.0</property><!-- 绑定Ip，0.0.0.0允许所有Ip->
+							<property name="frontWriteQueueSize">2048</property><!-- 前端允许写队列大小->
+							<property name="charset">utf-8</property><!-- 字符集编码->
+							<property name="txIsolation">2</property><!-- 事务隔离， repeatable可重复读read commited 可读已提交->
+							<property name="processors">8</property><!-- 进程数->
+							<property name="idleTimeOut">18000000</property><!-- 空闲超时数，单位毫秒->
+							<property name="sqlExecuteTimeOut">300</property><!-- SQL执行的超时时间，单位秒->
+							<property name="useSqlStat">0</property><!--使用SQL统计 1为开启实时统计、0为关闭 -->
+							<property name="useGlobalTableCheck">0</property>
+							<property name="sequnceHandleType">2</property>
+							<property name="defaultMaxLimit">100</property><!-- 返回数据集大小限制，行数->
+							<property name="maxPacketSize">104857600</property><!-- 最大包大小->
+					   </system> 
+						<user name="app_imooc" defaultAccount="true"><!-- 默认用户，前端用户登录MyCAT账户->
+							<property name="usingDecrypt">1</property><!-- 是否加密，1加密->
+							<!-- <property name="password">XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX</property>-><!-- 加密密码，通过java -cp Mycat-server-1.6.5-release.jar io.mycat.util.DecryptUtil 0:root:123456 ->
+							<property name="password">123456</property><!-- 明文密码->
+							<property name="schemas">imooc_db</property><!-- 当前用户访问的逻辑库，可以配置多个->
+					   </user>
+					测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库）
+				通过MyCAT来访问DB
+					mycat start （启动服务），查看服务是否启动（观察日志文件）：$MyCAT/conf目录下查看wrapper.log文件tail -f $MyCAT/conf/wrapper.log #动态查看日志
+					mycat stop （停止服务）
+				删除（.3-5）原库中已迁移的表
+					#清理多余数据（.3-5），使其成为独立的库
+						stop slave；
+						reset slaves all；#停止主从复制
+					    #删除.3-5（order_db、customer_db、product_db）中不属于该库的相关表
+					#跨分片（跨库）查询？？？解决方案：全局表（字典表）代替了数据冗余与API接口提供的方式；本例中涉及的表region_info（区域表）为全局表；
+						使用步骤（全局表存在每个分片节点上）：
+							#备份（.3）
+							mysqldump -uroot -p order_db region_info > region_info
+							#拷贝到（.4-5）并导入库中
+							scp region_info root@192.168.1.4:/root；
+							mysql -uroot -p product_db < region_info；
+							scp region_info root@192.168.1.5:/root；
+							mysql -uroot -p customer_db < region_info；
+							#配置文件scheme.xml声明全局表（多写）
+							<table name="region_info" primaryKey="region_id" dataNode="ordb,prodb,custdb" type="global"/><!-- 区域表，全局表 -->
+					#后续工作		
+						垂直切分的优点：拆分简洁明了，拆分规则明确；应用程序模块清晰，整合容易；方便维护，容易定位；
+								  缺点：部分表关联查询无法在数据库级别中完成，需要在程序中完成；（解决方案：全局表、数据冗余、使用API获取数据）
+										数据量大访问频繁的表仍然存在性能瓶颈；
+										切分到一定程度后，扩展性受到限制；
+		7、数据库架构升级之水平分库
+			案例说明：
+				App--------->MyCAT（imooc_db）------>订单/仓配（order_db）、用户（customer_db）、商品（product_db）
+				
+				水平切分                      分片规则（F（n））
+				App--------->MyCAT（imooc_db）------------------>order01、order02、order03、、order04
+			分片原则：
+				能不切分尽量不要切分；选择合适的分片规则（分片方法）与分片键；尽量避免跨分片（跨库）JOIN操作；
+			分片后如何查询：根据分片键与分片方法路由选择后端物理数据库（节点）进行查询
+			水平分片步骤：
+				根据业务状态确定水平分片的表（订单表order_master、order_detail）
+				分析业务模块选择分片键与分片算法
+					如何选择分片键？？？主键ID？？
+						尽可能的比较均匀分布数据到各个后端物理数据库（节点）；根据业务设置字段是最频繁或最重要的查询条件；
+					业务模型的分片键与分片算法分析：
+						对订单相关的表进行水平分片：以customer_id为分片键，采用简单取模分片算法；
+				使用MyCAT部署分片集群
+					演示环境说明：
+						（原始库imooc_db）192.168.1.2 MyCAT MySQL
+						（库order_db）192.168.1.3 MySQL orderdb01、orderdb02
+						（库product_db）192.168.1.4 MySQL orderdb03、orderdb04
+					配置逻辑库与逻辑表（scheme.xml）；
+						#添加数据节点
+						<dataNode name="orderdb01" dataHost="mysql0103" database="orderdb01"/>
+						<dataNode name="orderdb02" dataHost="mysql0103" database="orderdb02"/>
+						<dataNode name="orderdb03" dataHost="mysql0104" database="orderdb03"/>
+						<dataNode name="orderdb04" dataHost="mysql0104" database="orderdb04"/>
+						#配置（修改）逻辑库/逻辑表，四个节点中（orderdb01、orderdb02、orderdb03、orderdb04）都建立好order_master表
+						<table name="order_master" primaryKey="order_id" dataNode="orderdb01,orderdb02,orderdb03,orderdb04" rule="order_master"/><!-- 订单表 -->
+					配置分片表的分片规则（rule.xml）；
+						<tableRule name="order_master"><!-- 逻辑表分片规则，名称->
+							<rule>
+								<columns>customer_id</columns><!-- 分片规则，列值，分片键->
+								<algorithm>mod-long</algorithm><!-- 分片规则，算法，取<function>的name属性->
+							</rule>
+					   </tableRule>
+					   <function name="mod-long" class="io.mycat.route.function.PartitionByMod"><!-- 对应的Java类，简单取模分片 -->								
+								<property name="count">4</property><!-- 将表分4分->
+					   </function>
+					配置用户访问以及权限（server.xml）；
+						测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库，然后进行新增查询操作数据）
+						问题？？？各个节点里面的order_master订单表中的order_id主键自增，存在重复；
+						解决方案：利用MyCAT提供的全局自增ID
+							使用：
+								1、在一个主机节点上（.2安装了MySQL服务）创建一个数据库如mycat，执行脚本：mysql -uroot -p mycat < $conf/dbseq.sql #MyCAT安装目录下
+								进入数据库mycat查看表仅存在一张表MYCAT_SEQUENCE
+								2、修改server.xml文件
+								<!--
+									0、本地文件
+									1、数据库
+									2、时间戳
+									3、利用Zookeer方式
+								-->
+								<property name="sequnceHandleType">1</property><!-- 序列号生成类型-->
+								#添加数据节点
+								<dataNode name="mycat" dataHost="mysql0102" database="mycat"/>
+								#添加数据主机
+								<dataHost name="mysql0102" maxCon="1000" minCon="10" balance="3" writeType="0" dbType="mysql" dbDriver="native" switchType="1">
+									<heartbeat>select user()<heartbeat><!-- 心跳检测，检查后端数据库是否可用-->
+									<writeHost host="192.168.1.2" url="192.168.1.2:3306" user="im_mycat" password="123456"/>					
+								<dataHost/>
+								3、修改配置文件：sequence_db_conf.properties
+										#添加两行
+										GLOBAL=mycat #数据节点
+										ORDER_MASTER=mycat #全局自增ID逻辑表表名=数据节点
+								4、添加数据库mycat表记录：
+									insert into MYCAT_SEQUENCE values ('ORDER_MASTER',1,1)；
+								5、开启全局自增（scheme.xml）
+									<table name="order_master" primaryKey="order_id" dataNode="orderdb01,orderdb02,orderdb03,orderdb04" rule="order_master" autoIncrement="true"/><!-- 订单表 -->
+						问题？？？跨分片查询，如order_master与order_detail表的join查询
+						解决方案：ER分片表
+							步骤：
+								1，在4个节点（orderdb01、orderdb02、orderdb03、orderdb04）中创建好order_detail表；
+								2，修改scheme.xml配置文件定义ER分片表
+								<table name="order_master" primaryKey="order_id" dataNode="orderdb01,orderdb02,orderdb03,orderdb04" rule="order_master" autoIncrement="true">
+									<childTable name="order_detail" primaryKey="order_detail_id" joinKey="order_id" parentKey="order_id" autoIncrement="true"/>
+								</table>
+								3、配置order_detail表全局自增ID
+									#修改配置文件：sequence_db_conf.properties
+											#添加一行
+											ORDER_DETAIL=mycat #全局自增ID逻辑表表名=数据节点
+									#添加数据库mycat表记录：
+										insert into MYCAT_SEQUENCE values ('ORDER_DETAIL',1,1)；
+								4、测试
+									在MyCAT进行测试：mysql -uapp_imooc -p123456 -h192.168.1.2 -P8066 （进入mycat逻辑库，然后进行新增查询操作数据）
+									select order_id,order_sn,cunstomer_id,mod(cunstomer_id,4) from order_master；#查看在4个节点的分片情况
+						SQL拦截（事后）：
+							作用：监控数据库记录写入操作；SQL审计（查看SQL文件）；#MySQL也提供了记录日志的方式，如：slow_log、general_log（读写，所有信息），但不利于分析；
+							使用：配置scheme.xml文件；
+								<system>
+								  <property name="sqlInterceptor">org.opencloudb.interceptor.impl.DefaultSqlInterceptor</property>
+								  <property name="sqlInterceptorType">update,insert,delete</property><!-- SQL拦截类型 -->
+								  <property name="sqlInterceptorFile">/temp/sql.txt</property> <!-- SQL保存文件路径 -->
+								</system>
+						SQL防火墙（事前）：
+							作用：控制哪些用户通过哪些主机访问后端数据库；
+								  屏蔽一些SQL语句，加强安全控制；
+							使用：配置scheme.xml文件；  
+								<firewall>
+									<whitehost> 
+										<host user="immoc_db" host="192.168.1.5"></host>
+									</whitehost><!-- ip白名单，用户允许访问的ip地址-->  
+									<blacklist check="true"> 
+										<property name="noneBaseStatementAllow">false</property><!-- 黑名单，是否允许DDL操作-->  
+										<property name="deleteWhereNoneCheck">false</property><!-- 检查DELETE语句是否无where条件-->  
+									</blacklist> 
+							    </firewall>							
+				测试分片集群
+				业务及数据迁移
+		8、MyCAT高可用架构
+			问题：
+				如何使用Zookeeper启动MyCAT???
+				主从高可用架构：MyCAT + ZK（配置同步、启动MyCAT） + Haproxy（代理、负载均衡） + Keepalived（高可用） + MySQL
+			高可用系统的要求：
+				不存在单点问题；最大限度的保证服务的可用性；
+			示意图：
+				
+				APP------|-Haproxy（代理、负载均衡）------MyCAT ------------------------|订单库（水平切分）、用户库、商品库
+						 |    |								|                           |
+				App------|  Keepalived（高可用、解决单节点故障问题）          Zookeeper（同步MyCAT配置、启动MyCAT）    |
+				         |    |								|                           |
+				APP------|-Haproxy（代理、负载均衡）------MyCAT ------------------------|订单库（水平切分）、用户库、商品库
+			步骤：
+				演示环境说明：
+					192.168.1.2 MyCAT MySQL ZK
+					192.168.1.3 MySQL ZK
+					192.168.1.4 MySQL ZK
+					192.168.1.5 MyCAT MySQL
+				1、使用ZK记录MyCAT配置（192.168.1.2-4，MyCAT数据同步）
+					建立ZK集群
+						1、安装JDK（ZK基于Java环境）；
+						2、下载ZK并解压安装；wget http：//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.tar.gz；
+						3、修改配置文件：
+							cd $ZK/conf；cp zoo_sample.cfg zoo.cfg 
+							#zoo.cfg添加ZK配置
+								server.0=192.168.1.2:2888:3888
+								server.1=192.168.1.3:2888:3888
+								server.2=192.168.1.4:2888:3888
+						4、	新建目录data并建立节点文件；
+							echo 0 > $ZK/data/myid #192.168.1.2
+						    echo 1 > $ZK/data/myid #192.168.1.3
+							echo 2 > $ZK/data/myid #192.168.1.4
+						5、启动：
+							$ZK/bin/zkServer.sh start							
+					初始化MyCAT配置在ZK集群中同步数据
+						1、MyCAT安装目录下拷贝文件：cp $MyCAT/conf/server.xml $MyCAT/conf/rule.xml $MyCAT/conf/schema.xml $MyCAT/conf/sequence_db_conf.properties zkconf/
+						2、执行脚本：$MyCAT/bin/init_zk_data.sh #初始化MyCAT在ZK中的数据
+						   登陆并查看：
+							   $ZK/bin/zkCli.sh
+							   ls /mycat/mycat-cluster-1
+							   get /mycat/mycat-cluster-1/schema/dataHost #查看schema.xml中dataHost节点信息
+					配置MyCAT支持以ZK方式启动（192.168.1.2、192.168.1.3、192.168.1.4）
+						1、配置myid.properties文件：
+						   vim $MyCAT/conf/myid.properties
+						   #修改配置
+						   loadZK=true
+						   zkURL=192.168.1.2:2181，192.168.1.3:2181，192.168.1.4:2181
+						   clusterId=mycat-cluster-1
+						   myid=mycat_01
+						   clusterSize=2
+						   clusterNodes=mycat_01，mycat_04						   
+					启动MyCAT
+						mycat start（192.168.1.2、192.168.1.4）
+				2、	使用Haproxy对MyCAT负载均衡
+						步骤：																	
+						 
