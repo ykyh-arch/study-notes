@@ -23,33 +23,52 @@
 			  7、分布式任务调度：提供秒级、精准、高可靠、高可用的定时（基于 Cron 表达式）任务调度服务
 			  8、阿里云短信服务：覆盖全球的短信服务，友好、高效、智能的互联化通讯能力，帮助企业迅速搭建客户触达通道					  
 	1、服务注册与发现（配置中心、消息总线）
-		-Nocas（= Spring Cloud Eureka + Spring Cloud Config + Spring Cloud Bus）：
+		-Nacos（= Spring Cloud Eureka + Spring Cloud Config + Spring Cloud Bus）：
 				简介：Spring Cloud Alibaba 项目中开发分布式应用微服务的子组件，致力于服务发现、配置和管理微服务，基于 DNS 和基于 RPC 的服务发现。
+				由来：前4个字母分别为Naming和Configuration的前两个字母，最后的s是Service。
+				官方定义：一个更易于构建云原生应用的动态服务发现、配置管理和服务管理平台。
+				服务注册中心比较：
+					服务注册与发现模型      CAP模型      控制台管理       社区活跃度
+						Eureka               AP            支持             低（2.X版本闭源）
+						Zookeeper            CP            不支持           中
+						Consoul              CP            支持             高
+						Nacos                AP            支持             高
+				安装：
+					前提：本地Java8 + Maven环境已经OK；下载：https://github.com/alibaba/nacos/releases/tag/1.1.4；解压并运行：bin/startup.cmd；访问：http://localhost:8848/nacos；默认用户名与密码：nacos
 				关键特性：
 					1、服务发现和服务健康监测；
 					2、动态配置服务（通过 Nacos Server 和 spring-cloud-starter-alibaba-nacos-config 实现配置的动态变更）；
 					3、动态DNS服务与服务及其元数据管理（通过 Nacos Server 和 spring-cloud-starter-alibaba-nacos-discovery 实现服务的注册与发现）
+				官方文档：https://spring.io/projects/spring-cloud-alibaba；
 				使用（服务注册与发现、提供方与消费方）：
+				服务注册中心
 				1,引用模块：POM.XML
 					<!--Nacos的服务注册与发现模块-->
 					<dependency>
 						<groupId>org.springframework.cloud</groupId>
 						<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
 					</dependency>
+					<!--监控-->
+					<dependency>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-starter-actuator</artifactId>
+					</dependency>
 					<!--统一管理-->
 					<dependencyManagement>
 						<dependencies>
+							<!--spring cloud Hoxton.SR1-->
 							<dependency>
 								<groupId>org.springframework.cloud</groupId>
 								<artifactId>spring-cloud-dependencies</artifactId>
-								<version>Greenwich.RELEASE</version>
+								<version>Hoxton.SR1</version>
 								<type>pom</type>
 								<scope>import</scope>
 							</dependency>
+							<!--Spring cloud alibaba 2.1.0.RELEASE-->
 							<dependency>
-								<groupId>org.springframework.cloud</groupId>
+								<groupId>com.alibaba.cloud</groupId>
 								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-								<version>0.2.2.RELEASE</version>
+								<version>2.1.0.RELEASE</version>
 								<type>pom</type>
 								<scope>import</scope>
 							</dependency>
@@ -59,15 +78,33 @@
 				格式：
 					 spring:
 						  application:
-							name: 程序名
+							name: 程序名，服务提供方或服务消费方
 						  cloud:
 							nacos:
 							  discovery:
-								server-addr: 192.168.43.142:8848 # 服务IP与端口
+								server-addr: localhost:8848 # 服务IP与端口
+									
 									metadata: # 元数据管理
 									  name1: healthy1 
 									  name2: healthy2
-				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现				
+					 management:  #开启监控
+						  endpoints:
+							web:
+							  exposure:
+								include: '*'
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现；
+				说明：Nacos 底层支持负载均衡，即集成了Ribbon；所以在服务的消费方，可以直接使用RestTemplate API相关功能，只需注入容器即可使用；				
+				如：@Configuration
+					public class ApplicationContextConfig {
+						@Bean
+						@LoadBalanced
+						public RestTemplate getRestTemplate() {
+							return new RestTemplate();
+						}
+					}
+				Nacos与cap：支持cp与ap的切换，说明：c所有节点看到的数据是一致的，a所有请求都有响应；AP支持的是注册临时实例；CP支持的是注册持久化实例；该模式下注册实例之前必须先注册服务，如果服务不存在，则会返回错误。
+				切换指令：curl -X PUT `$NACOS_SERVER:8848/nacos/v1/ns/operator/switches?entry=serverMode&value=CP'；
+				服务配置中心：
 				使用-客户端（动态配置，相当于SpringCloud Config）：
 				1,引用模块：POM.XML	
 				<!--Nacos分布式配置模块-->
