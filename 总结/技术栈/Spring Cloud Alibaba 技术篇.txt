@@ -104,184 +104,218 @@
 					}
 				Nacos与cap：支持cp与ap的切换，说明：c所有节点看到的数据是一致的，a所有请求都有响应；AP支持的是注册临时实例；CP支持的是注册持久化实例；该模式下注册实例之前必须先注册服务，如果服务不存在，则会返回错误。
 				切换指令：curl -X PUT `$NACOS_SERVER:8848/nacos/v1/ns/operator/switches?entry=serverMode&value=CP'；
-				服务配置中心：
-				使用-客户端（动态配置，相当于SpringCloud Config）：
+				服务配置中心（动态配置，相当于SpringCloud Config + SpringCloud Config Bus）：
+				基础篇：
 				1,引用模块：POM.XML	
-				<!--Nacos分布式配置模块-->
+				<!-- nacos config-->
 				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					  <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+					<groupId>com.alibaba.cloud</groupId>
+					<artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
 				</dependency>
-				<!--统一管理-->
-				<dependencyManagement>
-					<dependencies>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-dependencies</artifactId>
-								<version>Greenwich.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-								<version>0.2.2.RELEASE</version>
-								<type>pom</type>
-								<scope>import</scope>
-							</dependency>
-					</dependencies>
-				</dependencyManagement>
-				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件（系统级别）
-				格式：
-					spring:
-					  application:
-						name: nacos-config-client # 统一配置中心客户端
-					  cloud:
-						nacos:
-						  config:
-							server-addr: 192.168.43.142:8848 # nacos服务端
-							file-extension: yml
-					server:
-					  port: 9094 
-				3、准备外部的统一配置文件：
-							新建配置文件yml（properties）并提交到ACM，如：nacos-config-client.properties或nacos-config-client.yml								
-							# nacos默认加载的是nacos-config-client.properties文件，如果需要加载yml，需要在yml增加一行配置：file-extension: yml
-				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现；	  
-					  ACM（应用配置管理）配置加载规则说明：
-						参考文档：https://www.alibabacloud.com/help/zh/doc-detail/94708.htm?spm=a2c63.p38356.b99.56.547b66ae7aDsVW
-							# Nacos Spring Cloud 中，dataId 的完整格式如下：
-							${prefix}-${spring.profile.active}.${file-extension}
-							prefix 默认为 spring.application.name 的值，也可以通过配置项 spring.cloud.nacos.config.prefix来配置。
-							spring.profile.active 即为当前环境对应的 profile，详情可以参考 Spring Boot文档。
-							注意：当 spring.profile.active 为空时，对应的连接符 - 也将不存在，dataId 的拼接格式变成 ${prefix}.${file-extension}
-							file-exetension 为配置内容的数据格式，可以通过配置项 spring.cloud.nacos.config.file-extension 来配置。目前只支持 properties 和 yaml 类型。
-							# @RefreshScope 实现配置自动更新							
-							采用默认值的应用要加载的配置规则就是：
-							Data ID=${spring.application.name}.properties，Group=DEFAULT_GROUP。
-	2、服务调用：
-		 -Feign：声明式服务调用，与Netflix Feign 功能相似；
-				使用-客户端：
-				1,引用模块：POM.XML	
-				<!--openfeign依赖-->
+				<!-- SpringCloud ailibaba nacos-->
 				<dependency>
-					<groupId>org.springframework.cloud</groupId>
-					  <artifactId>spring-cloud-starter-openfeign</artifactId>
-				</dependency>
-				<!--Nacos的服务注册与发现模块-->
-				<dependency>
-					<groupId>org.springframework.cloud</groupId>
+					<groupId>com.alibaba.cloud</groupId>
 					<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
 				</dependency>
 				<!--统一管理-->
 				<dependencyManagement>
-					<dependencies>
+						<dependencies>
+							<!--spring cloud Hoxton.SR1-->
 							<dependency>
 								<groupId>org.springframework.cloud</groupId>
 								<artifactId>spring-cloud-dependencies</artifactId>
-								<version>Greenwich.RELEASE</version>
+								<version>Hoxton.SR1</version>
 								<type>pom</type>
 								<scope>import</scope>
 							</dependency>
+							<!--Spring cloud alibaba 2.1.0.RELEASE-->
 							<dependency>
-								<groupId>org.springframework.cloud</groupId>
+								<groupId>com.alibaba.cloud</groupId>
 								<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-								<version>0.2.2.RELEASE</version>
+								<version>2.1.0.RELEASE</version>
 								<type>pom</type>
 								<scope>import</scope>
 							</dependency>
-					</dependencies>
+						</dependencies>
 				</dependencyManagement>
-				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
-				格式：
+				2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件（系统级别）#先制定从服务配置中心拉取配置，再配application.yml或application.properties；
+				格式:
+				#bootstrap.yml
+					server:
+					  port: 3377
 					spring:
 					  application:
-						name: nacos-discovery-consumer-feign # 客户端名称
+						name: nacos-config-client #客户端
 					  cloud:
 						nacos:
+						  discovery:
+							server-addr: localhost:8848 #Nacos服务注册中心地址
 						  config:
-							server-addr: 192.168.43.142:8848 # nacos服务端
-					server:
-					  port: 9091
-				3、申明使用：程序main入口，添加@EnableFeignClients注解，开启服务调用
-						具体使用：定义一个接口
-						@FeignClient("nacos-discovery-provider") //调用的服务名称
-						public interface TestService {
-							@GetMapping("/m1")
-							String m1(@RequestParam(name = "name") String name);
-						}
-	3、其他：
-		 - Webflux：替换了旧的Servlet线程模型。用少量的线程处理request和response io操作，这些线程称为Loop线程，而业务交给响应式编程框架处理，响应式编程是非常灵活的，用户可以将业务中阻塞的操作提交到响应式框架的work线程中执行，而不阻塞的操作依然可以在Loop线程中进行处理，大大提高了Loop线程的利用率。反应堆式编程reactor。
+							server-addr: localhost:8848 #Nacos作为配置中心地址
+							file-extension: yaml #指定yaml格式配置，目前官网仅支持yaml和properties；
+							group: TEST_GROUP #组
+							namespace: 6fecc7ae-f02f-49ef-ace7-80d2f671df77 #命名空间
+							#配置文件格式：
+							#${prefix}-${spring.profile.active}.${file-extension}
+							#${spring.application.name}-${spring.profile.active}.${file-extension}；即：#nacos-config-client-dev.yml
+				#application.yml			
+					spring:
+					  profiles:
+						active: dev #表示开发环境
+				3,申明使用：程序main入口，添加@EnableDiscoveryClient注解，开启服务治理与发现；具体业务控制器添加@RefreshScope，让其支持Nacos的动态刷新功能（相当于Cloud + Bus）；
+				4、Nacos添加配置信息：
+					DataID：
+						格式：${prefix}-${spring.profile.active}.${file-extension}；
+						      prefix默认为spring.application.name的值；
+							  spring.profile.active 即为当前环境对应的profile，可以通过配置项 spring.profile.active来配置；
+							  file-exetension为配置内容的数据格式，可以通过配置项spring.cloud.nacos.config.file-extension来配置；
+				5、测试：通过修改配置信息，已实现自动刷新；			  						
+				6、多环境多项目管理:多个微服务项目、开发、生产、测试环境配置如何管理问题；
+				   Namespace + Group + DataID 三者关系？为什么这么设计？
+				   类似Java里面的package名和类名，namespace是可以用于区分部署环境的，用来隔离的，Group和DataID逻辑上区分两个目标对象。
+				   默认情况：Namespace=public ，Group=DEFAULT_GROUP,默认Cluster是DEFAULT； 
+				   DataID方案：
+				      默认空间+默认分组+新建dev和test两个DataID；如：nacos-config-client-dev.yaml、nacos-config-client-test.yaml
+				      即指定客户端spring.profile.active配置和配置文件的DataID来使不同环境下读取不同的配置；
+				   Group方案：
+					  通过组来区分环境，如：DEV_GROUP、TEST_GROUP下有nacos-config-client-info.yaml
+					  即在bootstrap.yml中添加一行组的配置信息，如：group: TEST_GROUP #组
+				   Namespace方案：
+				      通过新建命名空间，如：DEV、TEST
+					  即在bootstrap.yml中添加一行命名空间的配置信息，如：namespace: 6fecc7ae-f02f-49ef-ace7-80d2f671df77 #命名空间
+				高级篇：	  
+				Nacos集群与持久化配置：
+					官网说明：
+					    参考网址：https://nacos.io/zh-cn/docs/cluster-mode-quick-start.html
+						架构设计：
+							客户端	+	VIP （Nginx集群+ KeepAlived）    +    Nacos（IP1）、Nacos（IP2）、Nacos（IP3）  +  MySQL（集群）
+					数据库说明：
+					    默认Nacos支持的事嵌入式数据库实现数据的存储，如何配置多个Nacos节点，数据的存储一致性存在问题，为了解决这一问题，Nacos采用了集中式存储方式来支持集群部署，目前只支持MySQL存储；
+					    Nacos支持3中部署模式：
+							单机模式-用于测试与单机
+							集群模式-用于生产确保高可用
+							多集群模式-适用于多数据中心场景
+					持久化配置：
+						Nacos默认自带的是嵌入式数据库derby；
+						切换到MySQL：（Windows版）
+							1、在Nacos安装目录下找到conf/nacos-mysql.sql脚本文件并执行；
+							2、在Nacos安装目录下找到conf/application.properties配置文件中，尾部添加如下配置：
+							   spring.datasource.platform=mysql
+							   db.num=1
+							   db.url.0=jdbc:mysql://127.0.0.1:3306/nacos_config?characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true
+							   db.user=root #用户名
+							   db.password=root #密码
+							3、启动Nacos，执行指令：./startup.cmd
+						Linux版Nacos+MySQL生产环境配置：
+							方案：1个Nginx+3个Nacos注册中心+1个MySQL
+							步骤：
+								1、安装Linux版的Nacos；
+								2、集群配置：
+									  a.在Nacos安装目录下找到conf/nacos-mysql.sql脚本文件并执行到MySQL；
+								      b.在Nacos安装目录下找到conf/application.properties配置文件中添加数据库配置信息；
+									  c.Nacos的集群配置，安装目录下找到conf/cluster.conf配置文件，添加如下配置：
+										192.168.111.222：3333
+										192.168.111.222：4444
+										192.168.111.222：5555 #3个Nacos服务对外提供的服务IP与端口，IP使用用hostname -i指令获得；
+									  d.编辑Nacos的启动脚本startup.sh，使它能够接受不同的启动端口，格式：./startup.sh -p 3333，即启动端口为3333的Nacos服务；
+									    编辑文件：
+											找到 while getops ":m:f:s:" opt 改成 while getops ":m:f:s:p:" opt
+									        添加配置：
+												p)
+												   PORT=$OPTARG;;
+											找到 nohup $JAVA ${JAVA_OPT} nacos.nacos >> 改成 nohup -Dserver.port=${PORT} $JAVA ${JAVA_OPT} nacos.nacos >> 
+									  e.Nginx的配置，负载均衡：
+											#指定配置文件nginx.conf 启动；./nginx -C 指定路径/nginx.conf；
+											#配置信息
+											upstream cluster{
+												192.168.111.222：3333
+												192.168.111.222：4444
+												192.168.111.222：5555
+											}
+											server{
+												listen:1111;
+												server_name:localhost;
+												
+												location / {
+													#root html;
+													#index index.html index.htm;
+													proxy_pass:http://cluster;
+												}
+												
+											}
+								3、测试：测试客户端注册到Nacos中，客户端添加配置信息：spring.cloud.nacos.discovery.server-addr=192.168.111.222:1111 # VIP做了代理处理；											
+	2、服务的熔断与降级：
 		 -Sentinel：
-				介绍：随着微服务的流行，服务和服务之间的稳定性变得越来越重要。Sentinel 作为流量防卫组件，以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度保护服务的稳定性。
-				特征：
-					 1、丰富的应用场景：Sentinel 承接了阿里巴巴近 10 年的双十一大促流量的核心场景，例如秒杀（即突发流量控制在系统容量可以承受的范围）、消息削峰填谷、集群流量控制、实时熔断下游不可用应用等
-					 2、完备的实时监控
-					 3、广泛的开源生态：Sentinel 提供开箱即用的与其它开源框架/库的整合模块，例如与 Spring Cloud、Dubbo、gRPC 的整合
-					 4、完善的 SPI（串行外设接口） 扩展点：Sentinel 提供简单易用、完善的 SPI 扩展接口。可以通过实现扩展接口来快速地定制逻辑。例如定制规则管理、适配动态数据源等。
-				组成：
-					 核心库（Java 客户端）
-					 控制台（Dashboard）		
-					 使用：		
-					 	 1、部署Sentinel Dashboard	
-							下载地址：https://github.com/alibaba/Sentinel/releases
-							启动(默认端口：8080)：
-							java -jar sentinel-dashboard-1.6.0.jar
-							java -jar -Dserver.port=8888 sentinel-dashboard-1.6.0.jar
-							默认用户名密码：sentinel					
-						 2、核心库的配置使用：
-							1,引用模块：POM.XML	
-							<!--Sentinel依赖-->
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								  <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
-							</dependency>
-							<!--Nacos存储扩展-->
-							<dependency>
-								<groupId>org.springframework.cloud</groupId>
-								<artifactId>sentinel-datasource-nacos</artifactId>
-							</dependency>
-							<!--统一管理-->
-							<dependencyManagement>
-								<dependencies>
-										<dependency>
-											<groupId>org.springframework.cloud</groupId>
-											<artifactId>spring-cloud-dependencies</artifactId>
-											<version>Greenwich.RELEASE</version>
-											<type>pom</type>
-											<scope>import</scope>
-										</dependency>
-										<dependency>
-											<groupId>org.springframework.cloud</groupId>
-											<artifactId>spring-cloud-alibaba-dependencies</artifactId>
-											<version>0.2.2.RELEASE</version>
-											<type>pom</type>
-											<scope>import</scope>
-										</dependency>
-								</dependencies>
-							</dependencyManagement>
-							2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
-							格式：
-								spring:
-								  application:
-									name: nacos-discovery-sentinel
-								  cloud:
-									sentinel:
-									  transport:
-										dashboard: localhost:8888 #Sentinel Dashboard服务端地址 
-									  datasource:
-										ds:
-										  nacos:
-											server-addr: localhost:8848 #nacos服务地址
-											dataId: ${spring.application.name}
-											groupId: DEFAULT_GROUP
-											ruleType: flow
-								server:
-								  port: 9095
-							3、申明使用：访问sentinel服务列表并限流；通过nacos配置流控规则；
-							   # 注意
-								 Sentinel控制台中修改规则：仅存在于服务的内存中，不会修改Nacos中的配置值，重启后恢复原来的值。
-								 Nacos控制台中修改规则：服务的内存中规则会更新，Nacos中持久化规则也会更新，重启后依然保持。
-							4、优点:
-									1、sentinel配置变动后通知非常的迅速, 秒杀springcloud原来的config几条街,
-									   毕竟原来的config是基于git, 不提供可视化界面, 动态变更还需要依赖bus来通过所有的客户端变化；
-									2、与hystrix相比，sentinel更加的轻量级,并且支持动态的限流调整,更加友好的界面ui。
+			介绍：随着微服务的流行，服务和服务之间的稳定性变得越来越重要。Sentinel 作为流量防卫组件，以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度保护服务的稳定性。
+			特征：
+				 1、丰富的应用场景：Sentinel 承接了阿里巴巴近 10 年的双十一大促流量的核心场景，例如秒杀（即突发流量控制在系统容量可以承受的范围）、消息削峰填谷、集群流量控制、实时熔断下游不可用应用等
+				 2、完备的实时监控
+				 3、广泛的开源生态：Sentinel 提供开箱即用的与其它开源框架/库的整合模块，例如与 Spring Cloud、Dubbo、gRPC 的整合
+				 4、完善的 SPI（串行外设接口） 扩展点：Sentinel 提供简单易用、完善的 SPI 扩展接口。可以通过实现扩展接口来快速地定制逻辑。例如定制规则管理、适配动态数据源等。
+			组成：
+				 核心库（Java 客户端）
+				 控制台（Dashboard）		
+				 使用：		
+					 1、部署Sentinel Dashboard	
+						下载地址：https://github.com/alibaba/Sentinel/releases
+						启动(默认端口：8080)：
+						java -jar sentinel-dashboard-1.6.0.jar
+						java -jar -Dserver.port=8888 sentinel-dashboard-1.6.0.jar
+						默认用户名密码：sentinel					
+					 2、核心库的配置使用：
+						1,引用模块：POM.XML	
+						<!--Sentinel依赖-->
+						<dependency>
+							<groupId>org.springframework.cloud</groupId>
+							  <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+						</dependency>
+						<!--Nacos存储扩展-->
+						<dependency>
+							<groupId>org.springframework.cloud</groupId>
+							<artifactId>sentinel-datasource-nacos</artifactId>
+						</dependency>
+						<!--统一管理-->
+						<dependencyManagement>
+							<dependencies>
+									<dependency>
+										<groupId>org.springframework.cloud</groupId>
+										<artifactId>spring-cloud-dependencies</artifactId>
+										<version>Greenwich.RELEASE</version>
+										<type>pom</type>
+										<scope>import</scope>
+									</dependency>
+									<dependency>
+										<groupId>org.springframework.cloud</groupId>
+										<artifactId>spring-cloud-alibaba-dependencies</artifactId>
+										<version>0.2.2.RELEASE</version>
+										<type>pom</type>
+										<scope>import</scope>
+									</dependency>
+							</dependencies>
+						</dependencyManagement>
+						2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
+						格式：
+							spring:
+							  application:
+								name: nacos-discovery-sentinel
+							  cloud:
+								sentinel:
+								  transport:
+									dashboard: localhost:8888 #Sentinel Dashboard服务端地址 
+								  datasource:
+									ds:
+									  nacos:
+										server-addr: localhost:8848 #nacos服务地址
+										dataId: ${spring.application.name}
+										groupId: DEFAULT_GROUP
+										ruleType: flow
+							server:
+							  port: 9095
+						3、申明使用：访问sentinel服务列表并限流；通过nacos配置流控规则；
+						   # 注意
+							 Sentinel控制台中修改规则：仅存在于服务的内存中，不会修改Nacos中的配置值，重启后恢复原来的值。
+							 Nacos控制台中修改规则：服务的内存中规则会更新，Nacos中持久化规则也会更新，重启后依然保持。
+						4、优点:
+								1、sentinel配置变动后通知非常的迅速, 秒杀springcloud原来的config几条街,
+								   毕竟原来的config是基于git, 不提供可视化界面, 动态变更还需要依赖bus来通过所有的客户端变化；
+								2、与hystrix相比，sentinel更加的轻量级,并且支持动态的限流调整,更加友好的界面ui。
