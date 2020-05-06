@@ -1,0 +1,2227 @@
+----------------------------------------------Java高级运用技术篇之设计模式-------------------------------------------------------------------------------------------------------				
+	设计模式
+		重要性：设计模式不依赖于语言，对普遍存在的各种问题，所提出的解决方案，思想来源于建筑学。
+				项目的后期维护扩展，有新需求，都需要设计模式。
+				在软件中的运用：面向对象(oo)->功能模块[设计模式+算法/数据结构]->框架[多种设计模式]->架构[服务器集群]
+		Java设计模式：23种、七大原则
+			目的：为了让软件具有更好的代码重用性[相同的功能，不需要重复编写]、可读性[规范性]、可扩展性[增加新功能非常方便，可维护性]、可靠性[新功能对就功能不会产生影响]，->高内聚、降低耦合性。
+			七大原则：是设计模式的基础
+				单一职责原则-一个类只负责一项职责，降低类的负责度，提高可读性、可维护性，降低风险。当类方法很少，可以在方法级别实现单一职责原则。				
+					//方案一
+					public class SingleResponsibility1 {
+						public static void main(String[] args) {
+							RoadVehicle roadVehicle = new RoadVehicle();
+							roadVehicle.run("摩托车");
+							roadVehicle.run("汽车");
+							
+							AirVehicle airVehicle = new AirVehicle();						
+							airVehicle.run("飞机");
+						}
+					}
+					//1. 遵守单一职责原则
+					//2. 但是这样做的改动很大，即将类分解，同时修改客户端
+					//3. 改进：直接修改Vehicle 类，改动的代码会比较少=>方案2
+					class RoadVehicle {
+						public void run(String vehicle) {
+							System.out.println(vehicle + "公路运行");
+						}
+					}
+					class AirVehicle {
+						public void run(String vehicle) {
+							System.out.println(vehicle + "天空运行");
+						}
+					}
+					class WaterVehicle {
+						public void run(String vehicle) {
+							System.out.println(vehicle + "水中运行");
+						}
+					}
+					//方案二
+					public class SingleResponsibility2 {
+							public static void main(String[] args) {
+								Vehicle2 vehicle2  = new Vehicle2();
+								vehicle2.run("汽车");
+								vehicle2.runWater("轮船");
+								vehicle2.runAir("飞机");
+							}
+
+						}
+						//1. 这种修改方法没有对原来的类做大的修改，只是增加方法
+						//2. 这里虽然没有在类这个级别上遵守单一职责原则，但是在方法级别上，仍然是遵守单一职责
+						class Vehicle2 {
+							public void run(String vehicle) {								
+								System.out.println(vehicle + " 在公路上运行....");								
+							}						
+							public void runAir(String vehicle) {
+								System.out.println(vehicle + " 在天空上运行....");
+							}							
+							public void runWater(String vehicle) {
+								System.out.println(vehicle + " 在水中行....");
+							}							
+						}
+				接口隔离原则-一个类对另一个类的依赖应建立在最小接口上。
+					UML类图：
+							 依赖										实现
+						A类	------->接口[最小接口，接口拆分多个接口]<------- B类
+							 依赖           							实现 
+						C类	------->接口[最小接口，接口拆分多个接口]<------- D类
+					如：public class Segregation1 {
+							public static void main(String[] args) {
+								A a = new A();
+								a.depend1(new B()); // A类通过接口去依赖B类
+								a.depend2(new B());
+								a.depend3(new B());
+
+								C c = new C();
+								c.depend1(new D()); // C类通过接口去依赖(使用)D类
+								c.depend4(new D());
+								c.depend5(new D());
+							}
+						}
+						// 接口1
+						interface Interface1 {
+							void operation1();
+
+						}
+						// 接口2
+						interface Interface2 {
+							void operation2();
+							void operation3();
+						}
+						// 接口3
+						interface Interface3 {
+							void operation4();
+							void operation5();
+						}
+						class B implements Interface1, Interface2 {
+							public void operation1() {
+								System.out.println("B 实现了 operation1");
+							}
+							public void operation2() {
+								System.out.println("B 实现了 operation2");
+							}
+							public void operation3() {
+								System.out.println("B 实现了 operation3");
+							}
+
+						}
+						class D implements Interface1, Interface3 {
+							public void operation1() {
+								System.out.println("D 实现了 operation1");
+							}
+							public void operation4() {
+								System.out.println("D 实现了 operation4");
+							}
+							public void operation5() {
+								System.out.println("D 实现了 operation5");
+							}
+						}
+						class A { // A 类通过接口Interface1,Interface2 依赖(使用) B类，但是只会用到1,2,3方法
+							public void depend1(Interface1 i) {
+								i.operation1();
+							}
+							public void depend2(Interface2 i) {
+								i.operation2();
+							}
+							public void depend3(Interface2 i) {
+								i.operation3();
+							}
+						}
+						class C { // C 类通过接口Interface1,Interface3 依赖(使用) D类，但是只会用到1,4,5方法
+							public void depend1(Interface1 i) {
+								i.operation1();
+							}
+							public void depend4(Interface3 i) {
+								i.operation4();
+							}
+							public void depend5(Interface3 i) {
+								i.operation5();
+							}
+						}												
+				依赖倒转[倒置]原则-核心思想是面向接口编程，使程序有一个缓冲层，抽象不依赖细节，细节依赖抽象，接口或抽象类制定规范，细节交给实现类
+					坚持3种传递方式：利用接口、构造器、setter进行依赖传递！注意细节：1，低层模块尽量是接口或抽象类；2，变量尽量使用是接口或抽象类；3，继承了里氏替换原则
+					如：public class DependecyInversion {
+							public static void main(String[] args) {
+								//客户端无需改变
+								Person person = new Person();
+								person.receive(new Email());								
+								person.receive(new WeiXin());
+							}
+						}
+						//定义接口
+						interface IReceiver {
+							public String getInfo();
+						}
+						class Email implements IReceiver {
+							public String getInfo() {
+								return "电子邮件信息: hello,world";
+							}
+						}
+						//增加微信
+						class WeiXin implements IReceiver {
+							public String getInfo() {
+								return "微信信息: hello,ok";
+							}
+						}
+						class Person {							
+							public void receive(IReceiver receiver) {//这里我们是对接口的依赖
+								System.out.println(receiver.getInfo());
+							}
+						}
+					传递方式：
+						public class DependencyPass {
+							public static void main(String[] args) {
+								//通过接口进行依赖传递
+								ChangHong changHong = new ChangHong();
+						//		OpenAndClose openAndClose = new OpenAndClose();
+						//		openAndClose.open(changHong);								
+								//通过构造器进行依赖传递
+						//		OpenAndClose openAndClose = new OpenAndClose(changHong);
+						//		openAndClose.open();
+								//通过setter方法进行依赖传递
+								OpenAndClose openAndClose = new OpenAndClose();
+								openAndClose.setTv(changHong);
+								openAndClose.open();
+							}
+						}
+						// 方式1：通过接口传递，2接口2实现
+						// 开关接口
+						// interface IOpenAndClose {
+						// public void open(ITV tv); //抽象方法,接收接口
+						// }
+						// interface ITV { //ITV接口
+						// public void play();
+						// } 
+						// class ChangHong implements ITV {
+						//	@Override
+						//	public void play() {
+						//		System.out.println("长虹电视机，打开");
+						//	} 
+						// }
+						// 实现接口
+						// class OpenAndClose implements IOpenAndClose{
+						// public void open(ITV tv){
+						// tv.play();
+						// }
+						// }
+						// 方式2: 通过构造方法，2接口1实现
+						// interface IOpenAndClose {
+						// public void open(); //抽象方法
+						// }
+						// interface ITV { //ITV接口
+						// public void play();
+						// }
+						// class OpenAndClose implements IOpenAndClose{
+						// public ITV tv; //成员
+						// public OpenAndClose(ITV tv){ //构造器
+						// this.tv = tv;
+						// }
+						// public void open(){
+						// this.tv.play();
+						// }
+						// }
+						// 方式3 , 通过setter方法传递
+						interface IOpenAndClose {
+							public void open(); // 抽象方法
+							public void setTv(ITV tv);
+						}
+						interface ITV { // ITV接口
+							public void play();
+						}
+						class OpenAndClose implements IOpenAndClose {
+							private ITV tv;
+							public void setTv(ITV tv) {
+								this.tv = tv;
+							}
+							public void open() {
+								this.tv.play();
+							}
+						}
+						class ChangHong implements ITV {
+							@Override
+							public void play() {
+								System.out.println("长虹电视机，打开");
+							}							 
+						}
+				里氏替换原则-正确使用继承[将父类与子类去继承更基础的类,原有的继承关系被打断]，继承会使耦合性增强，尽量不要去修改父类的方法；在适当的时候可以使用聚合、组合、依赖来解决这一问题！
+					如：public class Liskov {
+							public static void main(String[] args) {
+								A a = new A();
+								System.out.println("11-3=" + a.func1(11, 3));
+								B b = new B();
+								//调用完成的功能就会很明确
+								System.out.println("11+3+9=" + b.func2(11, 3));									
+								//使用组合仍然可以使用到A类相关方法
+								System.out.println("11-3=" + b.func3(11, 3));// 这里本意是求出11-3								
+							}
+						}
+						//创建一个更加基础的基类
+						class Base {
+							//把更加基础的方法和成员写到Base类
+						}
+						// A类
+						class A extends Base {
+							// 返回两个数的差
+							public int func1(int num1, int num2) {
+								return num1 - num2;
+							}
+						}
+						// 增加了一个新功能：完成两个数相加,然后和9求和
+						class B extends Base {
+							//如果B需要使用A类的方法,使用组合关系
+							private A a = new A();							
+							public int func1(int a, int b) {
+								return a + b;
+							}
+							public int func2(int a, int b) {
+								return func1(a, b) + 9;
+							}							
+							//我们仍然想使用A的方法
+							public int func3(int a, int b) {
+								return this.a.func1(a, b);
+							}
+						}					
+				开闭[ocp]原则-对扩展者开放[提供方]，对修改者关闭[使用者，调用者]，核心！
+					如：public class Ocp {
+							public static void main(String[] args) {
+								GraphicEditor graphicEditor = new GraphicEditor();
+								graphicEditor.drawShape(new Rectangle());
+								graphicEditor.drawShape(new Circle());
+								graphicEditor.drawShape(new Triangle());
+								graphicEditor.drawShape(new OtherGraphic());
+							}
+						}
+						//这是一个用于绘图的类 [使用方]
+						class GraphicEditor {							
+							public void drawShape(Shape s) {//接收Shape对象，调用draw方法
+								s.draw();
+							}							
+						}
+						//Shape类，基类
+						abstract class Shape {
+							int m_type;							
+							public abstract void draw();//抽象方法
+						}
+						//扩展方
+						class Rectangle extends Shape {
+							Rectangle() {
+								super.m_type = 1;
+							}
+							@Override
+							public void draw() {
+								System.out.println(" 绘制矩形 ");
+							}
+						}
+						class Circle extends Shape {
+							Circle() {
+								super.m_type = 2;
+							}
+							@Override
+							public void draw() {
+								System.out.println(" 绘制圆形 ");
+							}
+						}
+						//新增画三角形
+						class Triangle extends Shape {
+							Triangle() {
+								super.m_type = 3;
+							}
+							@Override
+							public void draw() {
+								System.out.println(" 绘制三角形 ");
+							}
+						}
+						//新增一个图形
+						class OtherGraphic extends Shape {
+							OtherGraphic() {
+								super.m_type = 4;
+							}
+							@Override
+							public void draw() {
+								System.out.println(" 绘制其它图形 ");
+							}
+						}					
+				迪米特法则-最少知道原则，只与直接朋友通讯。
+					耦合关系：组合、关联、聚合、依赖、泛化、实现。
+					直接朋友：a类与b类直接朋友，若a类成员变量、方法参数、方法返回值是b类，两者是直接朋友；而出现在局部变量里的b类则称为陌生的类；						
+						如：public class Demeter1 {
+								public static void main(String[] args) {
+									System.out.println("~~~使用迪米特法则~~");
+									//创建了一个 SchoolManager 对象
+									SchoolManager schoolManager = new SchoolManager();
+									//输出学院的员工id 和  学校总部的员工信息
+									schoolManager.printAllEmployee(new CollegeManager());
+								}
+							}
+							//学校总部员工类
+							class Employee {
+								private String id;
+								public void setId(String id) {
+									this.id = id;
+								}
+								public String getId() {
+									return id;
+								}
+							}
+							//学院的员工类
+							class CollegeEmployee {
+								private String id;
+								public void setId(String id) {
+									this.id = id;
+								}
+								public String getId() {
+									return id;
+								}
+							}
+							//管理学院员工的管理类
+							class CollegeManager {
+								//返回学院的所有员工
+								public List<CollegeEmployee> getAllEmployee() {
+									List<CollegeEmployee> list = new ArrayList<CollegeEmployee>();
+									for (int i = 0; i < 10; i++) { //这里我们增加了10个员工到 list
+										CollegeEmployee emp = new CollegeEmployee();
+										emp.setId("学院员工id= " + i);
+										list.add(emp);
+									}
+									return list;
+								}								
+								//输出学院员工的信息
+								public void printEmployee() {
+									//获取到学院员工
+									List<CollegeEmployee> list1 = getAllEmployee();
+									System.out.println("------------学院员工------------");
+									for (CollegeEmployee e : list1) {
+										System.out.println(e.getId());
+									}
+								}
+							}
+							//学校管理类
+							class SchoolManager {
+								//返回学校总部的员工
+								public List<Employee> getAllEmployee() {
+									List<Employee> list = new ArrayList<Employee>();									
+									for (int i = 0; i < 5; i++) { //这里我们增加了5个员工到 list
+										Employee emp = new Employee();
+										emp.setId("学校总部员工id= " + i);
+										list.add(emp);
+									}
+									return list;
+								}
+								//该方法完成输出学校总部和学院员工信息(id)
+								void printAllEmployee(CollegeManager sub) {									
+									//分析问题
+									//1. 将输出学院的员工方法，封装到CollegeManager，符合最少知道原则
+									sub.printEmployee();								
+									//获取到学校总部员工
+									List<Employee> list2 = this.getAllEmployee();
+									System.out.println("------------学校总部员工------------");
+									for (Employee e : list2) {
+										System.out.println(e.getId());
+									}
+								}
+							}						
+				合成复用原则-尽量使用合成/聚合的方式[UML类图的关系]，而不是使用继承
+				总结:针对接口编程，而不是实现编程；为松耦合而努力；			
+			UML类图
+				定义：统一建模语言，画图
+				符号含义：Note:注释；Class：类，可以添加属性与方法；Interface：接口；Dependency：依赖（使用）；Association：关联；
+					      Generalization：泛化（继承）；Realization：实现；Aggregation：聚合；Composite：组合
+				分类：类图[核心]、用例图、时序图、活动图
+				类图关系：依赖（使用）、关联、泛化（继承）、实现、聚合、组合
+					依赖：一个类使用到了其他的类，就存在依赖；
+					泛化（继承）:继承关系，依赖关系的特例；
+					实现：实现关系，依赖关系的特例；
+					关联：关联关系，依赖关系的特例；一对一，一对多[多对一]，多对多关系；具有导航性[单向/双向]
+					聚合：表示整体与部分之间的关系，整体与部分可以分开，关联关系的特例；代码中体现：setter方法
+					组合：表示整体与部分之间的关系，整体与部分可以不可分开[同生共死]，关联关系的特例；代码中体现：new 关键字；				
+			设计模式：
+				解决某类问题通用的解决方案
+				类型：23种
+					创建型模式：[对象的创建]，单例模式、抽象工厂模式、原型模式、建造者模式、工厂模式
+					结构型模式：[软件结构]，适配器模式、桥接模式、装饰模式、组合模式、外观模式、享元模式、代理模式
+					行为型模式：[方法]，模板方法模式、命令模式、访问者模式、迭代器模式、观察者模式、中介者模式、备忘录模式、解析器模式、状态模式、策略模式、职责链模式（责任链模式）			
+			创建型模式：	
+				单例模式：
+					含义：某个类只存在一个对象实例；通过一个静态方法来获取这个对象实例；
+					方式：8种
+						饿汉式（静态变量）、饿汉式（静态代码块）-2种[核心思想是在类加载的时候创建类的实例]
+						懒汉式（线程不安全）、懒汉式（线程安全，同步方法）、懒汉式（线程安全，同步代码块）-3种
+						双重检查
+						静态内部类
+						枚举
+					1、饿汉式（静态变量）：
+					如：public class SingletonTest01 {
+							public static void main(String[] args) {
+								//测试
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());
+							}
+						}
+						//饿汉式(静态变量)
+						class Singleton {							
+							//1. 构造器私有化, 外部能new
+							private Singleton() {								
+							}							
+							//2.本类内部创建对象实例
+							private final static Singleton instance = new Singleton();							
+							//3. 提供一个公有的静态方法，返回实例对象
+							public static Singleton getInstance() {
+								return instance;
+							}							
+						}
+					优点缺点：写法简单，类装载时完成实例化，避免线程同步问题；没有完成lazy loading的效果，如果没用过这个实例，会造成内存浪费；
+				    2、饿汉式（静态代码块）：	
+					如：public class SingletonTest02 {
+							public static void main(String[] args) {
+								//测试
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());
+							}
+						}
+						//饿汉式(静态代码块)
+						class Singleton {							
+							//1. 构造器私有化, 外部能new
+							private Singleton() {								
+							}							
+							//2.本类内部创建对象实例
+							private  static Singleton instance;							
+							static { // 在静态代码块中，创建单例对象
+								instance = new Singleton();
+							}							
+							//3. 提供一个公有的静态方法，返回实例对象
+							public static Singleton getInstance() {
+								return instance;
+							}
+						}
+					优点缺点：同饿汉式（静态变量）；
+					3、懒汉式（线程不安全）：
+					如：public class SingletonTest03 {
+							public static void main(String[] args) {
+								System.out.println("懒汉式1 ， 线程不安全~");
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());
+							}
+						}
+						class Singleton {
+							private static Singleton instance;							
+							private Singleton() {}							
+							//提供一个静态的公有方法，当使用到该方法时，才去创建 instance，即懒汉式
+							public static Singleton getInstance() {
+								if(instance == null) {
+									instance = new Singleton();
+								}
+								return instance;
+							}
+						}
+					优点缺点：单线程下起到lazy loading的效果，多线程下线程不安全，不推荐使用；
+					4、懒汉式（线程安全，同步方法）：
+					如：public class SingletonTest04 {
+							public static void main(String[] args) {
+								System.out.println("懒汉式2 ， 线程安全~");
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());
+							}
+						}
+						// 懒汉式(线程安全，同步方法)
+						class Singleton {
+							private static Singleton instance;							
+							private Singleton() {}							
+							//提供一个静态的公有方法，加入同步处理的代码，解决线程安全问题
+							public static synchronized Singleton getInstance() {
+								if(instance == null) {
+									instance = new Singleton();
+								}
+								return instance;
+							}
+						}
+					优点缺点：解决线程安全问题，但synchronized关键字的使用效率太低，不推荐使用；
+					5、懒汉式（线程安全，同步代码块）：
+					如：
+					// 懒汉式(线程安全，同步代码块)
+						class Singleton {
+							private static Singleton instance;							
+							private Singleton() {}							
+							//提供一个静态的公有方法
+							public static Singleton getInstance() {
+								//加入同步代码块
+								if(instance == null) {
+									synchronized(Singleton.class){
+										instance = new Singleton();
+									}
+								}
+								return instance;
+							}
+						}
+					优点缺点：不能解决线程安全问题，可能会出现多个实例，不推荐使用；
+					6、双重检查：[推荐使用]
+					如：public class SingletonTest06 {
+							public static void main(String[] args) {
+								System.out.println("双重检查");
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());								
+							}
+						}
+						class Singleton {
+							private static volatile Singleton instance;//volatile变量可以立即刷新到主存						
+							private Singleton() {}						
+							//提供一个静态的公有方法，加入双重检查代码							
+							public static synchronized Singleton getInstance() {
+								if(instance == null) {
+									synchronized (Singleton.class) {
+										if(instance == null) {
+											instance = new Singleton();
+										}
+									}									
+								}
+								return instance;
+							}
+						}
+					优点缺点：解决线程安全问题, 同时解决懒加载问题；同时保证了效率, 推荐使用；
+					7、静态内部类：[推荐使用]
+					如：public class SingletonTest07 {
+							public static void main(String[] args) {
+								System.out.println("使用静态内部类完成单例模式");
+								Singleton instance1 = Singleton.getInstance();
+								Singleton instance2 = Singleton.getInstance();
+								System.out.println(instance1 == instance2); // true
+								System.out.println("instance1.hashCode=" + instance1.hashCode());
+								System.out.println("instance2.hashCode=" + instance2.hashCode());								
+								}
+							}
+							// 静态内部类完成， 推荐使用
+							class Singleton {
+							//构造器私有化
+							private Singleton() {}
+							//写一个静态内部类,该类中有一个静态属性 Singleton
+							private static class SingletonInstance {
+							//final在JVM底层可以得到优化
+								private static final Singleton INSTANCE = new Singleton(); 
+							}
+							//提供一个静态的公有方法，直接返回SingletonInstance.INSTANCE
+							public static synchronized Singleton getInstance() {//调用时才会类装载SingletonInstance，保证线程安全问题，此时别的线程无法进入；								
+								return SingletonInstance.INSTANCE;
+								}
+							}
+					优点缺点：采用类加载机制保证线程安全问题, 同时解决懒加载[延迟加载]问题；同时保证了效率, 推荐使用；
+					8、枚举：[推荐使用]
+					如：public class SingletonTest08 {
+							public static void main(String[] args) {
+								Singleton instance1 = Singleton.INSTANCE;
+								Singleton instance2 = Singleton.INSTANCE;
+								System.out.println(instance1 == instance2);								
+								System.out.println(instance1.hashCode());
+								System.out.println(instance2.hashCode());							
+								instance.sayOK();
+							}
+						}
+						//使用枚举，可以实现单例, 推荐
+						enum Singleton {
+							INSTANCE; //属性
+							public void sayOK() {
+								System.out.println("ok~");
+							}
+						}
+					优点缺点：保证线程安全, 同时防止反序列化创建对象，推荐使用；
+					JDK1.5运用：java.lang.Runtime类使用单例模式[饿汉式]；
+					注意事项：
+						保证系统内存只有一个对象，节约资源；通过静态方法获取对象；使用场景：频繁创建销毁的对象，重量级对象[消耗资源过多]，
+						工具类、文件类、数据库类对象[session工厂、数据源]等；				
+				工厂模式：
+					1、简单工厂模式[静态工厂模式]：由一个工厂对象决定创建哪一种产品类的实例；定义一个创建对象的类[工厂类]，由这个类来封装实例化对象的行为；
+					如：披萨订购示例：
+					//抽象类
+					public abstract class Pizza {
+						protected String name; //名字						
+						public abstract void prepare();	//准备原材料, 不同的披萨不一样，因此，我们做成抽象方法				
+						public void bake() {
+							System.out.println(name + " baking;");
+						}
+						public void cut() {
+							System.out.println(name + " cutting;");
+						}
+						//打包
+						public void box() {
+							System.out.println(name + " boxing;");
+						}
+						public void setName(String name) {
+							this.name = name;
+						}
+					}
+					//实现类
+					public class CheesePizza extends Pizza {
+						@Override
+						public void prepare() {
+							System.out.println(" 给制作奶酪披萨 准备原材料 ");
+						}
+					}
+					public class GreekPizza extends Pizza {
+						@Override
+						public void prepare() {
+							System.out.println(" 给希腊披萨 准备原材料 ");
+						}
+					}
+					public class PepperPizza extends Pizza {
+						@Override
+						public void prepare() {
+							System.out.println(" 给胡椒披萨准备原材料 ");
+						}
+					}
+					//订单[使用者]
+					public class OrderPizza1 {
+						//  传统方法：
+						//  构造器
+						public OrderPizza1() {
+							Pizza pizza = null;
+							String orderType; // 订购披萨的类型
+							do {
+								orderType = getType();
+								if (orderType.equals("greek")) {
+									pizza = new GreekPizza();
+									pizza.setName(" 希腊披萨 ");
+								} else if (orderType.equals("cheese")) {
+									pizza = new CheesePizza();
+									pizza.setName(" 奶酪披萨 ");
+								} else if (orderType.equals("pepper")) {
+									pizza = new PepperPizza();
+									pizza.setName("胡椒披萨");
+								} else {
+									break;
+								}
+								//输出pizza制作过程
+								pizza.prepare();
+								pizza.bake();
+								pizza.cut();
+								pizza.box();								
+							} while (true);
+						}
+						//定义一个简单工厂对象
+						SimpleFactory simpleFactory;
+						Pizza pizza = null;						
+						//构造器
+						public OrderPizza1(SimpleFactory simpleFactory) {
+							setFactory(simpleFactory);
+						}
+						//利用UML类图的聚合关系
+						public void setFactory(SimpleFactory simpleFactory) {
+							String orderType = ""; //用户输入的							
+							this.simpleFactory = simpleFactory; //设置简单工厂对象							
+							do {
+								orderType = getType(); 
+								pizza = this.simpleFactory.createPizza1(orderType);	//接收实例化对象						
+								//输出pizza
+								if(pizza != null) { //订购成功
+									pizza.prepare();
+									pizza.bake();
+									pizza.cut();
+									pizza.box();
+								} else {
+									System.out.println(" 订购披萨失败 ");
+									break;
+								}
+							}while(true);
+						}						
+						// 写一个方法，可以获取客户希望订购的披萨种类
+						private String getType() {
+							try {
+								BufferedReader strin = new BufferedReader(new InputStreamReader(System.in));
+								System.out.println("input pizza 种类:");
+								String str = strin.readLine();
+								return str;
+							} catch (IOException e) {
+								e.printStackTrace();
+								return "";
+							}
+						}
+					}
+					//订单[使用者]
+					public class OrderPizza2 {
+						Pizza pizza = null;
+						String orderType = "";
+						// 构造器
+						public OrderPizza2() {							
+							do {
+								orderType = getType();
+								pizza = SimpleFactory.createPizza2(orderType);//调用静态工厂方法
+								// 输出pizza
+								if (pizza != null) { // 订购成功
+									pizza.prepare();
+									pizza.bake();
+									pizza.cut();
+									pizza.box();
+								} else {
+									System.out.println(" 订购披萨失败 ");
+									break;
+								}
+							} while (true);
+						}
+						// 写一个方法，可以获取客户希望订购的披萨种类
+						private String getType() {
+							try {
+								BufferedReader strin = new BufferedReader(new InputStreamReader(System.in));
+								System.out.println("input pizza 种类:");
+								String str = strin.readLine();
+								return str;
+							} catch (IOException e) {
+								e.printStackTrace();
+								return "";
+							}
+						}
+					}
+					//简单工厂类
+					public class SimpleFactory {
+						//添加orderType返回对应的Pizza对象，实例化过程交给工厂
+						public Pizza createPizza1(String orderType) {
+							Pizza pizza = null;
+							System.out.println("使用简单工厂模式");
+							if (orderType.equals("greek")) {
+								pizza = new GreekPizza();
+								pizza.setName(" 希腊披萨 ");
+							} else if (orderType.equals("cheese")) {
+								pizza = new CheesePizza();
+								pizza.setName(" 奶酪披萨 ");
+							} else if (orderType.equals("pepper")) {
+								pizza = new PepperPizza();
+								pizza.setName("胡椒披萨");
+							}
+							
+							return pizza;
+						}						
+						//简单工厂模式也叫静态工厂模式 						
+						public static Pizza createPizza2(String orderType) {
+							Pizza pizza = null;
+							System.out.println("使用简单工厂模式");
+							if (orderType.equals("greek")) {
+								pizza = new GreekPizza();
+								pizza.setName(" 希腊披萨 ");
+							} else if (orderType.equals("cheese")) {
+								pizza = new CheesePizza();
+								pizza.setName(" 奶酪披萨 ");
+							} else if (orderType.equals("pepper")) {
+								pizza = new PepperPizza();
+								pizza.setName("胡椒披萨");
+							}							
+							return pizza;
+						}
+					}
+					//客户端，发出订购
+					public class PizzaStore {
+						public static void main(String[] args) {
+							//传统方式
+							//new OrderPizza1();							
+							//使用简单工厂模式
+							//new OrderPizza1(new SimpleFactory());
+							//System.out.println("~~退出程序~~");							
+							new OrderPizza2();
+						}
+					}
+					结论：当出现一种新的披萨类型只需修改工厂方法，其他地方都不需要改动；
+					2、工厂方法模式：
+					   含义：定义创建对象的抽象方法[抽象类]，由子类决定要实例化的类，将对象的实例化推迟到了子类。
+					   如：披萨订购示例[添加了地区的概念]：
+					   //基础类
+					   public abstract class Pizza {
+							protected String name; //名字
+							//准备原材料, 不同的披萨不一样，因此，我们做成抽象方法
+							public abstract void prepare();							
+							public void bake() {
+								System.out.println(name + " baking;");
+							}
+							public void cut() {
+								System.out.println(name + " cutting;");
+							}
+							//打包
+							public void box() {
+								System.out.println(name + " boxing;");
+							}
+							public void setName(String name) {
+								this.name = name;
+							}
+						}
+					   public class BJCheesePizza extends Pizza {
+							@Override
+							public void prepare() {
+								setName("北京的奶酪pizza");
+								System.out.println(" 北京的奶酪pizza 准备原材料");
+							}
+						}
+					   public class BJPepperPizza extends Pizza {
+							@Override
+							public void prepare() {
+								setName("北京的胡椒pizza");
+								System.out.println(" 北京的胡椒pizza 准备原材料");
+							}
+						}
+					   public class LDCheesePizza extends Pizza{
+							@Override
+							public void prepare() {
+								setName("伦敦的奶酪pizza");
+								System.out.println(" 伦敦的奶酪pizza 准备原材料");
+							}
+						}
+					   public class LDPepperPizza extends Pizza{
+							@Override
+							public void prepare() {
+								setName("伦敦的胡椒pizza");
+								System.out.println(" 伦敦的胡椒pizza 准备原材料");
+							}
+						}
+					   //使用者
+					   public abstract class OrderPizza {
+							//定义一个抽象方法，createPizza , 让各个工厂子类自己实现
+							abstract Pizza createPizza(String orderType);							
+							// 构造器
+							public OrderPizza() {
+								Pizza pizza = null;
+								String orderType; // 订购披萨的类型
+								do {
+									orderType = getType();
+									pizza = createPizza(orderType); //抽象方法，由工厂子类完成
+									//输出pizza 制作过程
+									pizza.prepare();
+									pizza.bake();
+									pizza.cut();
+									pizza.box();
+									
+								} while (true);
+							}							
+							// 写一个方法，可以获取客户希望订购的披萨种类
+							private String getType() {
+								try {
+									BufferedReader strin = new BufferedReader(new InputStreamReader(System.in));
+									System.out.println("input pizza 种类:");
+									String str = strin.readLine();
+									return str;
+								} catch (IOException e) {
+									e.printStackTrace();
+									return "";
+								}
+							}
+						}
+					   public class BJOrderPizza extends OrderPizza {//对象的实例化推迟到了子类来实现							
+							@Override
+							Pizza createPizza(String orderType) {							
+								Pizza pizza = null;
+								if(orderType.equals("cheese")) {
+									pizza = new BJCheesePizza();
+								} else if (orderType.equals("pepper")) {
+									pizza = new BJPepperPizza();
+								}
+								return pizza;
+							}
+						}
+					   public class LDOrderPizza extends OrderPizza {							
+							@Override
+							Pizza createPizza(String orderType) {							
+								Pizza pizza = null;
+								if(orderType.equals("cheese")) {
+									pizza = new LDCheesePizza();
+								} else if (orderType.equals("pepper")) {
+									pizza = new LDPepperPizza();
+								}
+								return pizza;
+							}
+						}
+					   //客户端使用
+					   public class PizzaStore {
+							public static void main(String[] args) {
+								String loc = "bj";
+								if (loc.equals("bj")) {
+									//创建北京口味的各种Pizza
+									new BJOrderPizza();
+								} else {
+									//创建伦敦口味的各种Pizza
+									new LDOrderPizza();
+								}
+							}
+						}					   
+					3、抽象工厂模式：
+					   含义：是简单工厂模式与工厂方法模式的整合，对简单工厂模式的进一步抽象，将工厂分为两层：抽象工厂[是一个接口]和实现的子类工厂[工厂族]。
+					   如：披萨订购示例[添加了地区的概念]：
+					   //基础类，同工厂方法的基础类
+					   //使用者
+					    public interface AbsFactory {//一个抽象工厂模式的抽象层(接口)
+							//让下面的工厂子类来 具体实现
+							public Pizza createPizza(String orderType);
+						}
+						public class BJFactory implements AbsFactory {//工厂子类
+							@Override
+							public Pizza createPizza(String orderType) {
+								System.out.println("~使用的是抽象工厂模式~");
+								Pizza pizza = null;
+								if(orderType.equals("cheese")) {
+									pizza = new BJCheesePizza();
+								} else if (orderType.equals("pepper")){
+									pizza = new BJPepperPizza();
+								}
+								return pizza;
+							}
+						}
+						public class LDFactory implements AbsFactory {
+							@Override
+							public Pizza createPizza(String orderType) {
+								System.out.println("~使用的是抽象工厂模式~");
+								Pizza pizza = null;
+								if (orderType.equals("cheese")) {
+									pizza = new LDCheesePizza();
+								} else if (orderType.equals("pepper")) {
+									pizza = new LDPepperPizza();
+								}
+								return pizza;
+							}
+						}
+						public class OrderPizza {//使用者，使用UML类图的聚合关系
+							AbsFactory factory;
+							// 构造器
+							public OrderPizza(AbsFactory factory) {
+								setFactory(factory);
+							}
+							private void setFactory(AbsFactory factory) {
+								Pizza pizza = null;
+								String orderType = ""; // 用户输入
+								this.factory = factory;
+								do {
+									orderType = getType();
+									// factory 可能是北京的工厂子类，也可能是伦敦的工厂子类
+									pizza = factory.createPizza(orderType);
+									if (pizza != null) { // 订购ok
+										pizza.prepare();
+										pizza.bake();
+										pizza.cut();
+										pizza.box();
+									} else {
+										System.out.println("订购失败");
+										break;
+									}
+								} while (true);
+							}
+							// 写一个方法，可以获取客户希望订购的披萨种类
+							private String getType() {
+								try {
+									BufferedReader strin = new BufferedReader(new InputStreamReader(System.in));
+									System.out.println("input pizza 种类:");
+									String str = strin.readLine();
+									return str;
+								} catch (IOException e) {
+									e.printStackTrace();
+									return "";
+								}
+							}
+						}
+					    //客户端
+						public class PizzaStore {
+							public static void main(String[] args) {
+								//new OrderPizza(new BJFactory());
+								new OrderPizza(new LDFactory());
+							}
+						}
+					源码分析：
+					JDK中Calendar类使用到了简单工厂模式
+					小结：将实例化对象的代码抽取出来，放在一个类[工厂类]中统一维护与管理，以达到与主项目的解耦，增加扩展性；
+						  设计模式的依赖抽象原则；创建对象实例的时候，new的动作放在工厂类的方法中；继承抽象类或实现接口；不要覆盖基类已经实现的方法；				
+				原型模式：[Prototype模式]
+					含义：用原型实例指定创建对象，通过拷贝原型来创建新的对象。核心：对象.clone()；
+					UML类图解析：
+						Prototype：原型类，声明克隆接口
+						ConcretePrototype：具体的原型类，实现克隆操作
+						Client：原型类，让原型对象实例克隆自己，从而创建新的对象（属性一样）
+					如[克隆羊问题]：public class Sheep implements Cloneable {//实现Cloneable接口
+									private String name;
+									private int age;
+									private String color;
+									private String address = "蒙古羊";//默认属性
+									public Sheep friend; //是对象, 克隆是会如何处理
+									public Sheep(String name, int age, String color) {
+										super();
+										this.name = name;
+										this.age = age;
+										this.color = color;
+									}
+									public String getName() {
+										return name;
+									}
+									public void setName(String name) {
+										this.name = name;
+									}
+									public int getAge() {
+										return age;
+									}
+									public void setAge(int age) {
+										this.age = age;
+									}
+									public String getColor() {
+										return color;
+									}
+									public void setColor(String color) {
+										this.color = color;
+									}																											
+									@Override
+									public String toString() {
+										return "Sheep [name=" + name + ", age=" + age + ", color=" + color + ", address=" + address + "]";
+									}
+									//克隆该实例，使用默认的clone方法来完成
+									@Override
+									protected Object clone()  {										
+										Sheep sheep = null;
+										try {
+											sheep = (Sheep)super.clone();
+										} catch (Exception e) {
+											System.out.println(e.getMessage());
+										}
+										return sheep;
+									}																		
+								}
+							public class Client {
+								public static void main(String[] args) {
+									System.out.println("原型模式完成对象的创建");
+									Sheep sheep1 = new Sheep("tom", 1, "白色");
+									sheep1.friend = new Sheep("jack", 2, "黑色");
+									Sheep sheep2 = (Sheep)sheep1.clone(); //克隆
+									Sheep sheep3 = (Sheep)sheep1.clone(); //克隆
+									Sheep sheep4 = (Sheep)sheep1.clone(); //克隆
+									Sheep sheep5 = (Sheep)sheep1.clone(); //克隆									
+									System.out.println("sheep2 =" + sheep2 + "sheep2.friend=" + sheep2.friend.hashCode());//结果hashCode值一样，是浅拷贝！
+									System.out.println("sheep3 =" + sheep3 + "sheep3.friend=" + sheep3.friend.hashCode());
+									System.out.println("sheep4 =" + sheep4 + "sheep4.friend=" + sheep4.friend.hashCode());
+									System.out.println("sheep5 =" + sheep5 + "sheep5.friend=" + sheep5.friend.hashCode());
+								}
+							}
+					源码分析：Spring源码中Bean对象的创建；在beans.xml中，<bean id="" class="com.**.bean.Monster" scope="prototype"/>
+					浅拷贝与深拷贝[默认是浅拷贝]：
+						浅拷贝：成员变量数据类型是基本数据类型，拷贝进行值传递；成员变量数据类型是引用数据类型，拷贝进行址传递[内存地址]；
+						深拷贝：整个对象进行拷贝；方式：2种，一种是利用clone()方法，另一种是利用对象序列化的方式；
+						如：[深拷贝]
+						//基础类
+						public class DeepCloneableTarget implements Serializable, Cloneable {//实现Serializable,Cloneable接口					
+							private static final long serialVersionUID = 1L;
+							private String cloneName;//属性名
+							private String cloneClass;
+							//构造器
+							public DeepCloneableTarget(String cloneName, String cloneClass) {
+								this.cloneName = cloneName;
+								this.cloneClass = cloneClass;
+							}
+							//因为该类的属性，都是String，因此我们这里使用默认的clone完成即可
+							@Override
+							protected Object clone() throws CloneNotSupportedException {
+								return super.clone();
+							}
+						}
+						public class DeepProtoType implements Serializable, Cloneable{							
+							public String name; //String 属性
+							public DeepCloneableTarget deepCloneableTarget;//引用类型，对象
+							public DeepProtoType() {
+								super();
+							}														
+							//深拷贝 - 方式 1 使用clone 方法
+							@Override
+							protected Object clone() throws CloneNotSupportedException {								
+								Object deep = null;
+								//这里完成对基本数据类型(属性)和String的克隆
+								deep = super.clone(); 
+								//对引用类型的属性，进行单独处理
+								DeepProtoType deepProtoType = (DeepProtoType)deep;
+								deepProtoType.deepCloneableTarget  = (DeepCloneableTarget)deepCloneableTarget.clone();								
+								return deepProtoType;
+							}							
+							//深拷贝 - 方式2 通过对象的序列化实现 (推荐)							
+							public Object deepClone() {								
+								//创建流对象
+								ByteArrayOutputStream bos = null;
+								ObjectOutputStream oos = null;
+								ByteArrayInputStream bis = null;
+								ObjectInputStream ois = null;								
+								try {									
+									//序列化
+									bos = new ByteArrayOutputStream();
+									oos = new ObjectOutputStream(bos);//将字节数组输出流转化为对象输出流
+									oos.writeObject(this); //当前这个对象以对象流的方式输出									
+									//反序列化，出[写]->入[读]
+									bis = new ByteArrayInputStream(bos.toByteArray());
+									ois = new ObjectInputStream(bis);
+									DeepProtoType copyObj = (DeepProtoType)ois.readObject();									
+									return copyObj;									
+								} catch (Exception e1) {
+									e.printStackTrace(e1.getMessage());
+									return null;
+								} finally {
+									//关闭流
+									try {
+										bos.close();
+										oos.close();
+										bis.close();
+										ois.close();
+									} catch (Exception e2) {
+										System.out.println(e2.getMessage());
+									}
+								}								
+							}							
+						}
+						//客户端
+						public class Client {
+							public static void main(String[] args) throws Exception {
+								DeepProtoType p1 = new DeepProtoType();
+								p1.name = "宋江";
+								p1.deepCloneableTarget = new DeepCloneableTarget("大牛", "小牛");							
+								//方式1 完成深拷贝								
+						//		DeepProtoType p2 = (DeepProtoType) p1.clone();	
+						//		System.out.println("p1.name=" + p1.name + "p1.deepCloneableTarget=" + p1.deepCloneableTarget.hashCode());//结果，属性值相同，hashCode值不同
+						//		System.out.println("p2.name=" + p2.name + "p2.deepCloneableTarget=" + p2.deepCloneableTarget.hashCode());							
+								//方式2 完成深拷贝
+								DeepProtoType p2 = (DeepProtoType) p.deepClone();								
+								System.out.println("p1.name=" + p1.name + "p1.deepCloneableTarget=" + p1.deepCloneableTarget.hashCode());
+								System.out.println("p2.name=" + p2.name + "p2.deepCloneableTarget=" + p2.deepCloneableTarget.hashCode());							
+							}
+						}
+					小结：简化对象的创建过程，提高效率；动态的获取对象的运行状态；缺点:每一个类必须配备一个克隆方法；
+				建造者模式[生产器模式]：
+					含义：将产品与产品的建造过程解耦->建造者模式！角色：Product:产品，Builder:抽象建造者，往往是接口或抽象类，展现建造流程，组合Product；ConcreteBuilder：具体建造者，实现接口或继承抽象类，具体实现建造流程，
+					      Director：指挥者，聚合Builder，隔离客户与产品对象生产流程，负责控制产品的生产过程；
+					如：[盖房子案例]
+					//产品->Product
+					public class House {
+						private String baise;//属性，地基
+						private String wall;//墙面
+						private String roofed;//屋顶
+						public String getBaise() {
+							return baise;
+						}
+						public void setBaise(String baise) {
+							this.baise = baise;
+						}
+						public String getWall() {
+							return wall;
+						}
+						public void setWall(String wall) {
+							this.wall = wall;
+						}
+						public String getRoofed() {
+							return roofed;
+						}
+						public void setRoofed(String roofed) {
+							this.roofed = roofed;
+						}						
+					}
+					// 抽象的建造者->Builder
+					public abstract class HouseBuilder {
+						protected House house = new House();//使用UML类图的组合关系					
+						//将建造的流程写好, 抽象的方法，流程与产品解耦分离
+						public abstract void buildBasic();
+						public abstract void buildWalls();
+						public abstract void roofed();						
+						//建造房子好，将产品(房子) 返回
+						public House buildHouse() {
+							return house;
+						}						
+					}
+					//子类继承[泛化过程]，普通房子->ConcreteBuilder
+					public class CommonHouse extends HouseBuilder {
+						@Override
+						public void buildBasic() {
+							System.out.println("普通房子打地基5米");
+						}
+						@Override
+						public void buildWalls() {
+							System.out.println("普通房子砌墙10cm");
+						}
+						@Override
+						public void roofed() {
+							System.out.println("普通房子屋顶");
+						}
+					}
+					//子类继承[泛化过程]，高楼->ConcreteBuilder
+					public class HighBuilding extends HouseBuilder {
+						@Override
+						public void buildBasic() {
+							System.out.println("高楼的打地基100米");
+						}
+						@Override
+						public void buildWalls() {
+							System.out.println("高楼的砌墙20cm");
+						}
+						@Override
+						public void roofed() {
+							System.out.println("高楼的透明屋顶");
+						}
+					}
+					//指挥者->Dirctor，这里去指挥制作流程，返回产品
+					public class HouseDirector {						
+						HouseBuilder houseBuilder = null;//采用UML类图的聚合关系
+						//构造器传入houseBuilder
+						public HouseDirector(HouseBuilder houseBuilder) {
+							this.houseBuilder = houseBuilder;
+						}
+						//通过setter 传入 houseBuilder
+						public void setHouseBuilder(HouseBuilder houseBuilder) {
+							this.houseBuilder = houseBuilder;
+						}						
+						//如何处理建造房子的流程，交给指挥者
+						public House constructHouse() {
+							houseBuilder.buildBasic();
+							houseBuilder.buildWalls();
+							houseBuilder.roofed();
+							return houseBuilder.buildHouse();
+						}		
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {							
+							//盖普通房子
+							CommonHouse commonHouse = new CommonHouse();
+							//准备创建房子的指挥者
+							HouseDirector houseDirector = new HouseDirector(commonHouse);							
+							//完成盖房子，返回产品(普通房子)
+							House house = houseDirector.constructHouse();														
+							System.out.println("--------------------------");
+							//盖高楼
+							HighBuilding highBuilding = new HighBuilding();
+							//重置抽象建造者
+							houseDirector.setHouseBuilder(highBuilding);
+							//完成盖房子，返回产品(高楼)
+							houseDirector.constructHouse();																					
+						}
+					}
+					源码分析：JDK中java.lang.StringBuilder中使用到了建造者模式！
+				    小结：产品与产品创建过程解耦；每一种具体的建造者相互独立；可以更加细腻的控制产品的建造过程[指挥者]；符合OCP原则；
+						  与抽象工厂模式区别：前者强调的是产品组装建造流程，后者强调的是生产出产品；			
+			结构型模式[软件结构]：		
+				适配器模式：
+				含义：将某类的接口转化成客户端期待的另一种接口表示，目的做兼容。目标[Target/dst] <-- 适配器[Adapter] <-- 被适配者[Source/src]
+				分类：类适配器模式、对象适配器模式、接口适配器模式
+				类适配器模式：
+					如：[充电器案例]
+					//被适配的类，Source
+					public class Voltage220V {
+						//输出220V的电压
+						public int output220V() {
+							int src = 220;
+							System.out.println("电压=" + src + "伏");
+							return src;
+						}
+					}
+					//适配接口
+					public interface IVoltage5V {
+						public int output5V();
+					}
+					//适配器类，Adapter
+					public class VoltageAdapter extends Voltage220V implements IVoltage5V {
+						@Override
+						public int output5V() {
+							//获取到220V电压
+							int srcV = output220V();
+							int dstV = srcV / 44 ; //转成 5v
+							return dstV;//Target
+						}
+					}
+					public class Phone {
+						//充电，依赖关系
+						public void charging(IVoltage5V iVoltage5V) {
+							if(iVoltage5V.output5V() == 5) {
+								System.out.println("电压为5V, 可以充电~~");
+							} else if (iVoltage5V.output5V() > 5) {
+								System.out.println("电压大于5V, 不能充电~~");
+							}
+						}
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {
+							System.out.println(" === 类适配器模式 ====");
+							Phone phone = new Phone();
+							phone.charging(new VoltageAdapter());
+						}
+					}
+				优点缺点：adapter继承了src，增加了耦合，暴露了src的方法，增加成本，但同时可以根据需求重写，使灵活性增强。	
+				对象配器模式[常用]：
+					含义：对类适配器的改进，adapter不在继承了src，而是聚合，使用UML类图的关联关系来代替，符合"合成复用"原则，使得成本降低。
+					优化部分：
+					//适配器类
+					public class VoltageAdapter  implements IVoltage5V {//不在使用继承关系
+						private Voltage220V voltage220V; // 关联关系-聚合关系												
+						//通过构造器，传入一个 Voltage220V 实例
+						public VoltageAdapter(Voltage220V voltage220v) {							
+							this.voltage220V = voltage220v;
+						}
+						@Override
+						public int output5V() {							
+							int dst = 0;
+							if(null != voltage220V) {
+								int src = this.voltage220V.output220V();//获取220V 电压
+								System.out.println("使用对象适配器，进行适配~~");
+								dst = src / 44;
+								System.out.println("适配完成，输出的电压为=" + dst);
+							}							
+							return dst;						
+						}
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {
+							System.out.println(" === 对象适配器模式 ====");
+							Phone phone = new Phone();
+							phone.charging(new VoltageAdapter(new Voltage220V()));
+						}
+					}
+				接口适配器：
+					含义：又称适配器模式或缺省适配器模式，设计一个抽象类实现接口里面的所有方法[默认实现，空方法]，然后该抽象类子类[匿名内部类]有选择性的覆盖某些方法来实现
+					如：
+					//接口，被适配者->src
+					public interface Interface {
+						public void m1();
+						public void m2();
+						public void m3();
+						public void m4();
+					}
+					//抽象类，适配器
+					public abstract class AbsAdapter implements Interface {
+						//默认实现
+						public void m1() {
+						}
+						public void m2() {
+						}
+						public void m3() {
+						}
+						public void m4() {
+						}
+					}
+					//客户端使用
+					public class Client {
+						public static void main(String[] args) {	
+							AbsAdapter absAdapter = new AbsAdapter() {
+								//只需要去覆盖需要使用接口方法
+								@Override
+								public void m1() {
+									System.out.println("使用了m1的方法");
+								}
+							};							
+							absAdapter.m1();
+						}
+					}
+					源码分析：在SpringMVC框架中运用到了适配器模式，如：HandleAdapter类；
+					//核心思想->src					  
+					public interface Controller {//多种Controller实现
+					}
+					class HttpController implements Controller {
+						public void doHttpHandler() {
+							System.out.println("http...");
+						}
+					}
+					class SimpleController implements Controller {
+						public void doSimplerHandler() {
+							System.out.println("simple...");
+						}
+					}
+					class AnnotationController implements Controller {
+						public void doAnnotationHandler() {
+							System.out.println("annotation...");
+						}
+					}
+					//适配器接口->src	
+					public interface HandlerAdapter {
+						public boolean supports(Object handler);
+						public void handle(Object handler);
+					}
+					//多种适配器类
+					class SimpleHandlerAdapter implements HandlerAdapter {
+						public void handle(Object handler) {
+							((SimpleController) handler).doSimplerHandler();
+						}
+						public boolean supports(Object handler) {
+							return (handler instanceof SimpleController);
+						}
+					}
+					class HttpHandlerAdapter implements HandlerAdapter {
+						public void handle(Object handler) {
+							((HttpController) handler).doHttpHandler();
+						}
+						public boolean supports(Object handler) {
+							return (handler instanceof HttpController);
+						}
+					}
+					class AnnotationHandlerAdapter implements HandlerAdapter {
+						public void handle(Object handler) {
+							((AnnotationController) handler).doAnnotationHandler();
+						}
+						public boolean supports(Object handler) {
+							return (handler instanceof AnnotationController);
+						}
+					}
+					//使用者
+					public class DispatchServlet {
+						public static List<HandlerAdapter> handlerAdapters = new ArrayList<HandlerAdapter>();//依赖组合关系
+						public DispatchServlet() {
+							handlerAdapters.add(new AnnotationHandlerAdapter());
+							handlerAdapters.add(new HttpHandlerAdapter());
+							handlerAdapters.add(new SimpleHandlerAdapter());
+						}
+						public void doDispatch() {
+							// 此处模拟SpringMVC从request取handler的对象，适配器可以获取到希望的Controller
+							   HttpController controller = new HttpController();
+							// AnnotationController controller = new AnnotationController();
+							// SimpleController controller = new SimpleController();
+							// 得到对应适配器
+							HandlerAdapter adapter = getHandler(controller);
+							// 通过适配器执行对应的controller对应方法
+							adapter.handle(controller);
+						}
+						public HandlerAdapter getHandler(Controller controller) {
+							//遍历：根据得到的controller(handler), 返回对应适配器
+							for (HandlerAdapter adapter : this.handlerAdapters) {
+								if (adapter.supports(controller)) {
+									return adapter;
+								}
+							}
+							return null;
+						}
+						public static void main(String[] args) {
+							new DispatchServlet().doDispatch(); // http...
+						}
+					}
+					小结：三种适配器根据src以怎样的形式传给Adapter；目的是做接口的兼容；
+				桥接模式：
+					含义：将抽象[抽象类]与实现[接口和实现类]放在不同的层次中，它是基于类最小设计原则，防止类爆炸；
+					原理：
+						Client类：调用者，客户端；
+						Abstraction抽象类：维护了Implementor/以及实现类；聚合了接口，是调用者与被调用者关系；
+						RefinedAbstraction：是Abstraction抽象类子类；
+						Implementor：实现类接口；
+						ConcreteImplementorA/B：具体实现类；
+					如：[手机操作案例]
+					//接口
+					public interface Brand {//品牌
+						void open();//开机
+						void close();//关机
+						void call();//打电话
+					}
+					//实现子类
+					public class Vivo implements Brand {
+						@Override
+						public void open() {
+							System.out.println("Vivo手机开机");
+						}
+						@Override
+						public void close() {
+							System.out.println("Vivo手机关机");
+						}
+						@Override
+						public void call() {
+							System.out.println("Vivo手机打电话");
+						}
+					}
+					public class XiaoMi implements Brand {
+						@Override
+						public void open() {
+							System.out.println("小米手机开机");
+						}
+						@Override
+						public void close() {
+							System.out.println("小米手机关机");
+						}
+						@Override
+						public void call() {
+							System.out.println("小米手机打电话");
+						}
+					}
+					//抽象类
+					public abstract class Phone {						
+						//利用UML类图聚合关系，组合品牌
+						private Brand brand;
+						//构造器
+						public Phone(Brand brand) {
+							super();
+							this.brand = brand;
+						}					
+						protected void open() {
+							this.brand.open();
+						}
+						protected void close() {
+							brand.close();
+						}
+						protected void call() {
+							brand.call();
+						}						
+					}
+					//折叠式手机类，继承抽象类Phone
+					public class FoldedPhone extends Phone {
+						//构造器
+						public FoldedPhone(Brand brand) {
+							super(brand);
+						}						
+						public void open() {
+							super.open();
+							System.out.println("折叠样式手机");
+						}						
+						public void close() {
+							super.close();
+							System.out.println("折叠样式手机");
+						}						
+						public void call() {
+							super.call();
+							System.out.println("折叠样式手机");
+						}
+					}
+					//直立式手机类，继承抽象类Phone
+					public class UpRightPhone extends Phone {					
+						//构造器
+						public UpRightPhone(Brand brand) {
+							super(brand);
+						}						
+						public void open() {
+							super.open();
+							System.out.println("直立样式手机");
+						}						
+						public void close() {
+							super.close();
+							System.out.println("直立样式手机");
+						}						
+						public void call() {
+							super.call();
+							System.out.println("直立样式手机");
+						}
+					}
+					//客户端，依赖Phone与Brand，抽象与实现
+					public class Client {
+						public static void main(String[] args) {							
+							//获取折叠式手机 (样式 + 品牌 )						
+							Phone phone1 = new FoldedPhone(new XiaoMi());							
+							phone1.open();
+							phone1.call();
+							phone1.close();							
+							System.out.println("=======================");							
+							Phone phone2 = new FoldedPhone(new Vivo());							
+							phone2.open();
+							phone2.call();
+							phone2.close();							
+							System.out.println("==============");
+							//直立式手机 (样式 + 品牌 )	
+							UpRightPhone phone3 = new UpRightPhone(new XiaoMi());							
+							phone3.open();
+							phone3.call();
+							phone3.close();							
+							System.out.println("==============");							
+							UpRightPhone phone4 = new UpRightPhone(new Vivo());							
+							phone4.open();
+							phone4.call();
+							phone4.close();
+						}
+					}
+					源码分析：JDBC源码中使用到了桥接模式：
+						其中DriverManger充当的是抽象类的角色，而Connection接口充当的是实现角色[子类/子接口有MysqlConnection、OracleConnection等具体实现子类]；
+						客户端直接依赖DriverManger；
+					小结：实现了抽象与实现的分离；替代了多层继承问题，增加系统的灵活性；替代了继承，节约成本；缺点：对系统的设计与理解[维度]难度较大；
+					应用场景：JDBC驱动，银行转账系统；消息管理等				
+				装饰者模式：
+					含义：动态的将新功能附加到对象上，比继承更有弹性，符合开闭原则[OCP原则]，防止类爆炸，生活中的物流包裹就是一个典型的生活案列；
+					原理：
+					   Component ：抽象类
+					   ConcreteComponent：子类，继承Component，具体的主体；中间可以适当添加缓冲层；
+					   Decorator：装饰者[装饰类]，继承Component，组合Component
+					如：[星巴克咖啡订单案例，单品+种类]
+						//抽象类，饮料
+						public abstract class Drink {
+							public String des; // 描述
+							private float price = 0.0f;
+							public String getDes() {
+								return des;
+							}
+							public void setDes(String des) {
+								this.des = des;
+							}
+							public float getPrice() {
+								return price;
+							}
+							public void setPrice(float price) {
+								this.price = price;
+							}							
+							//计算费用的抽象方法，子类来实现
+							public abstract float cost();							
+						}
+						//缓冲层
+						public class Coffee  extends Drink {
+							@Override
+							public float cost() {
+								return super.getPrice();
+							}							
+						}
+						//实现子类
+						public class Espresso extends Coffee {							
+							public Espresso() {
+								setDes("意大利咖啡");
+								setPrice(6.0f);
+							}
+						}
+						public class LongBlack extends Coffee {
+							public LongBlack() {
+								setDes("longblack");
+								setPrice(5.0f);
+							}
+						}
+						public class ShortBlack extends Coffee{						
+							public ShortBlack() {
+								setDes("shortblack");
+								setPrice(4.0f);
+							}
+						}
+						public class DeCaf extends Coffee {
+							public DeCaf() {
+								setDes("无因咖啡");
+								setPrice(1.0f);
+							}
+						}
+						//装饰类（种类），继承+聚合
+						public class Decorator extends Drink {
+							private Drink obj;							
+							public Decorator(Drink obj) { //聚合
+								this.obj = obj;
+							}							
+							@Override
+							public float cost() {
+								// getPrice 自己价格
+								return super.getPrice() + obj.cost();
+							}							
+							@Override
+							public String getDes() {
+								// obj.getDes() 输出被装饰者的信息
+								return des + " " + getPrice() + " && " + obj.getDes();
+							}														
+						}
+						//子类
+						public class Chocolate extends Decorator {
+							public Chocolate(Drink obj) {
+								super(obj);
+								setDes("巧克力");
+								setPrice(3.0f); // 调味品的价格
+							}
+						}
+						public class Milk extends Decorator {
+							public Milk(Drink obj) {
+								super(obj);
+								setDes("牛奶");
+								setPrice(2.0f); 
+							}
+						}
+						public class Soy extends Decorator{
+							public Soy(Drink obj) {
+								super(obj);
+								setDes("豆浆");
+								setPrice(1.5f);
+							}
+						}
+						//客户端
+						public class CoffeeBar {
+							public static void main(String[] args) {
+								// 装饰者模式下的订单：2份巧克力+一份牛奶的LongBlack
+								// 1. 点一份 LongBlack
+								Drink order1 = new LongBlack();
+								System.out.println("费用=" + order1.cost());
+								System.out.println("描述=" + order1.getDes());
+								// 2. order 加入一份牛奶，装饰迭代
+								order1 = new Milk(order1);
+								System.out.println("order1 加入一份牛奶 费用 =" + order1.cost());
+								System.out.println("order1 加入一份牛奶 描述 =" + order1.getDes());
+								// 3. order 加入一份巧克力，装饰迭代
+								order1 = new Chocolate(order1);
+								System.out.println("order1 加入一份牛奶 加入一份巧克力 费用 =" + order1.cost());
+								System.out.println("order1 加入一份牛奶 加入一份巧克力 描述 =" + order1.getDes());
+								// 3. order 加入一份巧克力，装饰迭代
+								order1 = new Chocolate(order1);
+								System.out.println("order1 加入一份牛奶 加入2份巧克力 费用 =" + order1.cost());
+								System.out.println("order1 加入一份牛奶 加入2份巧克力 描述 =" + order1.getDes());							
+								System.out.println("===========================");								
+								Drink order2 = new DeCaf();								
+								System.out.println("order2 无因咖啡 费用 =" + order2.cost());
+								System.out.println("order2 无因咖啡 描述 =" + order2.getDes());								
+								order2 = new Milk(order2);								
+								System.out.println("order2 无因咖啡 加入一份牛奶 费用 =" + order2.cost());
+								System.out.println("order2 无因咖啡 加入一份牛奶 描述 =" + order2.getDes());							
+							}
+						}
+					源码分析：
+						JDK中IO结构，FilterInputStream就是一个装饰者而InputStream就是一个被装饰者[抽象类]；FileInputStream是被装饰者的一个子类，DataInputStream是装饰者的一个子类；						
+				组合模式：
+					含义：部分与整体模式，用树型结构来表示对象与对象组的关系
+					原理：
+						Component：抽象层，可是接口或抽象类，实现所有类共有的接口默认行为[添加、删除、修改等]，用于访问管理Component的子部件；
+						Leaf：叶子节点，下面没有子节点；
+						Composite：组合Component，非叶子节点，用于存储子部件，实现Component接口的相关操作，比如：添加、删除等；
+					适用场景：组织结构[树形结构]
+					如：[学校院系展示案例]
+						//抽象层，抽象类
+						public abstract class OrganizationComponent {
+							private String name; //名字
+							private String des; //说明							
+							protected  void add(OrganizationComponent organizationComponent) {
+								//默认实现
+								throw new UnsupportedOperationException();
+							}							
+							protected  void remove(OrganizationComponent organizationComponent) {
+								//默认实现
+								throw new UnsupportedOperationException();
+							}
+							//构造器
+							public OrganizationComponent(String name, String des) {
+								super();
+								this.name = name;
+								this.des = des;
+							}
+							public String getName() {
+								return name;
+							}
+							public void setName(String name) {
+								this.name = name;
+							}
+							public String getDes() {
+								return des;
+							}
+							public void setDes(String des) {
+								this.des = des;
+							}						
+							//方法print，做成抽象的，子类都需要实现
+							protected abstract void print();														
+						}
+						//University就是Composite，可以管理College，即大学管理学院
+						public class University extends OrganizationComponent {
+							List<OrganizationComponent> organizationComponents = new ArrayList<OrganizationComponent>();//组合OrganizationComponent
+							// 构造器
+							public University(String name, String des) {
+								super(name, des);
+							}
+							// 重写add
+							@Override
+							protected void add(OrganizationComponent organizationComponent) {
+								organizationComponents.add(organizationComponent);
+							}
+							// 重写remove
+							@Override
+							protected void remove(OrganizationComponent organizationComponent) {
+								organizationComponents.remove(organizationComponent);
+							}
+							@Override
+							public String getName() {
+								return super.getName();
+							}
+
+							@Override
+							public String getDes() {
+								return super.getDes();
+							}
+							// print方法，就是输出University包含的学院
+							@Override
+							protected void print() {
+								System.out.println("--------------" + getName() + "--------------");
+								//遍历organizationComponents 
+								for (OrganizationComponent organizationComponent : organizationComponents) {
+									organizationComponent.print();
+								}
+							}
+						}
+						//学院，管理系[专业]
+						public class College extends OrganizationComponent {
+							//List中存放的Department
+							List<OrganizationComponent> organizationComponents = new ArrayList<OrganizationComponent>();
+							// 构造器
+							public College(String name, String des) {
+								super(name, des);
+							}
+							// 重写add
+							@Override
+							protected void add(OrganizationComponent organizationComponent) {
+								//将来实际业务中，Colleage的add 和University的add不一定完全一样
+								organizationComponents.add(organizationComponent);
+							}
+							// 重写remove
+							@Override
+							protected void remove(OrganizationComponent organizationComponent) {
+								organizationComponents.remove(organizationComponent);
+							}
+							@Override
+							public String getName() {
+								return super.getName();
+							}
+							@Override
+							public String getDes() {
+								return super.getDes();
+							}
+							// print方法，就是输出College包含的系
+							@Override
+							protected void print() {
+								System.out.println("--------------" + getName() + "--------------");
+								//遍历 organizationComponents 
+								for (OrganizationComponent organizationComponent : organizationComponents) {
+									organizationComponent.print();
+								}
+							}
+						}
+						//系或专业，子节点->Leaf
+						public class Department extends OrganizationComponent {
+							//没有集合						
+							public Department(String name, String des) {
+								super(name, des);
+							}						
+							//add,remove 就不用写了，因为是叶子节点，没有子节点							
+							@Override
+							public String getName() {
+								return super.getName();
+							}							
+							@Override
+							public String getDes() {
+								return super.getDes();
+							}							
+							@Override
+							protected void print() {
+								System.out.println(getName());
+							}
+						}
+						//客户端
+						public class Client {
+							public static void main(String[] args) {								
+								//从大到小创建对象，创建学校
+								OrganizationComponent university = new University("清华大学", "中国顶级大学");								
+								//创建学院
+								OrganizationComponent computerCollege = new College("计算机学院", "计算机学院");
+								OrganizationComponent infoEngineercollege = new College("信息工程学院", "信息工程学院");																
+								//创建各个学院下面的系(专业)
+								computerCollege.add(new Department("软件工程", "软件工程不错"));
+								computerCollege.add(new Department("网络工程", "网络工程不错"));
+								computerCollege.add(new Department("计算机科学与技术", "计算机科学与技术是老牌的专业"));								
+								infoEngineercollege.add(new Department("通信工程", " 通信工程不好学 "));
+								infoEngineercollege.add(new Department("信息工程", " 信息工程好学 "));							
+								//将学院加入到学校
+								university.add(computerCollege);
+								university.add(infoEngineercollege);								
+								//university.print();//大学下所有树形结构
+								infoEngineercollege.print();//信息工程学院下树形结构
+							}
+						}
+					源码分析：
+						JDK集合类源码分析：Java的集合类-HashMap就适用了组合模式；Map：抽象层，接口[角色:Component]，定义了put/putAll方法，
+							HashMap：具体的实现，非叶子节点[角色:Composite]，重写或继承了put/putAll方法，Node: 叶子节点，是HashMap静态内部类，角色Leaf;
+					小结：适用于具有明确的组织结构或树形结构的场景，且叶子节点与非叶子节点属性没有明显的差异性；优点：简化客户端操作，有利于扩展；
+				外观模式/过程模式：
+					含义：定义一个一致性接口（界面类/高层接口），用于屏蔽内部子系统的细节，使调用端只跟这个高层接口发生调用，不需要关系子系统内部的细节；
+					原理/角色：
+						外观类[Facade]：为调用者提供统一的接口（方法），聚合/组合子系统集合，代理处理请求；
+						调用者：外观接口的调用者；
+						子系统集合：模块或子系统，处理Facade对象的任务，它是实际功能的提供者；
+				    如：[家庭影院案例]
+					//子系统集合之DVD播放器
+					public class DVDPlayer {					
+						//使用单例模式, 使用饿汉式
+						private static DVDPlayer instance = new DVDPlayer();					
+						public static DVDPlayer getInstanc() {
+							return instance;
+						}
+						//开机
+						public void on() {
+							System.out.println(" dvd on ");
+						}
+						//关机
+						public void off() {
+							System.out.println(" dvd off ");
+						}
+						//正在播放
+						public void play() {
+							System.out.println(" dvd is playing ");
+						}					
+						//暂停播放
+						public void pause() {
+							System.out.println(" dvd pause ..");
+						}
+					}
+					//子系统集合之爆米花机
+					public class Popcorn {						
+						private static Popcorn instance = new Popcorn();						
+						public static Popcorn getInstance() {
+							return instance;
+						}
+						//开机
+						public void on() {
+							System.out.println(" popcorn on ");
+						}
+						//关机
+						public void off() {
+							System.out.println(" popcorn ff ");
+						}
+						//出爆米花
+						public void pop() {
+							System.out.println(" popcorn is poping  ");
+						}
+					}
+					//子系统集合之投影仪
+					public class Projector {
+						private static Projector instance = new Projector();						
+						public static Projector getInstance() {
+							return instance;
+						}
+						//开机
+						public void on() {
+							System.out.println(" Projector on ");
+						}
+						//关机
+						public void off() {
+							System.out.println(" Projector ff ");
+						}
+						//聚焦
+						public void focus() {
+							System.out.println(" Projector is Projector  ");
+						}
+					}
+					//子系统集合之大屏
+					public class Screen {
+						private static Screen instance = new Screen();						
+						public static Screen getInstance() {
+							return instance;
+						}																		
+						//大屏上升
+						public void up() {
+							System.out.println(" Screen up ");
+						}
+						//大屏降下
+						public void down() {
+							System.out.println(" Screen down ");
+						}						
+					}
+					//子系统集合之立体声
+					public class Stereo {
+						private static Stereo instance = new Stereo();						
+						public static Stereo getInstance() {
+							return instance;
+						}
+						//打开声音
+						public void on() {
+							System.out.println(" Stereo on ");
+						}
+						//关闭声音
+						public void off() {
+							System.out.println(" Screen off ");
+						}
+						//声音调高
+						public void up() {
+							System.out.println(" Screen up.. ");
+						}
+					}
+					//子系统集合之灯光
+					public class TheaterLight {
+						private static TheaterLight instance = new TheaterLight();
+						public static TheaterLight getInstance() {
+							return instance;
+						}
+						//打开灯光
+						public void on() {
+							System.out.println(" TheaterLight on ");
+						}
+						//关闭灯光
+						public void off() {
+							System.out.println(" TheaterLight off ");
+						}
+						//调暗
+						public void dim() {
+							System.out.println(" TheaterLight dim.. ");
+						}
+						//调亮
+						public void bright() {
+							System.out.println(" TheaterLight bright.. ");
+						}
+					}
+					//高层接口或界面类、外观类
+					public class HomeTheaterFacade {						
+						//定义各个子系统对象
+						private TheaterLight theaterLight;
+						private Popcorn popcorn;
+						private Stereo stereo;
+						private Projector projector;
+						private Screen screen;
+						private DVDPlayer dVDPlayer;												
+						//构造器
+						public HomeTheaterFacade() {
+							super();
+							this.theaterLight = TheaterLight.getInstance();
+							this.popcorn = Popcorn.getInstance();
+							this.stereo = Stereo.getInstance();
+							this.projector = Projector.getInstance();
+							this.screen = Screen.getInstance();
+							this.dVDPlayer = DVDPlayer.getInstanc();
+						}
+						//操作分成4步，准备						
+						public void ready() {
+							popcorn.on();
+							popcorn.pop();
+							screen.down();
+							projector.on();
+							stereo.on();
+							dVDPlayer.on();
+							theaterLight.dim();
+						}
+						//开启
+						public void play() {
+							dVDPlayer.play();
+						}
+						//暂停
+						public void pause() {
+							dVDPlayer.pause();
+						}
+						//关闭
+						public void end() {
+							popcorn.off();
+							theaterLight.bright();
+							screen.up();
+							projector.off();
+							stereo.off();
+							dVDPlayer.off();
+						}
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {
+							HomeTheaterFacade homeTheaterFacade = new HomeTheaterFacade();
+							homeTheaterFacade.ready();
+							homeTheaterFacade.play();														
+							homeTheaterFacade.end();
+						}
+					}
+				源码分析：
+					Mybaits中的Configuration类用到了外观模式；
+					大致实现思路：Configuration类外观类依赖MetaObject类[方法：newMetaObject():MetaObject]，组合/聚合了子系统集合[工厂类]，如：DefultObjectFactory，客户端只依赖Configuration外观类；
+				小结：
+				        屏蔽内部子系统的细节，降低客户端对子系统使用的复杂性；将客户端与子系统解耦；更好的划分访问层次；
+			享元模式/蝇量模式：共享对象/数据
+				含义：运用共享技术有效的支持大量细粒度的对象，常用于系统底层开发，解决系统性能问题；它可以解决内存浪费问题；经典运用场景就是池技术，如常量池、数据库连接池、缓冲池等；
+				角色分析：
+					FlyWeight：抽象的享元角色，是产品抽象类，它定义出了对象的外部状态[对象不可分享出来的信息]与内部状态[对象分享出来的信息]的接口或抽象类；
+					ConcreteFlyWeight：具体的享元角色，具体的产品类；
+					UnSharedConcreteFlyWeight：不可共享的角色，一般不会出现在享元工厂里；
+					FlyWeightFactory：享元工厂类，用于构建池容器（集合），同时提供了从池中获取对象的方法；依赖FlyWeight享元角色；
+				如：[网站展现案例，网站外包问题]
+				//FlyWeight： 抽象类，享元角色；
+				public abstract class WebSite {
+					public abstract void use(User user);//抽象方法
+				}
+				//
+				//ConcreteFlyWeight：具体的享元角色，具体网站；
+				public class ConcreteWebSite extends WebSite {
+					//共享的部分，内部状态
+					private String type = ""; //网站发布的形式(类型，如：新闻、博客、公众号)					
+					//构造器
+					public ConcreteWebSite(String type) {							
+						this.type = type;
+					}
+					@Override
+					public void use(User user) {
+						System.out.println("网站的发布形式为:" + type + " 在使用中 .. 使用者是" + user.getName());
+					}												
+				}
+				// FlyWeightFactory：享元工厂类，根据需要返回一个网站，提供池技术
+				public class WebSiteFactory {						
+					//集合， 充当池的作用
+					private HashMap<String, ConcreteWebSite> pool = new HashMap<>();						
+					//根据网站的类型，返回一个网站, 如果没有就创建一个网站，并放入到池中,并返回
+					public WebSite getWebSiteCategory(String type) {
+						if(!pool.containsKey(type)) {
+							//就创建一个网站，并放入到池中
+							pool.put(type, new ConcreteWebSite(type));
+						}							
+						return (WebSite)pool.get(type);
+					}						
+					//获取网站分类的总数 (池中有多少个网站类型)
+					public int getWebSiteCount() {
+						return pool.size();
+					}
+				}
+				//用户
+				public class User {						
+					private String name;						
+					public User(String name) {
+						super();
+						this.name = name;
+					}
+					public String getName() {
+						return name;
+					}
+					public void setName(String name) {
+						this.name = name;
+					}											
+				}
+				//客户端
+				public class Client {
+					public static void main(String[] args) {
+						// 创建一个工厂类
+						WebSiteFactory factory = new WebSiteFactory();
+						// 客户要一个以新闻形式发布的网站
+						WebSite webSite1 = factory.getWebSiteCategory("新闻");							
+						webSite1.use(new User("tom"));
+						// 客户要一个以博客形式发布的网站
+						WebSite webSite2 = factory.getWebSiteCategory("博客");
+						webSite2.use(new User("jack"));
+						// 客户要一个以博客形式发布的网站
+						WebSite webSite3 = factory.getWebSiteCategory("博客");
+						webSite3.use(new User("smith"));
+						// 客户要一个以博客形式发布的网站
+						WebSite webSite4 = factory.getWebSiteCategory("博客");
+						webSite4.use(new User("king"));							
+						System.out.println("网站的分类共=" + factory.getWebSiteCount());
+					}
+				}
+				源码分析：
+					JDK中的Integer类使用到了享元模式；Integer.valueOf（），使用到了享元模式；
+					观察源码发现：先判断值是否在IntegerCache缓存池中[范围-128~127]，在的话直接从池中取值，否则使用new Integer（），结论：在-128~127中使用valueOf（）的方式要比new的方式要快；
+				小结：享元即共享对象，降低了对象的创建，减少了内存的消耗；缓存池技术的使用，一般使用HashMap或HashTable来存储；提高了系统的复杂度，需要区分内部状态与外部状态；				
+			代理模式：
+				含义：为目标对象提供一个替身，以实现对这个目标对象的访问；即代理对象访问目标对象；
+					  被代理对象可以是远程对象、创建开销大的对象和需要安全控制的对象，代理的形式：静态代理、动态代理（JDK代理、接口代理）以及Cglib代理（可以在内存中动态的创建对象，不需要实现接口，属于动态代理）
+				静态代理：
+					含义：需要定义一个接口或父类，目标对象与代理对象一起实现接口或继承父类；
+					如：[老师授课案例]
+					//接口
+					public interface ITeacherDao {							
+						void teach(); // 授课的方法
+					}
+					//目标对象
+					public class TeacherDao implements ITeacherDao {
+						@Override
+						public void teach() {
+							System.out.println("老师授课中  。。。。。");
+						}
+					}
+					//代理对象，静态代理
+					public class TeacherDaoProxy implements ITeacherDao{							
+						private ITeacherDao target; // 目标对象，通过接口来聚合														
+						//构造器
+						public TeacherDaoProxy(ITeacherDao target) {
+							this.target = target;
+						}
+						@Override
+						public void teach() {
+							System.out.println("开始代理，完成某些操作。。。。。 ");//方法
+							target.teach();
+							System.out.println("提交。。。。。");//方法
+						}
+					}
+					//客户端
+					public class Client {
+						public static void main(String[] args) {
+							//创建目标对象(被代理对象)
+							TeacherDao teacherDao = new TeacherDao();								
+							//创建代理对象, 同时将被代理对象传递给代理对象
+							TeacherDaoProxy teacherDaoProxy = new TeacherDaoProxy(teacherDao);								
+							//通过代理对象，调用到被代理对象的方法，即：执行的是代理对象的方法，代理对象再去调用目标对象的方法 
+							teacherDaoProxy.teach();
+						}
+					}
+					优缺点：在不改变目标对象功能前提下，通过代理对目标功能进行了扩展；一旦接口增加了方法，目标对象与代理对象都要维护；
+				动态代理：
+					含义：
+					

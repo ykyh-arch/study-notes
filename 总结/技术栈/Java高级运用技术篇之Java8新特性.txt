@@ -1,0 +1,487 @@
+----------------------------------------------Java高级运用技术篇之Java8新特性--------------------------------------------------------------------------------------------------------------------------------
+	一、初识Lambda表达式		
+		示例：
+			#匿名内部类形式，比较字符串长度
+			@Test
+			public void test1(){
+				Comparator<String> com = new Comparator<String>(){
+					@Override
+					public int compare(String o1, String o2) {
+						return Integer.compare(o1.length(), o2.length());
+					}
+				};				
+				TreeSet<String> ts1 = new TreeSet<>(com);				
+				TreeSet<String> ts2 = new TreeSet<>(new Comparator<String>(){
+					@Override
+					public int compare(String o1, String o2) {
+						return Integer.compare(o1.length(), o2.length());
+					}					
+				});
+			}			
+			//Lambda表达式改进版
+			@Test
+			public void test2(){
+				Comparator<String> com = (x, y) -> Integer.compare(x.length(), y.length());
+				TreeSet<String> ts = new TreeSet<>(com);
+			}
+			#案例分析：
+			#员工表
+			public class Employee {
+				private int id;
+				private String name;
+				private int age;
+				private double salary;
+				...
+			}
+			#模拟数据
+			List<Employee> emps = Arrays.asList(
+			new Employee(101, "张三", 18, 9999.99),
+			new Employee(102, "李四", 59, 6666.66),
+			new Employee(103, "王五", 28, 3333.33),
+			new Employee(104, "赵六", 8, 7777.77),
+			new Employee(105, "田七", 38, 5555.55)
+			);
+			#需求：获取公司中年龄小于35的员工信息
+			public List<Employee> filterEmployeeAge(List<Employee> emps){
+				List<Employee> list = new ArrayList<>();				
+				for (Employee emp : emps) {
+					if(emp.getAge() <= 35){
+						list.add(emp);
+					}
+				}				
+				return list;
+			}
+			#需求：获取公司中工资大于5000员工信息
+			public List<Employee> filterEmployeeSalary(List<Employee> emps){
+				List<Employee> list = new ArrayList<>();				
+				for (Employee emp : emps) {
+					if(emp.getSalary() >= 5000){
+						list.add(emp);
+					}
+				}				
+				return list;
+			}
+			#客户端测试
+			@Test
+			public void test3(){
+				List<Employee> list = filterEmployeeAge(emps);
+				//List<Employee> list = filterEmployeeSalary(emps);
+				for (Employee employee : list) {
+					System.out.println(employee);
+				}
+			}
+			#优化方式一策略设计模式
+			#接口
+			@FunctionalInterface
+			public interface MyPredicate<T> {
+				public boolean test(T t);				
+			}
+			#实现
+			public class FilterEmployeeForAge implements MyPredicate<Employee>{
+				@Override
+				public boolean test(Employee t) {
+					return t.getAge() <= 35;
+				}
+			}
+			public class FilterEmployeeForSalary implements MyPredicate<Employee> {
+				@Override
+				public boolean test(Employee t) {
+					return t.getSalary() >= 5000;
+				}
+			}			
+			public List<Employee> filterEmployee(List<Employee> emps, MyPredicate<Employee> mp){
+				List<Employee> list = new ArrayList<>();				
+				for (Employee employee : emps) {
+					if(mp.test(employee)){
+						list.add(employee);
+					}
+				}				
+				return list;
+			}
+			#客户端
+			@Test
+			public void test4(){
+				List<Employee> list = filterEmployee(emps, new FilterEmployeeForAge());
+				for (Employee employee : list) {
+					System.out.println(employee);
+				}								
+				List<Employee> list2 = filterEmployee(emps, new FilterEmployeeForSalary());
+				for (Employee employee : list2) {
+					System.out.println(employee);
+				}
+			}
+			#优化方式二匿名内部类
+			@Test
+			public void test5(){
+				List<Employee> list = filterEmployee(emps, new MyPredicate<Employee>() {
+					@Override
+					public boolean test(Employee t) {
+						return t.getId() <= 103;
+					}
+				});				
+				for (Employee employee : list) {
+					System.out.println(employee);
+				}
+			}
+			#优化方式三Lambda表达式
+			@Test
+			public void test6(){
+				List<Employee> list = filterEmployee(emps, (e) -> e.getAge() <= 35);
+				list.forEach(System.out::println);								
+				List<Employee> list2 = filterEmployee(emps, (e) -> e.getSalary() >= 5000);
+				list2.forEach(System.out::println);
+			}
+			#优化方式四StreamAPI
+			@Test
+			public void test7(){
+				emps.stream()
+					.filter((e) -> e.getAge() <= 35) //Predicate
+					.forEach(System.out::println);								
+				emps.stream()
+					.map(Employee::getName) //Function
+					.limit(3)
+					.sorted()
+					.forEach(System.out::println);
+			}
+	二、Lambda的基础语法
+		1、概念：
+		   Java8中引入了一个新的操作符 "->" 该操作符称为箭头操作符或Lambda操作符， 箭头操作符将Lambda表达式拆分成两部分：左侧：Lambda表达式的参数列表，右侧：Lambda表达式中所需执行的功能，即Lambda体；
+		2、语法：
+		   语法格式一：无参数，无返回值；如：() -> System.out.println("Hello Lambda!");
+		   语法格式二：有一个参数，并且无返回值；如：(x) -> System.out.println(x)；
+		   语法格式三：若只有一个参数，小括号可以省略不写；如：x -> System.out.println(x)；
+		   语法格式四：有两个以上的参数，有返回值，并且Lambda体中有多条语句；如：
+			   Comparator<Integer> com = (x, y) -> {
+		 			System.out.println("函数式接口");
+		 			return Integer.compare(x, y);
+		 	   };
+		   语法格式五：若Lambda体中只有一条语句，return和大括号都可以省略不写；如：Comparator<Integer> com = (x, y) -> Integer.compare(x, y);
+		   语法格式六：Lambda表达式的参数列表的数据类型可以省略不写，因为JVM编译器通过上下文推断出，数据类型，即“类型推断”；如：(Integer x, Integer y) -> Integer.compare(x, y);
+		   总结：上联：左右遇一括号省；下联：左侧推断类型省；横批：能省则省；
+		3、函数式接口：
+		   含义：接口中只有一个抽象方法的接口，称为函数式接口,可以使用注解@FunctionalInterface修饰；
+		   示例：
+		   @Test
+			public void test1(){
+				int num = 0;//jdk 1.7 前，必须是 final				
+				Runnable r = new Runnable() {
+					@Override
+					public void run() {
+						System.out.println("Hello World!" + num);
+					}
+				};				
+				r.run();				
+				//Lambda表达式，Runnable是函数式接口
+				Runnable r1 = () -> System.out.println("Hello Lambda!");
+				r1.run();
+			}
+			@Test
+			public void test2(){
+				Consumer<String> con = x -> System.out.println(x);
+				con.accept("我大尚硅谷威武！");
+			}
+			@Test
+			public void test3(){
+				Comparator<Integer> com = (x, y) -> {
+					System.out.println("函数式接口");
+					return Integer.compare(x, y);
+				};
+			}			
+			@Test
+			public void test4(){
+				Comparator<Integer> com = (x, y) -> Integer.compare(x, y);
+			}
+			//自定义函数式接口
+			@FunctionalInterface
+			public interface MyFun {
+				public Integer getValue(Integer num);	
+			}
+			@Test
+			public void test5(){
+				Integer num = operation(100, (x) -> x * x);
+				System.out.println(num);				
+				System.out.println(operation(200, (y) -> y + 200));
+			}			
+			public Integer operation(Integer num, MyFun mf){
+				return mf.getValue(num);
+			}
+		4、四大核心函数式接口：
+			Consumer<T> : void accept(T t)	#消费型接口；
+			Supplier<T> : T get()	#供给型接口；
+			Function<T, R> : R apply(T t)	#函数型接口；
+			Predicate<T> : boolean test(T t)	#断言型接口；
+			示例：
+			#Consumer<T> 消费型接口 
+			@Test
+			public void test1(){
+				happy(10000, (m) -> System.out.println("你们刚哥喜欢大宝剑，每次消费：" + m + "元"));
+			} 			
+			public void happy(double money, Consumer<Double> con){
+				con.accept(money);
+			}
+			#Supplier<T> 供给型接口
+			@Test
+			public void test2(){
+				List<Integer> numList = getNumList(10, () -> (int)(Math.random() * 100));				
+				for (Integer num : numList) {
+					System.out.println(num);
+				}
+			}			
+			//需求：产生指定个数的整数，并放入集合中
+			public List<Integer> getNumList(int num, Supplier<Integer> sup){
+				List<Integer> list = new ArrayList<>();				
+				for (int i = 0; i < num; i++) {
+					Integer n = sup.get();
+					list.add(n);
+				}				
+				return list;
+			}
+			#Function<T, R> 函数型接口
+			@Test
+			public void test3(){
+				String newStr = strHandler("\t\t\t 我大尚硅谷威武   ", (str) -> str.trim());
+				System.out.println(newStr);				
+				String subStr = strHandler("我大尚硅谷威武", (str) -> str.substring(2, 5));
+				System.out.println(subStr);
+			}			
+			//需求：用于处理字符串
+			public String strHandler(String str, Function<String, String> fun){
+				return fun.apply(str);
+			}
+			#Predicate<T> 断言型接口
+			@Test
+			public void test4(){
+				List<String> list = Arrays.asList("Hello", "atguigu", "Lambda", "www", "ok");
+				List<String> strList = filterStr(list, (s) -> s.length() > 3);				
+				for (String str : strList) {
+					System.out.println(str);
+				}
+			}			
+			//需求：将满足条件的字符串，放入集合中
+			public List<String> filterStr(List<String> list, Predicate<String> pre){
+				List<String> strList = new ArrayList<>();				
+				for (String str : list) {
+					if(pre.test(str)){
+						strList.add(str);
+					}
+				}				
+				return strList;
+			}
+		5、方法引用：
+			含义：若Lambda体中的功能，已经有方法提供了实现，可以使用方法引用，可以将方法引用理解为Lambda表达式的另外一种表现形式；
+			语法格式：
+				对象的引用 :: 实例方法名
+				类名 :: 静态方法名
+				类名 :: 实例方法名
+				注意：①方法引用所引用的方法的（Lambda体中）参数列表与返回值类型，需要与函数式接口中抽象方法的参数列表和返回值类型保持一致！
+					  ②若Lambda的参数列表的第一个参数，是实例方法的调用者，第二个参数(或无参)是实例方法的参数时，格式： ClassName::MethodName 或类名 :: 实例方法名
+			示例：
+			@Test
+			public void test1(){
+				PrintStream ps = System.out;
+				Consumer<String> con = (str) -> ps.println(str);
+				con.accept("Hello World！");								
+				Consumer<String> con2 = ps::println;
+				con2.accept("Hello Java8！");				
+				Consumer<String> con3 = System.out::println;				
+				con3.accept("Hello Java8！");
+			}
+			#对象的引用 :: 实例方法名
+			@Test
+			public void test2(){
+				Employee emp = new Employee(101, "张三", 18, 9999.99);				
+				Supplier<String> sup = () -> emp.getName();
+				System.out.println(sup.get());							
+				Supplier<String> sup2 = emp::getName;
+				System.out.println(sup2.get());
+			}
+			#类名 :: 静态方法名
+			@Test
+			public void test3(){
+				BiFunction<Double, Double, Double> fun = (x, y) -> Math.max(x, y);
+				System.out.println(fun.apply(1.5, 22.2));				
+				BiFunction<Double, Double, Double> fun2 = Math::max;
+				System.out.println(fun2.apply(1.2, 1.5));
+			}
+			@Test
+			public void test4(){
+				Comparator<Integer> com = (x, y) -> Integer.compare(x, y);								
+				Comparator<Integer> com2 = Integer::compare;
+				System.out.println(com2.compare(1, 2));
+			}
+			#类名 :: 实例方法名
+			@Test
+			public void test5(){
+				BiPredicate<String, String> bp = (x, y) -> x.equals(y);
+				System.out.println(bp.test("abcde", "abcde"));							
+				BiPredicate<String, String> bp2 = String::equals;
+				System.out.println(bp2.test("abc", "abc"));												
+				Function<Employee, String> fun = (e) -> e.show();
+				System.out.println(fun.apply(new Employee()));				
+				Function<Employee, String> fun2 = Employee::show;
+				System.out.println(fun2.apply(new Employee()));				
+			}
+			public String show() {
+				return "测试方法引用！";
+			}
+		6、构造器引用: 构造器的参数列表，需要与函数式接口中参数列表保持一致！使用：类名 :: new
+			#构造器引用
+			@Test
+			public void test6(){
+				Supplier<Employee> sup = () -> new Employee();
+				System.out.println(sup.get());								
+				Supplier<Employee> sup2 = Employee::new;
+				System.out.println(sup2.get());
+			}
+			@Test
+			public void test7(){
+				Function<String, Employee> fun = Employee::new;				
+				BiFunction<String, Integer, Employee> fun2 = Employee::new;
+			}
+		7、数组引用：类型[] :: new
+			@Test
+			public void test8(){
+				Function<Integer, String[]> fun = (args) -> new String[args];
+				String[] strs = fun.apply(10);
+				System.out.println(strs.length);								
+				Function<Integer, Employee[]> fun2 = Employee[] :: new;
+				Employee[] emps = fun2.apply(20);
+				System.out.println(emps.length);
+			}
+		8、综合案例：
+			#模拟内存数据
+			List<Employee> emps = Arrays.asList(
+					new Employee(101, "张三", 18, 9999.99),
+					new Employee(102, "李四", 59, 6666.66),
+					new Employee(103, "王五", 28, 3333.33),
+					new Employee(104, "赵六", 8, 7777.77),
+					new Employee(105, "田七", 38, 5555.55)
+			);
+			#按年龄排序，年龄相同按姓名排序
+			@Test
+			public void test1(){
+				Collections.sort(emps, (e1, e2) -> {
+					if(e1.getAge() == e2.getAge()){
+							return e1.getName().compareTo(e2.getName());
+					}else{
+						return -Integer.compare(e1.getAge(), e2.getAge());
+					}
+				});				
+				for (Employee emp : emps) {
+					System.out.println(emp);
+				}
+			}
+			@Test
+			public void test2(){
+				String trimStr = strHandler("\t\t\t 我大尚硅谷威武   ", (str) -> str.trim());
+				System.out.println(trimStr);				
+				String upper = strHandler("abcdef", (str) -> str.toUpperCase());
+				System.out.println(upper);				
+				String newStr = strHandler("我大尚硅谷威武", (str) -> str.substring(2, 5));
+				System.out.println(newStr);
+			}			
+			//需求：用于处理字符串
+			public String strHandler(String str, MyFunction mf){
+				return mf.getValue(str);
+			}
+			@FunctionalInterface
+			public interface MyFunction {				
+				public String getValue(String str);
+			}
+			@Test
+			public void test3(){
+				op(100L, 200L, (x, y) -> x + y);				
+				op(100L, 200L, (x, y) -> x * y);
+			}			
+			//需求：对于两个Long型数据进行处理
+			public void op(Long l1, Long l2, MyFunction2<Long, Long> mf){
+				System.out.println(mf.getValue(l1, l2));
+			}
+			@FunctionalInterface
+			public interface MyFunction2<T, R> {
+				public R getValue(T t1, T t2);				
+			}
+	三、Stream流操作
+		1、StreamaAPI的基本知识
+		   操作步骤：创建 Stream  -> 中间操作 -> 终止操作(终端操作)
+		   示例：
+		   1. 创建Stream
+			@Test
+			public void test1(){
+				//1. Collection 提供了两个方法stream()与parallelStream()
+				List<String> list = new ArrayList<>();
+				Stream<String> stream = list.stream(); //获取一个顺序流
+				Stream<String> parallelStream = list.parallelStream(); //获取一个并行流				
+				//2. 通过 Arrays 中的静态方法 stream() 获取一个数组流
+				Integer[] nums = new Integer[10];
+				Stream<Integer> stream1 = Arrays.stream(nums);				
+				//3. 通过 Stream 类中静态方法 of()
+				Stream<Integer> stream2 = Stream.of(1,2,3,4,5,6);				
+				//4. 创建无限流
+				//迭代
+				Stream<Integer> stream3 = Stream.iterate(0, (x) -> x + 2).limit(10);
+				stream3.forEach(System.out::println);				
+				//生成，类名：：静态方法
+				Stream<Double> stream4 = Stream.generate(Math::random).limit(2);
+				stream4.forEach(System.out::println);				
+			}
+		   2. 中间操作，模拟内存数据
+			List<Employee> emps = Arrays.asList(
+					new Employee(102, "李四", 59, 6666.66),
+					new Employee(101, "张三", 18, 9999.99),
+					new Employee(103, "王五", 28, 3333.33),
+					new Employee(104, "赵六", 8, 7777.77),
+					new Employee(104, "赵六", 8, 7777.77),
+					new Employee(104, "赵六", 8, 7777.77),
+					new Employee(105, "田七", 38, 5555.55)
+			);
+			#筛选与切片
+			filter（过滤）——接收Lambda，从流中排除某些元素
+			limit（限制）——截断流，使其元素不超过给定数量
+			skip(n) —— 跳过元素，返回一个扔掉了前 n 个元素的流。若流中元素不足 n 个，则返回一个空流。与 limit(n) 互补
+			distinct——筛选，通过流所生成元素的 hashCode() 和 equals() 去除重复元素
+			#内部迭代：迭代操作 Stream API 内部完成
+			@Test
+			public void test2(){
+				//所有的中间操作不会做任何的处理
+				Stream<Employee> stream = emps.stream()
+					.filter((e) -> {
+						System.out.println("测试中间操作");
+						return e.getAge() <= 35;
+					});//Predicate boolean test(T t);				
+				//只有当做终止操作时，所有的中间操作会一次性的全部执行，称为“惰性求值”
+				stream.forEach(System.out::println);
+			}
+			#外部迭代
+			@Test
+			public void test3(){
+				Iterator<Employee> it = emps.iterator();				
+				while(it.hasNext()){
+					System.out.println(it.next());
+				}
+			}
+			@Test
+			public void test4(){
+				emps.stream()
+					.filter((e) -> {
+						System.out.println("短路！"); // &&  ||
+						return e.getSalary() >= 5000;
+					}).limit(3)
+					.forEach(System.out::println);
+			}
+			@Test
+			public void test5(){
+				emps.parallelStream()
+					.filter((e) -> e.getSalary() >= 5000)
+					.skip(2)
+					.forEach(System.out::println);
+			}
+			@Test
+			public void test6(){
+				emps.stream()
+					.distinct()
+					.forEach(System.out::println);
+			}
+			#映射
+			map——接收Lambda，将元素转换成其他形式或提取信息。接收一个函数作为参数，该函数会被应用到每个元素上，并将其映射成一个新的元素
+			flatMap——接收一个函数作为参数，将流中的每个值都换成另一个流，然后把所有流连接成一个流
