@@ -304,6 +304,8 @@
 						</dependencyManagement>
 						2,配置参数：创建bootstrap.yml或创建bootstrap.properties文件
 						格式：
+						    server:
+								port: 8401
 							spring:
 							  application:
 								name: cloudalibaba-sentinal-service
@@ -318,7 +320,7 @@
 									dashboard: localhost:8080
 									# 默认8719端口，假如被占用了会自动从8719端口+1进行扫描，直到找到未被占用的端口
 									port: 8719
-								  datasource:
+								  datasource: #规则持久化
 									ds1:
 									  nacos:
 										server-addr: localhost:8848
@@ -372,18 +374,256 @@
                            热点规则：
 						       热点key限流：官网：https://github.com/alibaba/Sentinel/wiki/%E7%83%AD%E7%82%B9%E5%8F%82%E6%95%B0%E9%99%90%E6%B5%81；
 							   兜底方法：系统默认与用户自定义，像Blocked by Sentinel （flow limiting）系统默认，自定义：@SentinelResource 进行降级处理；
-							   
-						   
-						   
-						   
+								   如：
+								   @GetMapping("/testHotKey")
+								   //@SentinelResource(value = "testHotKey") //Sentinel的默认提示都是： Blocked by Sentinel (flow limiting)；
+								   @SentinelResource(value = "testHotKey",blockHandler = "deal_testHotKey")
+								   public String testHotKey(@RequestParam(value = "p1",required = false)String p1,@RequestParam(value = "p2",required = false)String p2) {														 
+										return "testHotKey";
+								   }
+								   #兜底方法，假设QPS=1，参数索引设0，则第一个参数只要QPS超过每秒1次，马上降级处理；
+								   public String deal_testHotKey(String p1, String p2, BlockException exception) {
+										return "testHotKey, o(╥﹏╥)o";
+								   }
+						       #Sentinel配置热点规则：资源名，限流模式仅支持QPS，参数索引，单机阈值，统计窗口时长，是否集群...；
+							   #访问：http://localhost:8401/testHotKey?p1=1；
+						       参数例外项：
+								   描述：当超过1秒钟一个后，达到阈值1后马上被限流，若期望p1参数当它是某一个特殊值时，它的限流值和平时不一样，则配置参数例外项；
+								   前提条件：热点参数的注意点，参数必须为基本类型或者String；
+								   注意：@SentinelResource主管配置违规，走兜底方法；运行异常走运行异常；
+						   系统规则：
+							   含义：系统保护规则从应用级别的入口流量进行控制，是应用整体维度的，不是资源维度的；仅对入口流量生效，支持以下几种模式：
+									 load自适应：对Linux/Unix机器生效，一般设置为CPU核数*2.5
+									 CPU利用率：
+									 平均RT：
+									 并发线程数：
+									 入口QPS：
+						   @SentinelResource详细说明：
+							   按资源名称限流：如下
+									@GetMapping("/byResource")
+									@SentinelResource(value = "byResource",blockHandler = "handleException")
+									public CommonResult byResource() {
+										return  new CommonResult(200,"按照资源名称限流测试",new Payment(2020L,"serial001"));
+									}
+									public CommonResult handleException(BlockException exception) {
+										return  new CommonResult(444,exception.getClass().getCanonicalName() + "\t 服务不可用");
+									}
+							   Sentinel流控规则配置：资源名：byResource；
+							   按照Url地址限流：如下   
+								   @GetMapping("/rateLimit/byUrl")
+								   @SentinelResource(value = "byUrl")
+								   public CommonResult byUrl() {
+										return  new CommonResult(200,"按照byUrl限流测试",new Payment(2020L,"serial002"));
+								   }
+							   Sentinel流控规则配置：资源名：/rateLimit/byUrl；
+						   兜底方法面临问题：
+							   系统默认，与业务代码耦合，导致代码膨胀，需要全局统一处理；
+						   用户自定义限流处理逻辑：如下
+							   @GetMapping("/rateLimit/customerBlockHandler")
+							   @SentinelResource(value = "customerBlockHandler",blockHandlerClass = CustomerBlockHandler.class,blockHandler = "handlerException1")									
+							   public CommonResult customerBlockHandler() {
+								return  new CommonResult(200,"按照客户自定义限流测试",new Payment(2020L,"serial003"));
+							   }
+							   #自定义限流处理
+							   public class CustomerBlockHandler {
+									public static CommonResult handlerException1(BlockException exception) {
+										return  new CommonResult(444,"按照客户自定义的Glogal 全局异常处理1",new Payment(2020L,"serial003"));
+									}
+									public static CommonResult handlerException2(BlockException exception) {
+										return  new CommonResult(444,"按照客户自定义的Glogal 全局异常处理2",new Payment(2020L,"serial003"));
+									}
+							   }
+						   服务熔断功能：
+							   Ribbon系列：
+								  服务提供者：
+									  1、引入依赖POM.XML
+									   <!-- SpringCloud ailibaba nacos-->
+										<dependency>
+											<groupId>com.alibaba.cloud</groupId>
+											<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+										</dependency>
+										<!-- SpringCloud ailibaba sentinel-->
+										<dependency>
+											<groupId>com.alibaba.cloud</groupId>
+											<artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+										</dependency>
+										<dependency>
+									   2、application.yml的配置
+									   server:
+										  port: 9003
+										spring:
+										  application:
+											name: nacos-payment-provider
+										  cloud:
+											nacos:
+											  discovery:
+												server-addr: localhost:8848
+										management: #监控
+										  endpoints:
+											web:
+											  exposure:
+												include: '*'
+									   3、入口添加注解@EnableDiscoveryClient；
+									   4、业务类
+									   @RestController
+										public class PaymentController {
+											@Value("${server.port}")
+											private  String serverPort;
+											public static HashMap<Long, Payment > map = new HashMap<>();
+											static {
+												map.put(1L,new Payment(1L,"1111"));
+												map.put(2L,new Payment(2L,"2222"));
+												map.put(3L,new Payment(3L,"3333"));
+											}
+											@GetMapping(value = "/paymentSQL/{id}")
+											public CommonResult<Payment> paymentSQL(@PathVariable("id") Long id) {
+												Payment payment = map.get(id);
+												CommonResult<Payment> result = new CommonResult<>(200,"from mysql,serverPort: " + serverPort,payment);
+												return result;
+											}
+										}
+								  服务消费者：
+							           1、引入依赖POM.XML（同提供者）
+									   2、application.yml的配置
+									   server:
+										  port: 84
+										spring:
+										  application:
+											name: nacos-order-consumer
+										  cloud:
+											nacos:
+											  discovery:
+												server-addr: localhost:8848
+											sentinel:
+											  transport:
+												dashboard: localhost:8080
+												port: 8719
+										#消费者将去访问的微服务名称
+										server-url:
+										  nacos-user-service: http://nacos-payment-provider
+										#激活Sentinel对Feign的支持
+										feign:
+										  sentinel:
+											enabled: true
+										3、入口添加注解@EnableDiscoveryClient；
+										4、配置类将RestTemplate注入容器；
+										@Configuration
+										public class ApplicationContextConfig {
+											@Bean
+											@LoadBalanced
+											public RestTemplate getRestTemplate() {
+												return new RestTemplate();
+											}
+										}
+										5、业务类
+										@RestController
+										@Slf4j
+										public class CircleBreakerController {
+											public static  final  String SERVICE_URL = "http://nacos-payment-provider";
+											@Resource
+											private RestTemplate restTemplate;
+											@RequestMapping("/consumer/fallback/{id}")
+										//  @SentinelResource(value = "fallback")
+										//  @SentinelResource(value = "fallback",fallback ="handlerFallback")
+										//  fallback管运行异常，blockHandler管配置违规，都配blockHandler起作用
+											@SentinelResource(value = "fallback",fallback ="handlerFallback",blockHandler = "blockHandler") 
+											public CommonResult<Payment> fallback(@PathVariable Long id) {
+												CommonResult<Payment> result = restTemplate.getForObject(SERVICE_URL + "/paymentSQL/" + id,CommonResult.class,id);
+												if(id == 4){
+													throw new IllegalArgumentException("IllegalArgument ,非法参数异常...");
+												}else if(result.getData() == null) {
+													throw new NullPointerException("NullPointerException,该ID没有对应记录，空指针异常");
+												}
+												return  result;
+											}
+											public CommonResult handlerFallback(@PathVariable Long id,Throwable e) {
+												Payment payment = new Payment(id,"null");
+												return new CommonResult(444,"异常handlerFallback，exception内容： " + e.getMessage(), payment);
+											}
+											public CommonResult blockHandler(@PathVariable Long id,BlockException e) {
+												Payment payment = new Payment(id,"null");
+												return new CommonResult(444,"blockHandler-sentinel 限流，BlockException： " + e.getMessage(), payment);
+											}
+											//OpenFeign
+											@Resource
+											private PaymentService paymentService;
+											@GetMapping(value = "/consumer/paymentSQL/{id}")
+											public CommonResult<Payment> paymentSQL(@PathVariable("id") Long id){
+												return paymentService.paymentSQL(id);
+											}
+										}
+										6、Feign 接口声明
+										@FeignClient(value = "nacos-payment-provider",fallback = PaymentFallbackService.class)
+										public interface PaymentService {
+											@GetMapping(value = "/paymentSQL/{id}")
+											public CommonResult< Payment > paymentSQL(@PathVariable("id") Long id);
+
+										}
+										#兜底降级处理
+										@Component
+										public class PaymentFallbackService implements PaymentService{
+											@Override
+											public CommonResult< Payment > paymentSQL(Long id) {
+												return new CommonResult<>(444,"服务降级返回，PaymentFallbackService",new Payment(id,"ErrorSerial"));
+											}
+										}
+							   Feign系列：
+								  1、引入依赖POM.XML，对OpenFeign的支持；
+								  2、application.yml的配置，服务端口，Sentinel对Feign支持等；
+								  3、入口添加注解@EnableFeignClients；
+						   Sentinel规则持久化：
+							  问题：一旦重启应用，Sentinel规则将消失，生产环境需要将配置规则进行持久化；
+							  方案：将限流配置规则持久化进Nacos保存即可；
+							  使用：
+								  1、引入依赖POM.XML
+								  <dependency>
+									<groupId>com.alibaba.csp</groupId>
+									<artifactId>sentinel-datasource-nacos</artifactId>
+								  </dependency>
+								  2、application.yml的配置
+								    server:
+										port: 8401
+									spring:
+									  application:
+										name: cloudalibaba-sentinal-service
+									  cloud:
+										nacos:
+										  discovery:
+											#Nacos服务注册中心地址
+											server-addr: localhost:8848
+										sentinel:
+										  transport:
+											#配置Sentin dashboard地址
+											dashboard: localhost:8080
+											# 默认8719端口，假如被占用了会自动从8719端口+1进行扫描，直到找到未被占用的端口
+											port: 8719
+										  datasource: #规则持久化
+											ds1: #数据源
+											  nacos:
+												server-addr: localhost:8848
+												dataId: cloudalibaba-sentinel-service
+												groupId: DEFAULT_GROUP
+												data-type: json
+												rule-type: flow #流控规则
+							      3、Nacos添加配置规则：结构如下
+								     [
+										{
+											"resource": "/rateLimit/byUrl", #资源名称
+											"limitApp": "default", #来源应用
+											"grade": 1, #阈值类型，0线程数，1QPS
+											"count": 1, #单机阈值
+											"strategy": 0, #流控模式，0直接，1关联，2链路
+											"controlBehavior": 0, #流控效果，0快速失败，1Warm Up，2排队等待
+											"clusterMode": false #是否集群
+										}
+									]									 
 						   # 注意
-							 Sentinel控制台中修改规则：仅存在于服务的内存中，不会修改Nacos中的配置值，重启后恢复原来的值。
-							 Nacos控制台中修改规则：服务的内存中规则会更新，Nacos中持久化规则也会更新，重启后依然保持。
+							 Sentinel控制台中修改规则：仅存在于服务的内存中，重启后丢失配置，Nacos控制台中修改规则：服务的内存中规则会更新，Nacos中持久化规则也会更新，重启后依然保持。							 
 						5、优点:
 								1、sentinel配置变动后通知非常的迅速吗，秒杀springcloud原来的config几条街，
 								   毕竟原来的config是基于git，不提供可视化界面，动态变更还需要依赖bus来通知所有的客户端变化；
 								2、与hystrix相比，sentinel更加的轻量级,并且支持动态的限流调整，更加友好的界面ui。
-								
+	3、分布式事务处理：							
 								
 								
 								
