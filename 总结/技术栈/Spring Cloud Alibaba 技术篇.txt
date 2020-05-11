@@ -624,24 +624,148 @@
 								   毕竟原来的config是基于git，不提供可视化界面，动态变更还需要依赖bus来通知所有的客户端变化；
 								2、与hystrix相比，sentinel更加的轻量级,并且支持动态的限流调整，更加友好的界面ui。
 	3、分布式事务处理：							
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
-								
+		分布式事务问题：分布式以前，单机单库没这个问题；分布式之后，全局的事务问题难以保证；一次业务操作需要跨多个数据源（如：订单、仓库、账户）或需要跨多个系统（如：订单、仓库、账户）进行远程调用，就会产生分布式事务问题；						
+		Seata：
+			含义：Senta是一款开源的分布式事务解决方案，致力于在微服务架构下提供高性能和简单易用的分布式事务服务；
+				  2019年1月份蚂蚁金服和阿里巴巴共同开源的分布式事务解决方案，Simple Extensible Autonomous Transaction Architecture，简单可扩展自治事务框架；
+			官网：http://seata.io/zh-cn/；
+			分布式事务处理过程ID+三组件模型：
+				Transaction ID全局唯一的事务ID - XID；
+				TC - 事务协调者，理解成Seata服务器，维护全局和分支事务的状态，驱动全局事务提交或回滚。
+				TM - 事务管理器，理解成事务的发起方，定义全局事务的范围：开始全局事务、提交或回滚全局事务。
+				RM - 资源管理器，理解成事务的参与方，即数据库，管理分支事务处理的资源，与TC交谈以注册分支事务和报告分支事务的状态，并驱动分支事务提交或回滚。
+			执行过程：
+									Begin/Commit/Rollback
+				微服务（TM） <--------------------------------------> TC
+					（RM）<-------------------------------------->    TC			
+					（DB）  Register Branch / Branch Commit/Rollback
+			执行细节：
+				TM开启分布式事务（TM向TC注册全局事务记录）；
+				按业务场景，编排数据库、服务等事务内资源（RM向TC汇报资源准备状态）；
+				TM结束分布式事务，事务一阶段结束（TM通知TC提交/回滚分布式事务)；
+				TC汇总事务信息，决定分布式事务是提交还是回滚；
+				TC通知所有RM提交/回滚资源，事务二阶段结束；
+			模式：
+				AT模式：提供无侵入自动补偿的事务模式，目前已支持 MySQL、 Oracle 、PostgreSQL和 TiDB的AT模式，H2 开发中；
+				TCC模式：支持 TCC 模式并可与 AT 混用，灵活度更高；
+				SAGA模式：为长事务提供有效的解决方案；
+				XA模式：开发中；
+				高可用：
+			AT模式如何做到对业务的无侵入？？？
+				一阶段加载：业务SQL ---->前置快照（before image）---->执行SQL------>后置快照（after image）---->行锁----->提交业务SQL
+				二阶段提交：一阶段正常执行完，删除快照与行锁即可；
+				二阶段回滚：校验脏写--------->还原数据------->删除中间数据（快照与行锁）
+			使用：本地事务@Transational，全局事务添加@GlobalTransactional；				
+			Seata-Server服务安装：
+				官方地址：https://seata.io/zh-cn/blog/download.html；
+				下载解压并执行以下操作：
+					1、修改配置文件file.conf：主要修改自定义事务组名称+事务日志存储模式为db+数据库连接信息；		
+						服务模块（service）修改事务组，
+						存储模块（store）修改事务的存储模式为db；
+					2、执行建库脚本db_store.sql，在MySQL数据库seata下会生成3张表（branck_table、global_table、lock_table）；	
+					3、修改配置文件registry.conf：配置注册信息为nacos，以及nacos服务的连接信息；			
+				使用：
+					准备：分别启动Nacos服务，以及Seata-Server服务，seata-server.bat脚本执行；
+					演示：订单、库存、账户案例说明，用户下一个订单，经历了三个服务（订单、库存、账户），各个服务对应各自的数据库（seata-order、seata-storage、seata-account）；
+						  流程：下订单-减库存-减账户余额-改订单状态，涉及到分布式事务处理问题；
+						1、建立好各自的数据库以及表信息，seata-order（t_order）、seata-storage（t_storage）、seata-account（t_account）；
+						2、建立好各自的数据库的日志回滚表，直接执行eata官方提供的脚本sdb_undo_log.sql即可；
+					各个微服务核心模块使用：
+						订单模块
+							1、POM.XML，引入Nacos、Seata、OpenFeign等相关依赖；
+							<!-- nacos -->
+							<dependency>
+								<groupId>com.alibaba.cloud</groupId>
+								<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+							</dependency>
+							<!-- seata-->
+							<dependency>
+								<groupId>com.alibaba.cloud</groupId>
+								<artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+								<exclusions>
+									<exclusion>
+										<groupId>io.seata</groupId>
+										<artifactId>seata-all</artifactId>
+									</exclusion>
+								</exclusions>
+							</dependency>
+							<dependency>
+								<groupId>io.seata</groupId>
+								<artifactId>seata-all</artifactId>
+								<version>0.9.0</version>
+							</dependency>
+							<dependency>
+								<groupId>org.springframework.cloud</groupId>
+								<artifactId>spring-cloud-starter-openfeign</artifactId>
+							</dependency>
+							2、YML配置
+							server:
+							  port: 2001
+							spring:
+							  application:
+								name: seata-order-service
+							  cloud:
+								alibaba:
+								  seata:
+									# 自定义事务组名称需要与seata-server中的对应
+									tx-service-group: fsp_tx_group
+								nacos:
+								  discovery:
+									server-addr: 127.0.0.1:8848
+							  datasource:
+								# 当前数据源操作类型
+								type: com.alibaba.druid.pool.DruidDataSource
+								# mysql驱动类
+								driver-class-name: com.mysql.cj.jdbc.Driver
+								url: jdbc:mysql://localhost:3306/seata_order?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8
+								username: root
+								password: 123456
+							feign:
+							  hystrix:
+								enabled: false
+							3、file.conf、registry.conf拷贝到资源路径下；
+							4、业务逻辑层，下订单
+							@Service
+							@Slf4j
+							public class OrderServiceImpl implements OrderService {
+								@Resource
+								private OrderDao orderDao;//DAO层
+								@Resource
+								private AccountService accountService;//接口，Feign调用的是账户服务；
+								@Resource
+								private StorageService storageService;
+								/**
+								 * 下订单->减库存->减余额->改状态
+								 * GlobalTransactional seata开启分布式事务，异常时回滚,name保证唯一即可
+								 * @param order 订单对象
+								 */
+								@Override
+								@GlobalTransactional(name = "fsp-create-order",rollbackFor = Exception.class)
+								public void create(Order order) {
+									// 1 新建订单
+									orderDao.create(order);
+									// 2 扣减库存
+									storageService.decrease(order.getProductId(), order.getCount());
+									// 3 扣减账户
+									accountService.decrease(order.getUserId(), order.getMoney());
+									// 4 修改订单状态,从0到1,1代表已完成
+									orderDao.update(order.getUserId(), 0);
+								}
+							}
+							@FeignClient(value = "seata-account-service")//服务名
+							public interface AccountService {
+								/**
+								 * 减余额
+								 * @param userId
+								 * @param money
+								 * @return
+								 */
+								@PostMapping(value = "/account/decrease")
+								CommonResult decrease(@RequestParam("userId") Long userId, @RequestParam("money") BigDecimal money);
+							}	
+				测试：
+					业务逻辑层添加分布式全局事务注解后，可以解决分布式事务问题；
+					
 								
 								
 								
