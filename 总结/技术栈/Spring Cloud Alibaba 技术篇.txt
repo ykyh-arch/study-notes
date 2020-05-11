@@ -765,11 +765,253 @@
 							}	
 				测试：
 					业务逻辑层添加分布式全局事务注解后，可以解决分布式事务问题；
-					
-								
-								
-								
-								
-								
-								
+	4、集群高并发情况下分布式唯一全局ID生成：				
+		需求：在分布式系统中需要对大量的消息数据进行唯一性标识，如：美团订单、优惠券等；
+		ID生成规则部分硬性要求：
+			1、全局唯一，不能出现重复的ID号，既然是唯一标识；
+			2、趋势递增，在MySQL的InnoDB引擎中使用的是聚集索引，由于多数RDBMS使用Btree的数据结构来存储索引数据，在主键的选择上面我们应该尽量使用有序的主键保证写入性能；
+			3、单调递增，保证下一个ID一定大于上一个ID，例如事务版本号，IM增量消息、排序等特殊需求；
+			4、信息安全，如果ID是连续的，恶意用户的扒取工作就非常容易做了，直接按照顺序下载指定的URL即可；如果是订单号就更危险了，竞争对手可以直接知道我们一天的单量。所以在一些应用场景下，需要ID无规则，让竞争对手不好猜；
+			5、含时间戳，能够在开发中快速了解分布式ID的生成时间；
+		ID生成系统的可用性要求：
+			高可用：发一个获取分布式ID的请求，服务器就可以保证99.999%的情况下给我创建一个唯一的分布式ID；
+			低延迟：发一个获取分布式ID的请求，服务器响应速度要快；
+			高QPS：假如并发一口气10万个创建分布式ID请求同时过来，服务器要顶得住并一下子成功创建10万个唯一的分布式ID；
+		通用方案：
+			UUID：性能高，本地生成，没有网络延迟，36位字符组成，可以保证唯一性，但入数据库性能差；MySQL官方推荐的主键ID越短越好，低于36位；
+			数据库自增主键：利用数据库自增ID和MySQL的replace into实现的；单机合适，集群分布式不合适（水平扩展困难、高QPS下性能差、频繁的I/O读写操作）、设置不同的增长步长；
+			基于Redis生成全局Id策略：因为Redis是单线程的天生保证原子性，可以使用原子操作INCR和INCRBY来实现；集群分布式可以实现、设置不同的增长步长；
+			snowflake：
+				介绍：Twitter的分布式自增ID算法snowflake（雪花算法）；1秒钟可生成26万个趋势自增的可排序的ID，计算结果是一个64bit大小的整数，最终转化为字符串的长度最多可以有19位；
+				核心组成部分：
+					0-1bit符号位，0表示整数，1表示负数，取0；
+					000000-41bit时间戳位，换算成时间69年；
+					000000-10bit工作进程（机器ID）位，共计1024节点；包括5位datacenterId与5位workeId；
+					000000-12bit序列号位，每毫秒生成4095个ID序号；
+				使用糊涂工具包提供雪花算法，地址：https://github.com/looly/hutool/，引入：hutool-captcha 模块即可；
+				工具类：
+				@Slf4j
+				@Component
+				public class IdGeneratorSnowflake {
+					/** 工作机器ID(0~31) */
+					private long workerId = 0;
+					/** 数据中心ID(0~31) */
+					private long datacenterId = 1;
+					private Snowflake snowflake = IdUtil.createSnowflake(workerId,datacenterId);
+					@PostConstruct
+					public void init() {
+						try {
+							workerId = NetUtil.ipv4ToLong(NetUtil.getLocalhostStr());
+							log.info("当前机器的workerId:{}", workerId);
+						} catch (Exception e) {
+							log.info("当前机器的workerId获取失败", e);
+							workerId = NetUtil.getLocalhostStr().hashCode();
+							log.info("当前机器 workId:{}", workerId);
+						}
+					}
+					public synchronized long snowflakeId() {
+						return snowflake.nextId();
+					}
+					public synchronized long snowflakeId(long workerId, long datacenterId) {
+						snowflake = IdUtil.createSnowflake(workerId, datacenterId);
+						return snowflake.nextId();
+					}
+					public static void main(String[] args) {						
+						System.out.println(new IdGeneratorSnowflake().snowflakeId());//1240536286826201088
+					}
+				}
+				缺点：存在时钟回拨，可能出现ID重复；趋势递增并不是严格递增；解决方案参考：百度开源的分布式唯一ID生成器UidGenerator，Leaf-美团点评分布式ID生成系统；
+				完整代码：
+				import org.apache.commons.lang3.RandomUtils;
+				import org.apache.commons.lang3.StringUtils;
+				import org.apache.commons.lang3.SystemUtils;				 
+				import java.net.Inet4Address;
+				import java.net.UnknownHostException;				 
+				/**
+				 * Twitter_Snowflake<br>
+				 * SnowFlake的结构如下(每部分用-分开):<br>
+				 * 0 - 0000000000 0000000000 0000000000 0000000000 0 - 00000 - 00000 - 000000000000 <br>
+				 * 1位标识，由于long基本类型在Java中是带符号的，最高位是符号位，正数是0，负数是1，所以id一般是正数，最高位是0<br>
+				 * 41位时间截(毫秒级)，注意，41位时间截不是存储当前时间的时间截，而是存储时间截的差值（当前时间截 - 开始时间截)
+				 * 得到的值），这里的的开始时间截，一般是我们的id生成器开始使用的时间，由我们程序来指定的（如下下面程序IdWorker类的startTime属性）。41位的时间截，可以使用69年，年T = (1L << 41) / (1000L * 60 * 60 * 24 * 365) = 69<br>
+				 * 10位的数据机器位，可以部署在1024个节点，包括5位datacenterId和5位workerId<br>
+				 * 12位序列，毫秒内的计数，12位的计数顺序号支持每个节点每毫秒(同一机器，同一时间截)产生4096个ID序号<br>
+				 * 加起来刚好64位，为一个Long型。<br>
+				 * SnowFlake的优点是，整体上按照时间自增排序，并且整个分布式系统内不会产生ID碰撞(由数据中心ID和机器ID作区分)，并且效率较高，经测试，SnowFlake每秒能够产生26万ID左右。
+				 */
+				public class SnowflakeIdWorker {
+				 
+					// ==============================Fields===========================================
+					/** 开始时间截 (2015-01-01) */
+					private final long twepoch = 1489111610226L;
+				 
+					/** 机器id所占的位数 */
+					private final long workerIdBits = 5L;
+				 
+					/** 数据标识id所占的位数 */
+					private final long dataCenterIdBits = 5L;
+				 
+					/** 支持的最大机器id，结果是31 (这个移位算法可以很快的计算出几位二进制数所能表示的最大十进制数) */
+					private final long maxWorkerId = -1L ^ (-1L << workerIdBits);
+				 
+					/** 支持的最大数据标识id，结果是31 */
+					private final long maxDataCenterId = -1L ^ (-1L << dataCenterIdBits);
+				 
+					/** 序列在id中占的位数 */
+					private final long sequenceBits = 12L;
+				 
+					/** 机器ID向左移12位 */
+					private final long workerIdShift = sequenceBits;
+				 
+					/** 数据标识id向左移17位(12+5) */
+					private final long dataCenterIdShift = sequenceBits + workerIdBits;
+				 
+					/** 时间截向左移22位(5+5+12) */
+					private final long timestampLeftShift = sequenceBits + workerIdBits + dataCenterIdBits;
+				 
+					/** 生成序列的掩码，这里为4095 (0b111111111111=0xfff=4095) */
+					private final long sequenceMask = -1L ^ (-1L << sequenceBits);
+				 
+					/** 工作机器ID(0~31) */
+					private long workerId;
+				 
+					/** 数据中心ID(0~31) */
+					private long dataCenterId;
+				 
+					/** 毫秒内序列(0~4095) */
+					private long sequence = 0L;
+				 
+					/** 上次生成ID的时间截 */
+					private long lastTimestamp = -1L;
+				 
+					private static SnowflakeIdWorker idWorker;
+				 
+					static {
+						idWorker = new SnowflakeIdWorker(getWorkId(),getDataCenterId());
+					}
+				 
+					//==============================Constructors=====================================
+					/**
+					 * 构造函数
+					 * @param workerId 工作ID (0~31)
+					 * @param dataCenterId 数据中心ID (0~31)
+					 */
+					public SnowflakeIdWorker(long workerId, long dataCenterId) {
+						if (workerId > maxWorkerId || workerId < 0) {
+							throw new IllegalArgumentException(String.format("workerId can't be greater than %d or less than 0", maxWorkerId));
+						}
+						if (dataCenterId > maxDataCenterId || dataCenterId < 0) {
+							throw new IllegalArgumentException(String.format("dataCenterId can't be greater than %d or less than 0", maxDataCenterId));
+						}
+						this.workerId = workerId;
+						this.dataCenterId = dataCenterId;
+					}
+				 
+					// ==============================Methods==========================================
+					/**
+					 * 获得下一个ID (该方法是线程安全的)
+					 * @return SnowflakeId
+					 */
+					public synchronized long nextId() {
+						long timestamp = timeGen();
+				 
+						//如果当前时间小于上一次ID生成的时间戳，说明系统时钟回退过这个时候应当抛出异常
+						if (timestamp < lastTimestamp) {
+							throw new RuntimeException(
+									String.format("Clock moved backwards.  Refusing to generate id for %d milliseconds", lastTimestamp - timestamp));
+						}
+				 
+						//如果是同一时间生成的，则进行毫秒内序列
+						if (lastTimestamp == timestamp) {
+							sequence = (sequence + 1) & sequenceMask;
+							//毫秒内序列溢出
+							if (sequence == 0) {
+								//阻塞到下一个毫秒,获得新的时间戳
+								timestamp = tilNextMillis(lastTimestamp);
+							}
+						}
+						//时间戳改变，毫秒内序列重置
+						else {
+							sequence = 0L;
+						}
+				 
+						//上次生成ID的时间截
+						lastTimestamp = timestamp;
+				 
+						//移位并通过或运算拼到一起组成64位的ID
+						return ((timestamp - twepoch) << timestampLeftShift)
+								| (dataCenterId << dataCenterIdShift)
+								| (workerId << workerIdShift)
+								| sequence;
+					}
+				 
+					/**
+					 * 阻塞到下一个毫秒，直到获得新的时间戳
+					 * @param lastTimestamp 上次生成ID的时间截
+					 * @return 当前时间戳
+					 */
+					protected long tilNextMillis(long lastTimestamp) {
+						long timestamp = timeGen();
+						while (timestamp <= lastTimestamp) {
+							timestamp = timeGen();
+						}
+						return timestamp;
+					}
+				 
+					/**
+					 * 返回以毫秒为单位的当前时间
+					 * @return 当前时间(毫秒)
+					 */
+					protected long timeGen() {
+						return System.currentTimeMillis();
+					}
+				 
+					private static Long getWorkId(){
+						try {
+							String hostAddress = Inet4Address.getLocalHost().getHostAddress();
+							int[] ints = StringUtils.toCodePoints(hostAddress);
+							int sums = 0;
+							for(int b : ints){
+								sums += b;
+							}
+							return (long)(sums % 32);
+						} catch (UnknownHostException e) {
+							// 如果获取失败，则使用随机数备用
+							return RandomUtils.nextLong(0,31);
+						}
+					}
+				 
+					private static Long getDataCenterId(){
+						int[] ints = StringUtils.toCodePoints(SystemUtils.getHostName());
+						int sums = 0;
+						for (int i: ints) {
+							sums += i;
+						}
+						return (long)(sums % 32);
+					}
+				 
+				 
+					/**
+					 * 静态工具类
+					 *
+					 * @return
+					 */
+					public static synchronized Long generateId(){
+						long id = idWorker.nextId();
+						return id;
+					}
+				 
+					//==============================Test=============================================
+					/** 测试 */
+					public static void main(String[] args) {
+						System.out.println(System.currentTimeMillis());
+						long startTime = System.nanoTime();
+						for (int i = 0; i < 50000; i++) {
+							long id = SnowflakeIdWorker.generateId();
+							System.out.println(id);
+						}
+						System.out.println((System.nanoTime()-startTime)/1000000+"ms");
+					}
+				}
+
 								
