@@ -6,14 +6,13 @@
 		Java设计模式：23种、七大原则
 			目的：为了让软件具有更好的代码重用性[相同的功能，不需要重复编写]、可读性[规范性]、可扩展性[增加新功能非常方便，可维护性]、可靠性[新功能对就功能不会产生影响]，->高内聚、降低耦合性。
 			七大原则：是设计模式的基础
-				单一职责原则-一个类只负责一项职责，降低类的负责度，提高可读性、可维护性，降低风险。当类方法很少，可以在方法级别实现单一职责原则。				
+				单一职责原则-一个类只负责一项职责，降低类的复杂度，提高可读性、可维护性，降低风险。当类方法很少，可以在方法级别实现单一职责原则。				
 					//方案一
 					public class SingleResponsibility1 {
 						public static void main(String[] args) {
 							RoadVehicle roadVehicle = new RoadVehicle();
 							roadVehicle.run("摩托车");
-							roadVehicle.run("汽车");
-							
+							roadVehicle.run("汽车");							
 							AirVehicle airVehicle = new AirVehicle();						
 							airVehicle.run("飞机");
 						}
@@ -193,10 +192,10 @@
 						// public void play();
 						// } 
 						// class ChangHong implements ITV {
-						//	@Override
-						//	public void play() {
+						// @Override
+						// public void play() {
 						//		System.out.println("长虹电视机，打开");
-						//	} 
+						// } 
 						// }
 						// 实现接口
 						// class OpenAndClose implements IOpenAndClose{
@@ -349,7 +348,7 @@
 									System.out.println("~~~使用迪米特法则~~");
 									//创建了一个 SchoolManager 对象
 									SchoolManager schoolManager = new SchoolManager();
-									//输出学院的员工id 和  学校总部的员工信息
+									//输出学院的员工id 和 学校总部的员工信息
 									schoolManager.printAllEmployee(new CollegeManager());
 								}
 							}
@@ -420,7 +419,7 @@
 									}
 								}
 							}						
-				合成复用原则-尽量使用合成/聚合的方式[UML类图的关系]，而不是使用继承
+				合成复用原则-尽量使用合成/聚合的方式[UML类图的关系]，而不是使用继承；
 				总结:针对接口编程，而不是实现编程；为松耦合而努力；			
 			UML类图
 				定义：统一建模语言，画图
@@ -431,11 +430,11 @@
 					依赖：一个类使用到了其他的类，就存在依赖；
 					泛化（继承）:继承关系，依赖关系的特例；
 					实现：实现关系，依赖关系的特例；
-					关联：关联关系，依赖关系的特例；一对一，一对多[多对一]，多对多关系；具有导航性[单向/双向]
-					聚合：表示整体与部分之间的关系，整体与部分可以分开，关联关系的特例；代码中体现：setter方法
+					关联：关联关系，依赖关系的特例；一对一，一对多[多对一]，多对多关系；具有导航性[单向/双向]；
+					聚合：表示整体与部分之间的关系，整体与部分可以分开，关联关系的特例；代码中体现：setter方法；
 					组合：表示整体与部分之间的关系，整体与部分可以不可分开[同生共死]，关联关系的特例；代码中体现：new 关键字；				
 			设计模式：
-				解决某类问题通用的解决方案
+				解决某类问题通用的解决方案；
 				类型：23种
 					创建型模式：[对象的创建]，单例模式、抽象工厂模式、原型模式、建造者模式、工厂模式
 					结构型模式：[软件结构]，适配器模式、桥接模式、装饰模式、组合模式、外观模式、享元模式、代理模式
