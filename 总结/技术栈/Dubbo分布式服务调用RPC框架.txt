@@ -254,6 +254,8 @@
 				<dubbo:registry address="zookeeper://118.24.44.169:2181" />
 				<!-- 生成远程服务代理，可以和本地bean一样使用demoService -->
 				<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService"></dubbo:reference>
+				<!-- 配置当前消费者的统一规则：所有的服务都不检查 -->
+				<dubbo:consumer check="false" timeout="5000"></dubbo:consumer>
 				3、启动服务
 				public static void main(String[] args) throws IOException {
 					ClassPathXmlApplicationContext context = 
@@ -413,7 +415,7 @@
 					<dubbo:method name="initOrder" timeout="3000" />
 				</dubbo:reference>
 		9、dubbo与springboot整合方式：
-			
+				
 				
 				
 					
