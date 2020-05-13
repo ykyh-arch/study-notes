@@ -1,1 +1,472 @@
 ------------------------------------------------------- Dubbo 分布式服务调用RPC框架---------------------------------------------------
+	一、分布式基础理论
+		1、分布式系统：
+			《分布式系统原理与范型》定义：分布式系统是若干独立计算机的集合，这些计算机对于用户来说就像单个相关系统；分布式系统（distributed system）是建立在网络之上的软件系统。
+		2、发展演变：
+			单一应用架构：当网站流量很小时，只需一个应用，将所有功能都部署在一起，以减少部署节点和成本。此时，用于简化增删改查工作量的数据访问框架(ORM)是关键。（All In One 1~10），
+						  适用于小型网站，小型管理系统，将所有功能都部署到一个功能里，简单易用。缺点： 1、性能扩展比较难 ；2、协同开发问题；3、不利于升级维护；
+			垂直应用架构：当访问量逐渐增大，单一应用增加机器带来的加速度越来越小，将应用拆成互不相干的几个应用，以提升效率。此时，用于加速前端页面开发的Web框架(MVC)是关键。（Vertical Application 10~1000），
+						  通过切分业务来实现各个模块独立部署，降低了维护和部署的难度，团队各司其职更易管理，性能扩展也更方便，更有针对性。缺点： 公用模块无法重复利用，开发性的浪费；
+			分布式服务架构：当垂直应用越来越多，应用之间交互不可避免，将核心业务抽取出来，作为独立的服务，逐渐形成稳定的服务中心，使前端应用能更快速的响应多变的市场需求。（Distributed Service 1000~10000），
+						  此时，用于提高业务复用及整合的分布式服务框架(RPC)是关键。
+			流动计算架构：当服务越来越多，容量的评估，小服务资源的浪费等问题逐渐显现，此时需增加一个调度中心基于访问压力实时管理集群容量，提高集群利用率。（Elastic Computing 10000+），
+					      此时，用于提高机器利用率的资源调度和治理中心(SOA)[ Service Oriented Architecture]是关键。
+		3、RPC：[Remote Procedure Call] 是指远程过程调用，是一种进程间通信方式，他是一种技术的思想，而不是规范。本质是底层通过套接字（Socket）基于网络（Network）建立通讯；
+				RPC两个核心模块：通讯，序列化。
+	二、Dubbo
+		1、介绍：Apache Dubbo |ˈdʌbəʊ| 是一款高性能、轻量级的开源Java RPC框架，它提供了三大核心能力：面向接口的远程方法调用，智能容错和负载均衡，以及服务自动注册和发现。
+		2、官网：http://dubbo.apache.org/；
+		3、Dubbo执行流程：
+									注册中心（Registry）
+						   订阅/通知				    注册（register）
+						<---------------->			<----------------
+				消费者（consumer）	------------->		提供者（provider）
+									 调用（invoke）		容器（container）
+									 
+									 Monitor（监控中心）
+			
+		4、Dubbo环境搭建：
+			a、windows安装：
+				安装Zookeeper（树节点结构）：
+					1、下载Zookeeper
+					   网址：https://archive.apache.org/dist/zookeeper/zookeeper-3.4.13/ 
+					2、解压Zookeeper
+					   解压运行zkServer.cmd，初次运行会报错，没有zoo.cfg配置文件；
+					3、修改zoo.cfg配置文件
+					   将conf下的zoo_sample.cfg复制一份改名为zoo.cfg即可；
+					   注意几个重要位置：
+					   dataDir=./   #临时数据存储的目录（可写相对路径）；
+					   clientPort=2181   #Zookeeper的端口号
+					   修改完成后再次启动Zookeeper
+					4、使用zkCli.cmd测试
+					   ls /：#列出zookeeper根下保存的所有节点
+					   create –e /ykyh 123：#创建一个ykyh节点，值为123
+					   get /ykyh：#获取/ykyh节点的值
+				安装dubbo-admin管理控制台：
+					解释：dubbo本身并不是一个服务软件，它其实就是一个jar包能够帮你的java程序连接到zookeeper，并利用zookeeper消费、提供服务。
+					      所以你不用在Linux上启动什么dubbo服务，但是为了让用户更好的管理监控众多的dubbo服务，官方提供了一个可视化的监控程序，不过这个监控即使不装也不影响使用。
+					1、下载dubbo-admin
+					   网址：https://github.com/apache/incubator-dubbo-ops；下载dubbo-admin
+					2、进入目录，修改dubbo-admin配置（maven工程项目）
+					   修改src\main\resources\application.properties，指定zookeeper地址：
+					   dubbo.registry.address=zookeeper://127.0.0.1:2181
+					3、打包dubbo-admin
+					   mvn clean package -Dmaven.test.skip=true
+					4、运行dubbo-admin
+					   java -jar dubbo-admin-0.0.1-SNAPSHOT.jar
+					   注意：有可能控制台看着启动了，但是网页打不开，需要在控制台按下ctrl+c即可，默认使用root/root登陆；
+			b、linux安装：		   
+				安装jdk：（下载JDK、上传服务器并解压、设置环境变量并使其生效）	
+				    网址：https://www.oracle.com/cn/java/technologies/javase-jdk8-downloads.html	
+				安装zookeeper：
+					1、下载zookeeper
+					   网址：https://archive.apache.org/dist/zookeeper/zookeeper-3.4.11/ 
+					         wget https://archive.apache.org/dist/zookeeper/zookeeper-3.4.11/zookeeper-3.4.11.tar.gz 
+					2、解压，路径：/usr/local/zookeeper
+					3、设置开启自启动
+					   编写脚本文件/etc/init.d/zookeeper，内容：
+						   #!/bin/bash
+						   #chkconfig:2345 20 90
+						   #description:zookeeper
+						   #processname:zookeeper
+						   ZK_PATH=/usr/local/zookeeper
+						   export JAVA_HOME=/usr/local/java/jdk1.8.0_171
+						   case $1 in
+									start) sh  $ZK_PATH/bin/zkServer.sh start;;
+									stop)  sh  $ZK_PATH/bin/zkServer.sh stop;;
+									status) sh  $ZK_PATH/bin/zkServer.sh status;;
+									restart) sh $ZK_PATH/bin/zkServer.sh restart;;
+									*)  echo "require start|stop|status|restart"  ;;
+						   esac
+					    把脚本注册成服务
+						   chkconfig --add zookeeper;
+						   chkconfig --list;
+						添加权限
+						   chmod +x /etc/init.d/zookeeper
+					4、配置zookeeper
+					    1、初始化zookeeper配置文件，拷贝/usr/local/zookeeper/conf/zoo_sample.cfg到同一个目录下改个名字叫zoo.cfg； 
+						2、启动zookeeper，service zookeeper start；
+				安装dubbo-admin管理控制台：
+					解释：旧版dubbo-admin是war，新版是jar不需要安装Tomcat；
+					1、安装Tomcat8
+					    1、下载Tomcat8并解压；
+						  网址：https://tomcat.apache.org/download-80.cgi
+							    wget http://mirrors.shu.edu.cn/apache/tomcat/tomcat-8/v8.5.32/bin/apache-tomcat-8.5.32.tar.gz
+					    2、开机自启动
+					      编写脚本文件/etc/init.d/tomcat8，内容：
+							#!/bin/bash
+							#chkconfig:2345 21 90
+							#description:apache-tomcat-8
+							#processname:apache-tomcat-8
+							CATALANA_HOME=/opt/apache-tomcat-8.5.32
+							export JAVA_HOME=/opt/java/jdk1.8.0_171
+							case $1 in
+							start)
+								echo "Starting Tomcat..."  
+								$CATALANA_HOME/bin/startup.sh
+								;;
+
+							stop)
+								echo "Stopping Tomcat..."  
+								$CATALANA_HOME/bin/shutdown.sh
+								;;
+
+							restart)
+								echo "Stopping Tomcat..."  
+								$CATALANA_HOME/bin/shutdown.sh
+								sleep 2
+								echo  
+								echo "Starting Tomcat..."  
+								$CATALANA_HOME/bin/startup.sh
+								;;
+							*)
+								echo "Usage: tomcat {start|stop|restart}"  
+								;; esac
+					    3、注册服务&添加权限
+						    chkconfig --add tomcat8;
+						    chkconfig --list;
+					        chmod +x /etc/init.d/tomcat8;
+					    4、启动测试
+						    service tomcat8 start
+					2、安装dubbo-admin管理控制台（同上）    
+		5、功能使用：
+			需求：某个电商系统，订单服务需要调用用户服务获取某个用户的所有地址；订单服务模块在A服务器，用户服务模块在B服务器，A可以远程调用B的功能；
+			工程架构：
+				公用接口模块（model，service，exception…），作用：定义公共接口，也可以导入公共依赖；gmall-interface；
+				订单模块，gmall-order，
+				用户模块，gmall-user；
+				公用模块：
+					gmall-interface
+					1、Bean模型
+					public class UserAddress implements Serializable{
+						private Integer id;
+						private String userAddress;
+						private String userId;
+						private String consignee;
+						private String phoneNum;
+						private String isDefault;
+					}
+					2、Service接口
+					UserService
+					public List<UserAddress> getUserAddressList(String userId);
+				用户模块：
+					gmall-user
+					用户模块（对用户接口的实现）；
+					1、pom.xml
+					  <dependencies>
+						<dependency>
+							<groupId>com.atguigu.dubbo</groupId>
+							<artifactId>gmall-interface</artifactId>
+							<version>0.0.1-SNAPSHOT</version>
+						</dependency>
+					  </dependencies>
+					2、Service
+					public class UserServiceImpl implements UserService {							
+						@Override
+						public List<UserAddress> getUserAddressList(String userId) {
+							return userAddressDao.getUserAddressById(userId);
+						}
+					}
+				订单模块：
+					gmall-order（调用用户模块）
+					1、pom.xml
+					<dependencies>
+						<dependency>
+							<groupId>com.atguigu.dubbo</groupId>
+							<artifactId>gmall-interface</artifactId>
+							<version>0.0.1-SNAPSHOT</version>
+						</dependency>
+					   </dependencies>
+					2、测试
+					public class OrderService {						
+						UserService userService;					
+						public List<UserAddress> initOrder(String userId){
+							return userService.getUserAddressList(userId);
+						}
+					}
+				效果解释：现在这样是无法进行调用的，gmall-order引入了gmall-interface，但是interface的实现是gmall-user，我们并没有引入，而且实际他可能还在别的服务器中。
+		6、dubbo引入：
+			1、改造gmall-user作为服务提供者：
+				1、POM.XML引入dubbo
+				<!-- 引入dubbo -->
+				<dependency>
+					<groupId>com.alibaba</groupId>
+					<artifactId>dubbo</artifactId>
+					<version>2.6.2</version>
+				</dependency>
+				<!-- 由于我们使用zookeeper作为注册中心，所以需要操作zookeeper，dubbo 2.6以前的版本引入zkclient操作zookeeper，dubbo 2.6及以后的版本引入curator操作zookeeper
+				下面两个zk客户端根据dubbo版本2选1即可
+				-->
+				<dependency>
+					<groupId>com.101tec</groupId>
+					<artifactId>zkclient</artifactId>
+					<version>0.10</version>
+				</dependency>
+				<!-- curator-framework -->
+				<dependency>
+					<groupId>org.apache.curator</groupId>
+					<artifactId>curator-framework</artifactId>
+					<version>2.12.0</version>
+				</dependency>
+				2、配置服务提供者，spring-bean.xml配置文件，文件名如：provider.xml
+				<!--当前应用的名字  -->
+				<dubbo:application name="gmall-user"></dubbo:application>
+				<!--指定注册中心的地址  -->
+				<dubbo:registry address="zookeeper://118.24.44.169:2181" />
+				<!--或  -->
+				<dubbo:registry protocol="zookeeper" address="127.0.0.1:2181"></dubbo:registry>
+				<!--使用dubbo协议，将服务暴露在20880端口，（通信协议？通信端口）  -->
+				<dubbo:protocol name="dubbo" port="20880" />
+				<!-- 指定需要暴露的服务 -->
+				<dubbo:service interface="com.atguigu.gmall.service.UserService" ref="userServiceImpl" />
+				<!-- 服务的实现 -->
+				<bean id="userServiceImpl" class="com.atguigu.gmall.service.impl.UserServiceImpl"></bean>
+				3、启动服务
+				public static void main(String[] args) throws IOException {
+					ClassPathXmlApplicationContext context = 
+							new ClassPathXmlApplicationContext("classpath:provider.xml");
+					System.in.read(); 
+				}		
+			2、改造gmall-order服务消费者：
+				1、引入dubbo
+				<!-- 引入dubbo -->
+				<dependency>
+					<groupId>com.alibaba</groupId>
+					<artifactId>dubbo</artifactId>
+					<version>2.6.2</version>
+				</dependency>
+				<!-- 由于我们使用zookeeper作为注册中心，所以需要引入zkclient和curator操作zookeeper -->
+				<dependency>
+					<groupId>com.101tec</groupId>
+					<artifactId>zkclient</artifactId>
+					<version>0.10</version>
+				</dependency>
+				<!-- curator-framework -->
+				<dependency>
+					<groupId>org.apache.curator</groupId>
+					<artifactId>curator-framework</artifactId>
+					<version>2.12.0</version>
+				</dependency>
+				2、配置消费者信息，spring-bean.xml配置文件，文件名如：consumer.xml
+				<!-- 应用名 -->
+				<dubbo:application name="gmall-order"></dubbo:application>
+				<!-- 指定注册中心地址 -->
+				<dubbo:registry address="zookeeper://118.24.44.169:2181" />
+				<!-- 生成远程服务代理，可以和本地bean一样使用demoService -->
+				<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService"></dubbo:reference>
+				3、启动服务
+				public static void main(String[] args) throws IOException {
+					ClassPathXmlApplicationContext context = 
+							new ClassPathXmlApplicationContext("classpath:consumer.xml");
+							#测试调用
+							OrderService orderService = applicationContext.getBean(OrderService.class);
+							orderService.initOrder("1");
+					System.in.read(); 
+				}
+				4、测试调用
+				访问gmall-order的initOrder请求，会调用UserService获取用户地址；调用成功。说明我们order已经可以调用远程的UserService了；	
+				5、注解版
+				   服务提供方，配置文件修改；
+				   <dubbo:application name="gmall-user"></dubbo:application>
+				   <dubbo:registry address="zookeeper://118.24.44.169:2181" />
+				   <dubbo:protocol name="dubbo" port="20880" />
+				   <!-- 注解版 -->
+				   <dubbo:annotation package="com.atguigu.gmall.user.impl"/>
+				   #使用dubbo提供的service注解，注册暴露服务
+				   @Service 
+				   public class UserServiceImpl implements UserService {					    
+				   }
+				   服务消费方，配置文件修改；
+				   <dubbo:application name="gmall-order"></dubbo:application>
+				   <dubbo:registry address="zookeeper://118.24.44.169:2181" />
+				   <dubbo:annotation package="com.atguigu.gmall.order.controller"/>
+				   #控制层
+				   @Controller
+				   public class OrderController {
+					   #使用dubbo提供的reference注解引用远程服务				   
+					   @Reference
+					   UserService userService;
+				   }
+			3、	监控中心：
+				dubbo-admin：图形化的服务管理页面；安装时需要指定注册中心地址，即可从注册中心中获取到所有的提供者/消费者进行配置管理；
+				dubbo-monitor-simple：简单的监控中心；
+					步骤：
+					1、下载，网址：https://github.com/apache/incubator-dubbo-ops 
+					2、修改配置指定注册中心地址
+					   进入dubbo-monitor-simple\src\main\resources\conf，修改dubbo.properties文件：
+					   dubbo.registry.address=zookeeper://127.0.0.1:2181
+					   dubbo.protocol.port=7070
+					   dubbo.jetty.port=8080
+					3、打包dubbo-monitor-simple
+					   mvn clean package -Dmaven.test.skip=true
+					4、解压 tar.gz 文件，并运行start.bat；#打包后会生成tar.gz文件，不使用jar文件；
+					5、启动服务默认访问8080；
+					配置监控中心：
+					所有服务配置连接监控中心，进行监控统计，
+					<!-- 监控中心协议，如果为protocol="registry"，表示从注册中心发现监控中心地址，否则直连监控中心 -->
+					<dubbo:monitor protocol="registry"></dubbo:monitor>
+					<!-- 或 -->
+					<!-- <dubbo:monitor address="127.0.0.1:7070"></dubbo:monitor> -->
+		7、dubbo整合SpringBoot实现：
+			1、POM.XML引入spring-boot-starter以及dubbo和curator的依赖
+			<dependency>
+				<groupId>com.alibaba.boot</groupId>
+				<artifactId>dubbo-spring-boot-starter</artifactId>
+				<version>0.2.0</version>
+			</dependency>
+			2、服务提供者配置、服务消费者配置：
+			#提供者配置：
+			dubbo.application.name=gmall-user #服务名，不能跟别的dubbo提供端重复
+			dubbo.registry.protocol=zookeeper #是指定注册中心协议
+			dubbo.registry.address=192.168.67.159:2181 #是注册中心的地址加端口号
+			dubbo.scan.base-package=com.atguigu.gmall #注解方式要扫描的包，也可以使用注解
+			dubbo.protocol.name=dubbo #是分布式固定是dubbo，不要改
+			dubbo.protocol.port=20880 #服务提供者端口
+            dubbo.monitor.protocol=registry	#监控		
+			#消费者配置：
+			dubbo.application.name=gmall-order
+			dubbo.registry.protocol=zookeeper
+			dubbo.registry.address=192.168.67.159:2181
+			dubbo.protocol.name=dubbo 
+			dubbo.scan.base-package=com.atguigu.gmall
+			3、dubbo注解
+			@Service、@Reference
+			如果没有在配置中写dubbo.scan.base-package,还需要使用@EnableDubbo注解；
+		8、dubbo配置：
+			配置原则：
+				虚拟机参数：-Ddubbo.protocol.port=20880
+				XML配置：<dubbo:protocol name="dubbo" port="20880" />
+				dubbo.properties：dubbo.protocol.port=20880
+				结论：优先级由大到小，高的配置会覆盖低的配置；
+			超时时间：
+				介绍：由于网络或服务端不可靠，会导致调用出现一种不确定的中间状态（超时）。为了避免超时导致客户端资源（线程）挂起耗尽，必须设置超时时间。
+				消费端消费者：
+				<!--全局超时配置 -->
+				<dubbo:consumer timeout="5000" />
+				<!--指定接口以及特定方法超时配置 -->
+				<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService" timeout="2000">
+					<dubbo:method name="initOrder" timeout="3000" />
+				</dubbo:reference>
+				服务端提供者：
+				<!--全局超时配置 -->
+				<dubbo:provider timeout="5000" />
+				<!--指定接口以及特定方法超时配置 -->
+				<dubbo:service interface="com.atguigu.gmall.service.UserService" ref="userServiceImpl" timeout="2000">
+					<dubbo:method name="getUserAddressList" timeout="1000"></dubbo:method>
+				</dubbo:service>
+				<!-- 服务的实现 -->
+				<bean id="userServiceImpl" class="com.atguigu.gmall.service.impl.UserServiceImpl"></bean>
+				结论： 
+					精确优先 (方法级优先，接口级次之，全局配置再次之)
+					消费者设置优先(如果级别一样，则消费方优先，提供方次之)
+			重试次数：
+				含义：失败自动切换，当出现失败，重试其它服务器，但重试会带来更长延迟。不包含第一次调用，0代表不重试；
+				      幂等（设置重试次数）[查询、删除、修改]、非幂等（不能设置重试次数）[新增];
+				重试次数配置如下：
+				#提供者
+				<dubbo:service retries="2" timeout="1000" interface="com.atguigu.gmall.service.UserService" ref="userServiceImpl" />
+				<!-- 服务的实现 -->
+				<bean id="userServiceImpl" class="com.atguigu.gmall.service.impl.UserServiceImpl"></bean>
+				或
+				#消费者
+				<dubbo:reference retries="2" id="userService" interface="com.atguigu.gmall.service.UserService"/>
+				或
+				<dubbo:reference>
+					<dubbo:method name="initOrder" retries="2" />
+				</dubbo:reference>
+			版本号：
+				当一个接口实现，出现不兼容升级时，可以用版本号过渡，版本号不同的服务相互间不引用，可以按照以下的步骤进行版本迁移：
+				在低压力时间段，先升级一半提供者为新版本，再将所有消费者升级为新版本，然后将剩下的一半提供者升级为新版本；
+				#配置：
+				<!-- 老版本服务提供者配置： -->
+				<dubbo:service interface="com.atguigu.gmall.service.UserService" ref="userServiceImpl" version="1.0.0" />
+				<!-- 新版本服务提供者配置： -->
+				<dubbo:service interface="com.atguigu.gmall.service.UserService" ref="userServiceImpl" version="2.0.0" />
+				<!-- 老版本服务消费者配置： -->
+				<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService" version="1.0.0" />
+				<!-- 新版本服务消费者配置： -->
+				<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService" version="2.0.0" />
+				<!-- 如果不需要区分版本，可以按照以下的方式配置： -->
+				<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService" version="*" />
+			本地存根：
+				#消费者配置：
+				public class UserServiceStub implements UserService {
+					private final UserService userService;
+					/**
+					 * 传入的是userService远程的代理对象
+					 * @param userService
+					 */
+					public UserServiceStub(UserService userService) {
+						super();
+						this.userService = userService;
+					}
+					@Override
+					public List<UserAddress> getUserAddressList(String userId) {
+						if(!StringUtils.isEmpty(userId)) {
+							return userService.getUserAddressList(userId);
+						}
+						return null;
+					}
+				}
+				#消费者配置文件配置：
+				<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService" timeout="2000" stub="com.XXXX.UserServiceStub">
+					<dubbo:method name="initOrder" timeout="3000" />
+				</dubbo:reference>
+		9、dubbo与springboot整合方式：
+			
+				
+				
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
+					
