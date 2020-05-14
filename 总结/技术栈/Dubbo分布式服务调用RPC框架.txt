@@ -275,7 +275,8 @@
 				   <!-- 注解版 -->
 				   <dubbo:annotation package="com.atguigu.gmall.user.impl"/>
 				   #使用dubbo提供的service注解，注册暴露服务
-				   @Service 
+				   @Service
+				   @Component
 				   public class UserServiceImpl implements UserService {					    
 				   }
 				   服务消费方，配置文件修改；
@@ -415,15 +416,149 @@
 					<dubbo:method name="initOrder" timeout="3000" />
 				</dubbo:reference>
 		9、dubbo与springboot整合方式：
-				
-				
-				
-					
-					
-					
-					
-					
-					
+			方式一：
+			POM.XML导入dubbo-starter依赖，在application.properties配置属性，使用@Service进行暴露服务，使用@Reference进行引用服务；
+			方式二：
+            保留dubbo的配置文件，如类路径下保留：provider.xml，导入dubbo-starter依赖，程序入口使用@ImportResource导入dubbo的配置文件即可；
+			如：
+  			@ImportResource(locations="classpath:provider.xml")
+			#对服务的保留与引用使用配置文件标签使用
+			方式三：
+			使用注解API的方式，将每一个组件手动创建到容器中,让dubbo来扫描其他的组件（程序入口添加@EnableDubbo(scanBasePackages="com.atguigu.gmall")）；
+			如：	
+			@Configuration
+			public class DubboConfig {				
+				#服务名配置
+				@Bean
+				public ApplicationConfig applicationConfig() {
+					ApplicationConfig applicationConfig = new ApplicationConfig();
+					applicationConfig.setName("gmall-user");
+					return applicationConfig;
+				}				
+				#<dubbo:registry protocol="zookeeper" address="127.0.0.1:2181"></dubbo:registry>
+				@Bean
+				public RegistryConfig registryConfig() {
+					RegistryConfig registryConfig = new RegistryConfig();
+					registryConfig.setProtocol("zookeeper");
+					registryConfig.setAddress("127.0.0.1:2181");
+					return registryConfig;
+				}				
+				#<dubbo:protocol name="dubbo" port="20882"></dubbo:protocol>
+				@Bean
+				public ProtocolConfig protocolConfig() {
+					ProtocolConfig protocolConfig = new ProtocolConfig();
+					protocolConfig.setName("dubbo");
+					protocolConfig.setPort(20882);
+					return protocolConfig;
+				}
+				#暴露服务配置
+				/**
+				 *<dubbo:service interface="com.atguigu.gmall.service.UserService" ref="userServiceImpl" timeout="1000" version="1.0.0">
+				 *	<dubbo:method name="getUserAddressList" timeout="1000"></dubbo:method>
+				 *</dubbo:service>
+				 */
+				@Bean
+				public ServiceConfig<UserService> userServiceConfig(UserService userService){
+					ServiceConfig<UserService> serviceConfig = new ServiceConfig<>();
+					serviceConfig.setInterface(UserService.class);
+					serviceConfig.setRef(userService);
+					serviceConfig.setVersion("1.0.0");					
+					//配置每一个method的信息
+					MethodConfig methodConfig = new MethodConfig();
+					methodConfig.setName("getUserAddressList");
+					methodConfig.setTimeout(1000);					
+					//将method的设置关联到service配置中
+					List<MethodConfig> methods = new ArrayList<>();
+					methods.add(methodConfig);
+					serviceConfig.setMethods(methods);
+					return serviceConfig;
+				}
+			}
+		10、高可用：通过设计，减少系统不能提供服务的时间；
+			1、zookeeper宕机与dubbo直连；
+			   现象：zookeeper注册中心宕机，还可以消费dubbo暴露的服务；
+			   原因：健壮性；				
+					 监控中心宕掉不影响使用，只是丢失部分采样数据；
+					 数据库宕掉后，注册中心仍能通过缓存提供服务列表查询，但不能注册新服务；
+					 注册中心对等集群，任意一台宕掉后，将自动切换到另一台；
+					 注册中心全部宕掉后，服务提供者和服务消费者仍能通过本地缓存通讯；
+					 服务提供者无状态，任意一台宕掉后，不影响使用；
+					 服务提供者全部宕掉后，服务消费者应用将无法使用，并无限次重连等待服务提供者恢复；
+			   直连：@Reference(url="127.0.0.1:20880")
+			2、负载均衡：
+			   说明：在集群负载均衡时，Dubbo 提供了多种均衡策略，缺省为 random 随机调用；
+			         Random LoadBalance：随机，按权重设置随机概率。
+					 RoundRobin LoadBalance：轮循，按公约后的权重设置轮循比率。
+					 LeastActive LoadBalance：最少活跃调用数，相同活跃数的随机，活跃数指调用前后计数差。使慢的提供者收到更少请求，因为越慢的提供者的调用前后计数差会越大。
+					 ConsistentHash LoadBalance：一致性 Hash，相同参数的请求总是发到同一提供者。
+			   使用：服务端、客户端、服务级别、方法级别皆可使用；
+			         如：
+					 <dubbo:service interface="com.atguigu.gmall.service.UserService" loadbalance="roundrobin" />
+					 <dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService" loadbalance="roundrobin" />
+					 <dubbo:service interface="com.atguigu.gmall.service.UserService">
+						<dubbo:method name="getUserAddressList" timeout="1000" loadbalance="roundrobin"></dubbo:method>
+					 </dubbo:service>
+					 <dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService">
+						<dubbo:method name="initOrder" loadbalance="roundrobin"/>
+					 </dubbo:reference>
+		11、服务熔断与降级：
+			1、服务降级
+               当服务器压力剧增的情况下，根据实际业务情况及流量，对一些服务和页面有策略的不处理或换种简单的方式处理，从而释放服务器资源以保证核心交易正常运作或高效运作。
+			   方式与手段：屏蔽，不发起远程调用，直接返回 null 值；消费方对该服务的方法调用在失败后，再返回 null 值；
+			2、集群容错：
+			   在集群调用失败时，Dubbo 提供了多种容错方案，缺省为 failover 重试；
+			   Failover Cluster：失败自动切换，当出现失败，重试其它服务器。通常用于读操作，但重试会带来更长延迟。可通过 retries="2" 来设置重试次数(不含第一次)。
+				    #重试次数配置如下：
+					<dubbo:service interface="com.atguigu.gmall.service.UserService" retries="2" />
+					或
+					<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService" retries="2" />
+					或
+					<dubbo:reference id="userService" interface="com.atguigu.gmall.service.UserService">
+						<dubbo:method name="initOrder" retries="2" />
+					</dubbo:reference>
+			   Failfast Cluster：快速失败，只发起一次调用，失败立即报错。通常用于非幂等性的写操作，比如新增记录。
+			   Failsafe Cluster：失败安全，出现异常时，直接忽略。通常用于写入审计日志等操作。
+			   Failback Cluster：失败自动恢复，后台记录失败请求，定时重发。通常用于消息通知操作。
+			   Forking Cluster：并行调用多个服务器，只要一个成功即返回。通常用于实时性要求较高的读操作，但需要浪费更多服务资源。可通过 forks="2" 来设置最大并行数。
+			   Broadcast Cluster：广播调用所有提供者，逐个调用，任意一台报错则报错。通常用于通知所有提供者更新缓存或日志等本地资源信息。
+			   #集群模式配置，按照以下示例在服务提供方和消费方配置集群模式
+			   <dubbo:service cluster="failsafe"/>
+			   或
+			   <dubbo:reference cluster="failsafe"/>
+			3、整合hystrix：
+			   1、POM.XML添加配置spring-cloud-starter-netflix-hystrix依赖；
+			   <dependency>
+				   <groupId>org.springframework.cloud</groupId>
+				   <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+				   <version>1.4.4.RELEASE</version>
+			   </dependency>
+			   2、在Application类上增加@EnableHystrix来启用hystrix starter；
+               #配置提供方，在Dubbo的提供方上增加@HystrixCommand配置，这样子调用就会经过Hystrix代理；
+			   如：
+			   @Service 
+			   @Component
+			   public class UserServiceImpl implements UserService {
+					@HystrixCommand
+					@Override
+					public List<UserAddress> getUserAddressList(String userId) {
+					}
+			   }
+			   #配置消费方
+               如：
+               @Service
+			   public class OrderServiceImpl implements OrderService {
+					@Reference(loadbalance="random",timeout=1000)
+					UserService userService;
+					@HystrixCommand(fallbackMethod="initOrderfallback")
+					@Override
+					public List<UserAddress> initOrder(String userId) {
+						List<UserAddress> addressList = userService.getUserAddressList(userId);
+						return addressList;
+					}
+					public List<UserAddress> initOrderfallback(String userId) {
+						return Arrays.asList(new UserAddress(10, "测试地址", "1", "测试", "测试", "Y"));
+					}
+				}			   
 					
 					
 					
