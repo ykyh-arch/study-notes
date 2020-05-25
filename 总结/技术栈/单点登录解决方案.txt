@@ -6,18 +6,314 @@
 	业务流程
 		 
 		          
-		客户端 --------------------> 业务系统1（天猫）      ticket
-											<------------------------------
-									 业务系统2（淘宝）                   认证系统（SSO）
+		客户端 --------------------> 业务系统1（天猫Session、IsLogin、token校验）、ticket/token
+											<-------------------------------------------
+									 业务系统2（淘宝）                   认证系统（SSO、token）
 																			|
 									 业务系统3（钉钉）					用户信息（Session）
 
 	
-		说明：客户端访问业务系统1，判断用户登录状态，未登录请求认证系统（SSO）进入登录页面；带参数（认证系统地址&RedictURL=当前访问地址）
-		      填写用户名/密码登录，登录成功存储用户信息，返回一个ticket 或 token；
+		说明：1、客户端访问业务系统1，判断用户登录状态（本地Session查看IsLogin状态），未登录去请求认证系统（SSO）进入登录页面，用过滤器或拦截器实现（Interceptor）；带参数（认证系统服务/checkLogin?redirectUrl=当前访问地址）
+		      2、在SSO端填写用户名/密码登录，登录成功生成存储ticket信息，返回一个ticket/token；
+			  3、客户端拿到token/ticket信息到SSO端校验，/verify？token=token;
+			  4、单点登出，服务端Session失效，利用监听器通知客户端调用登出方法；
 			  
 	SSO的发展历程
-		单机部署：将项目打包成WAR，放在Tomcat里面，采用的是Session与Cookie机制，服务端Session存用户相关信息，客户端Cookie存储Key JSESSIONID，让也HTTP有状态协议；
+		单机部署：将项目打包成WAR，放在Tomcat里面，采用的是Session与Cookie机制，服务端Session存用户相关信息，客户端Cookie存储Key JSESSIONID（用户信息唯一），让也HTTP有状态协议；
 		分布式集群部署：
-			多台服务器
-			
+			多台服务器：Nginx（IPHash方案，缺点：无法负载均衡） + 多台Tomcat服务器，Session同步问题，可以将Session存储信息统计抽取存放到第三方服务，如：Redis；可以解决单点登陆问题，也是一种解决方案；
+		登录解决方案：
+			Cookie：不安全，不能跨域登录；
+			分布式Session：利用缓存中间件如：Redis，采用KV结构存储，K存储用户ID，V存储Session信息；
+		单点登录解决的问题：如何产生和存储信任问题，服务端生产信任，客户端校验；
+		身份认证技术：
+			1.cas（单点登录）
+			2. Spring Security OAuth2（第三方登录授权：如QQ登陆）
+			3. jwt (客户端token：原生方案)
+		安全控制框架：
+			1. spring-security
+			2. shiro
+		比较：
+			spring-security + oauth2 依赖 jdk、jwt、redis；不支持认证服务集群，共享session，支持前后端分离参数始终携带access_token；
+			shiro + cas 依赖 jdk、jwt、redis；CAS支持认证服务集群，共享session，前后端分离支持不够友好，需要改造CAS服务端；
+			jwt 都支持，不依赖其他技术；
+	代码实现
+		HttpClient客户端：在JDK的 java.net 包中已经提供了访问Http协议的基本功能的类：HttpURLConnection；
+		测试代码：
+		import org.springframework.util.StreamUtils;
+		import java.net.HttpURLConnection;
+		import java.net.URL;
+		import java.nio.charset.Charset;
+		public class HttpTest {
+		  public static void main(String[] args) throws Exception {
+		    //1. 定义需要访问的地址，京东万象API
+		    URL url = new URL("https://way.jd.com/he/freeweather");
+		    //2. 开启连接
+		    HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		    //3. 设置请求的方式
+		    connection.setRequestMethod("POST");
+		    //4. 输出参数
+		    connection.setDoOutput(true);
+		    //5. 拼接参数信息 city=beijing&appkey=06642046425c68a351817b5b020b591f
+		    StringBuilder params = new StringBuilder();
+		    params.append("city=").append("beijing").append("&appkey=").append("06642046425c68a351817b5b020b591f");
+		    //6. 写出参数
+		    connection.getOutputStream().write(params.toString().getBytes("UTF-8"));
+		    //7. 发起请求
+		    connection.connect();
+		    //8. 接收对方响应的信息,可以使用Spring的 StreamUtils 工具类
+		    String response =StreamUtils.copyToString(connection.getInputStream(), Charset.forName("UTF-8"));
+    		System.out.println(response);
+		    }
+	    }
+	    封装工具类：
+		public class HttpUtil {
+			  public static String sendHttpRequest(String httpURL, Map<String,String>params) throws Exception {
+			    URL url = new URL(httpURL);
+			    HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+			    connection.setRequestMethod("POST");
+			    connection.setDoOutput(true);
+			    if (params!=null&&params.size()>0){
+				      StringBuilder sb = new StringBuilder();
+				      for (Map.Entry<String,String> entry:params.entrySet()){  
+				 		sb.append("&").append(entry.getKey()).append("=").append(entry.getValue());
+				      }
+				     //去除最前面的&写出参数
+				     connection.getOutputStream().write(sb.substring(1).toString().getBytes("UTF-8"));
+			    }
+			    connection.connect();
+			    String response = StreamUtils.copyToString(connection.getInputStream(), Charset.forName("UTF-8"));
+			    return response;
+			}
+		}
+		代码参考：
+		客户端
+		#工具类
+		public class SSOClientUtil {
+			private static Properties ssoProperties = new Properties();
+			public static String SERVER_URL_PREFIX; //统一认证中心地址
+			public static String CLIENT_HOST_URL; //当前客户端地址
+			static {
+				try {
+					ssoProperties.load(SSOClientUtil.class.getClassLoader().getResourceAsStream("sso.properties"));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				SERVER_URL_PREFIX = ssoProperties.getProperty("server-url-prefix");
+				CLIENT_HOST_URL = ssoProperties.getProperty("client-host-url");
+			}
+			/**
+			 * 当客户端请求被拦截,跳往统一认证中心,需要带redirectUrl的参数,统一认证中心登录后回调的地址
+			 */
+			public static String getRedirectUrl(HttpServletRequest request){
+				//获取请求URL
+				return CLIENT_HOST_URL+request.getServletPath();
+			}
+			/**
+			 * 根据request获取跳转到统一认证中心的地址,通过Response跳转到指定的地址，天猫！
+			 */
+			public static void redirectToSSOURL(HttpServletRequest request,HttpServletResponse response) throws IOException {
+				String redirectUrl = getRedirectUrl(request);
+				StringBuilder url = new StringBuilder(50)
+						.append(SERVER_URL_PREFIX)
+						.append("/checkLogin?redirectUrl=")
+						.append(redirectUrl);
+				response.sendRedirect(url.toString());
+			}
+			/**
+			 * 获取客户端的完整登出地址
+			 */
+			public static String getClientLogOutUrl(){
+				return CLIENT_HOST_URL+"/logOut";
+			}
+			/**
+			 * 获取认证中心的登出地址
+			 */
+			public static String getServerLogOutUrl(){
+				return SERVER_URL_PREFIX+"/logOut";
+			}
+		}
+		#sso.properties配置文件
+		server-url-prefix=http://www.sso.com:8080
+		client-host-url=http://www.tb.com:8081
+		#控制器
+		@Controller
+		public class LoginController {
+			@RequestMapping("/taobao")
+			public String index(Model model){
+				model.addAttribute("servetLogouUrl",SSOClientUtil.getServerLogOutUrl());
+				return "taobao";
+			}
+			@RequestMapping("/logOut")
+			public void logOut(HttpSession session){
+				session.invalidate();
+			}
+		}
+		#拦截器
+		public class SsoClientInterceptor implements HandlerInterceptor {
+			public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+				//1. 判断是否存在会话 isLogin = true
+				HttpSession session =  request.getSession();
+				Boolean isLogin = (Boolean) session.getAttribute("isLogin");
+				if (isLogin!=null && isLogin){ //存在会话
+					return true;
+				}
+				// 2. 判断token
+				String token = request.getParameter("token");
+				if (!StringUtils.isEmpty(token)){ //判断token不为空
+					System.out.println("检测到token信息，需要拿到服务器去校验token"+token);
+					//发起一个请求，携带一个参数！获得一个结果
+					String httpUrl = SSOClientUtil.SERVER_URL_PREFIX + "/verify";
+					HashMap<String, String> params = new HashMap<String, String>();
+					params.put("token",token);
+					params.put("clientUrl",SSOClientUtil.getClientLogOutUrl());
+					params.put("jsessionid",session.getId());
+					try {
+						String isVerify = HttpUtil.sendHttpRequest(httpUrl, params);
+						if ("true".equals(isVerify)){
+							System.out.println("服务器端校验token信息通过");
+							session.setAttribute("isLogin",true);
+							return true;
+						}
+					}catch (Exception e){
+						System.out.println("校验HTTP通信异常");
+						e.printStackTrace();
+					}
+				}
+				//没有登录信息，就需要跳转到登录的服务器！www.sso.com:8080
+				//http://www.sso.com:8080/checkLogin?redirectUrl=http://www.tb.com:8081
+				SSOClientUtil.redirectToSSOURL(request,response);
+				return false;
+			}
+		}
+		#前端
+		<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+		<html>
+		<head>
+			<title>淘宝首页</title>
+		</head>
+		<body>
+		<h1>淘宝首页</h1>
+		<hr>
+		<p>
+			当前登录的用户  <span> admin </span>
+			<%--本质调用了服务器端的注销操作！--%>
+			<a href="${servetLogouUrl}">注销</a>
+		</p>
+		</body>
+		</html>
+		服务端
+		#控制层
+		@Controller
+		public class SsoServerController {
+			@RequestMapping("/index")
+			public String index(){
+				return "login";
+			}
+			//redirectUrl我从哪里来~
+			@RequestMapping("/login")
+			public String login(String username,String password,String redirectUrl,HttpSession session,Model model){								
+				System.out.println(username+","+password);
+				//登录成功
+				if ("admin".equals(username) && "123456".equals(password)){
+					// 1. 服务器端创建令牌
+					String token = UUID.randomUUID().toString();
+					System.out.println("token创建成功=>"+token);
+					// 2. 创建全局会话，将令牌信息存入
+					session.setAttribute("token",token);
+					// 3. 存在数据库中
+					MockDB.T_TOKEN.add(token);
+					// 4. 返回给用户，来时的地方
+					model.addAttribute("token",token);
+					return "redirect:"+redirectUrl; // ?token = xxxxx
+				}
+				System.out.println("用户名或密码错误！");
+				model.addAttribute("redirectUrl",redirectUrl);
+				// 登录的操作，保存token数据  redis。。。 mock
+				return "login";
+			}
+			//checkLogin
+			@RequestMapping("/checkLogin")
+			public String checkLogin(String redirectUrl, HttpSession session,Model model){
+				//1. 是否存在会话
+				String token = (String) session.getAttribute("token");
+				if (StringUtils.isEmpty(token)){
+					// 没有全局会话，需要登录，跳转到登录页面，需要携带我从哪里来~
+					model.addAttribute("redirectUrl",redirectUrl);
+					return "login";
+				}else { // 存在全局会话
+					// 取出令牌 token，返回给客户端
+					model.addAttribute("token",token);
+					return "redirect:" + redirectUrl; //model  ?token=xxxx
+				}
+			}
+			//verify
+			@RequestMapping("/verify")
+			@ResponseBody
+			public String verifyToken(String token,String clientUrl,String jsessionid){
+				if (MockDB.T_TOKEN.contains(token)){
+					System.out.println("服务器端token校验成功！"+token);
+					// 存表操作！
+					List<ClientInfoVo> clientInfoVoList = MockDB.T_CLIENT_INFO.get(token);
+					if (clientInfoVoList==null){
+						clientInfoVoList = new ArrayList<ClientInfoVo>();
+						// 当如当前的用户信息
+						MockDB.T_CLIENT_INFO.put(token,clientInfoVoList);
+					}
+					ClientInfoVo vo = new ClientInfoVo();
+					vo.setClientUrl(clientUrl);
+					vo.setJsessionid(jsessionid);
+					clientInfoVoList.add(vo);
+					return "true";
+				}
+				return "false";
+			}
+			// Session  手动注销，自动注销！ 监听器！
+			//logOut
+			@RequestMapping("/logOut")
+			public String logOut(HttpSession session){
+				session.invalidate();
+				//客户端的session 应该在在这里通知销毁吗？
+				//存在自动注销，我们需要在监听器中实现
+				return "login";
+			}
+		}
+		#VO
+		@Data
+		public class ClientInfoVo {
+			private String clientUrl; //客户单的注销地址
+			private String jsessionid; // 当前的用的session信息
+		}
+		#监听器
+		public class MySessionListener implements HttpSessionListener {
+			// Session创建的时候执行的操作
+			public void sessionCreated(HttpSessionEvent se) {
+			}
+			// Session销毁的时候执行的操作
+			public void sessionDestroyed(HttpSessionEvent se) {
+				HttpSession session = se.getSession();
+				String token = (String) session.getAttribute("token");
+				//销毁表中的数据
+				MockDB.T_TOKEN.remove(token);
+				List<ClientInfoVo> clientInfoLists = MockDB.T_CLIENT_INFO.remove(token);
+				for (ClientInfoVo vo : clientInfoLists) {
+					try {
+						// 服务器端通知所有的客户端进行session 的注销！
+						HttpUtil.sendHttpRequest(vo.getClientUrl(),vo.getJsessionid());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+
+			}
+		}
+		#数据结构
+		public class MockDB {
+			public static Set<String> T_TOKEN  = new HashSet<String>(); // token保存表
+			// 用户登出地址保存表  token， Alist
+			public static Map<String,List<ClientInfoVo>> T_CLIENT_INFO = new HashMap<String, List<ClientInfoVo>>();					
+		}
+		
+		
+	
+		
