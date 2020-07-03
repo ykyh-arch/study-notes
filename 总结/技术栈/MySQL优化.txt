@@ -1132,7 +1132,7 @@ insert into linelock(name) values('5')  ;
 		如果仍然报错：可能是防火墙没关闭 ：  在B关闭防火墙  service iptables stop
 
 	实现主从同步（主从复制）：图
-		1.master将改变的数 记录在本地的 二进制日志中（binary log） ；该过程 称之为：二进制日志件事
+		1.master将改变的数 记录在本地的 二进制日志中（binary log） ；该过程 称之为：二进制日志事件
 		2.slave将master的binary log拷贝到自己的 relay log（中继日志文件）中
 		3.中继日志事件，将数据读取到自己的数据库之中
 	MYSQL主从复制 是异步的，串行化的， 有延迟
