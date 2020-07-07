@@ -53,4 +53,5 @@ https://github.com/lenve/vhr --微人事 stars 9000+
 #工具
 https://www.jibing57.com/2019/04/09/online-visual-paradigm/ --架构图工具Online Visual Paradigm
 https://online.visual-paradigm.com/cn/  --架构图工具Online Visual Paradigm
+https://mind.airmore.cn/ --爱莫脑图
 
