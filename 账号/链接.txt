@@ -28,6 +28,7 @@ https://zb.oschina.net --开源众包
 https://www.oschina.net/ --OSCHINA社区
 http://www.iocoder.cn/ --芋道源码解析
 http://yun.java1234.com/ --百度云搜索引擎Java
+https://www.suibianlu.com/ --随便撸
 
 #网站参考
 http://www.hanergymobileenergy.com/ --汉能太阳能
