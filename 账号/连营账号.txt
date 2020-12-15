@@ -57,7 +57,7 @@ APP密钥：65antg8qna7iu9nbavowin9syx9yztca，对应商户号为：1514379791
 120.55.243.73 账户： Administrator 密码：CRH@uetec123!
 121.40.188.86 账户：root   密码：Uetec@86
 120.55.243.73     Administrator  CRH@coreach123!
-114.55.109.229    Administrator	Uetec@123!
+114.55.109.229    Administrator	Uetec!123@！
 
 Linux服务器账号密码：47.98.208.13  账号：root   密码：Hfcd20171208
 
