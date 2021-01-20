@@ -6,6 +6,7 @@ https://github.com/wu-dada/baidupankey --百度网盘提取码源码
 https://www.extractpdf.com/zh.html --pdf在线提取
 https://smallpdf.com/ --pdf在线转化工具
 https://tool.book118.com/ --在线转换
+https://app.xunjiepdf.com/myfile --迅捷PDF转化器
 http://www.cnblogs.com/iflytek/ --龙飞博客
 http://maven.outofmemory.cn/ --MAVEN中央仓库
 https://52sharing.cn --吾爱分享网
